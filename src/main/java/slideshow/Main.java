@@ -36,33 +36,42 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
+/**
+ * MDZ_Slider主应用程序类
+ * 负责管理用户界面和幻灯片编辑功能
+ */
 public class Main extends Application {
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
+    
     private Canvas canvas;
-    private GraphicsContext gc;
+    private GraphicsContext graphicsContext;
     private Slide currentSlide;
     private SlideElement selectedElement;
     private double lastMouseX;
     private double lastMouseY;
     private List<Slide> slides = new ArrayList<>();
     private int currentSlideIndex = -1;
-    private Button prevSlideBtn;
-    private Button nextSlideBtn;
+    private Button previousSlideButton;
+    private Button nextSlideButton;
     private Label slideCountLabel;
     private SlideElement.ResizeHandle currentResizeHandle = SlideElement.ResizeHandle.NONE;
     private DrawElement.ShapeType currentShape = null;
     private DrawElement currentDrawing = null;
     private ColorPicker drawColorPicker;
-    private ComboBox<Double> lineWidthCombo;
+    private ComboBox<Double> lineWidthComboBox;
     private ToggleGroup drawGroup;
     
     @Override
     public void start(Stage primaryStage) {
+        logger.info("应用程序启动中...");
         BorderPane root = new BorderPane();
         
-        // 先创建画布
+        // 创建画布
         canvas = new Canvas(Constants.DEFAULT_SLIDE_WIDTH, Constants.DEFAULT_SLIDE_HEIGHT);
-        gc = canvas.getGraphicsContext2D();
+        graphicsContext = canvas.getGraphicsContext2D();
         
         // 添加鼠标事件处理
         canvas.setOnMousePressed(this::handleMousePressed);
@@ -70,29 +79,29 @@ public class Main extends Application {
         canvas.setOnMouseReleased(this::handleMouseReleased);
         canvas.setOnMouseMoved(this::handleMouseMoved);
         
-        // 再创建菜单栏和工具栏
+        // 创建菜单栏和工具栏
         MenuBar menuBar = createMenuBar();
         ToolBar toolBar = createToolBar();
         
-        // 创建一个垂直布局容器来放置菜单栏和工具栏
+        // 创建顶部容器
         VBox topContainer = new VBox();
         topContainer.getChildren().addAll(menuBar, toolBar);
         root.setTop(topContainer);
         
-        // 将画布放在中心
+        // 设置画布容器
         BorderPane canvasHolder = new BorderPane(canvas);
         canvasHolder.getStyleClass().add("canvas-holder");
         root.setCenter(canvasHolder);
         
         Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);
         
-        // 载入CSS样式
-        String cssPath = getClass().getResource("/styles/theme.css").toExternalForm();
+        // 加载CSS样式
         try {
+            String cssPath = getClass().getResource("/styles/theme.css").toExternalForm();
             scene.getStylesheets().add(cssPath);
+            logger.info("CSS样式加载成功");
         } catch (Exception e) {
-            System.err.println("无法加载CSS文件: " + e.getMessage());
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "无法加载CSS文件", e);
         }
         
         primaryStage.setTitle("MDZ_Slider");
@@ -104,6 +113,7 @@ public class Main extends Application {
         
         // 添加键盘事件监听
         scene.setOnKeyPressed(this::handleKeyPressed);
+        logger.info("应用程序启动完成");
     }
     
     private void handleMousePressed(MouseEvent event) {
@@ -113,7 +123,7 @@ public class Main extends Application {
                 event.getX(), event.getY(),
                 currentShape,
                 drawColorPicker.getValue(),
-                lineWidthCombo.getValue()
+                lineWidthComboBox.getValue()
             );
             currentSlide.addElement(currentDrawing);
             return;
@@ -250,13 +260,13 @@ public class Main extends Application {
     
     private void refreshCanvas() {
         // 清空画布
-        gc.setFill(Color.WHITE);
-        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        graphicsContext.setFill(Color.WHITE);
+        graphicsContext.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
         
         // 重新绘制所有元素
         if (currentSlide != null) {
             System.out.println("刷新画布");
-            currentSlide.draw(gc);
+            currentSlide.draw(graphicsContext);
         }
     }
     
@@ -321,15 +331,15 @@ public class Main extends Application {
         });
         
         // 初始化类成员变量，而不是创建新的局部变量
-        prevSlideBtn = new Button("上一页");
-        nextSlideBtn = new Button("下一页");
+        previousSlideButton = new Button("上一页");
+        nextSlideButton = new Button("下一页");
         slideCountLabel = new Label("1/1"); // 显示当前页码
         
-        prevSlideBtn.getStyleClass().add("button");
-        nextSlideBtn.getStyleClass().add("button");
+        previousSlideButton.getStyleClass().add("button");
+        nextSlideButton.getStyleClass().add("button");
         
-        prevSlideBtn.setOnAction(e -> previousSlide());
-        nextSlideBtn.setOnAction(e -> nextSlide());
+        previousSlideButton.setOnAction(e -> previousSlide());
+        nextSlideButton.setOnAction(e -> nextSlide());
         
         newSlideBtn.setOnAction(e -> createNewSlide());
         addTextBtn.setOnAction(e -> addText());
@@ -361,16 +371,16 @@ public class Main extends Application {
         
         // 添加颜色和线宽控制
         drawColorPicker = new ColorPicker(Color.BLACK);
-        lineWidthCombo = new ComboBox<>();
-        lineWidthCombo.getItems().addAll(1.0, 2.0, 3.0, 4.0, 5.0);
-        lineWidthCombo.setValue(2.0);
+        lineWidthComboBox = new ComboBox<>();
+        lineWidthComboBox.getItems().addAll(1.0, 2.0, 3.0, 4.0, 5.0);
+        lineWidthComboBox.setValue(2.0);
         
         return new ToolBar(
             newSlideBtn,
             new Separator(),
-            prevSlideBtn,
+            previousSlideButton,
             slideCountLabel,
-            nextSlideBtn,
+            nextSlideButton,
             new Separator(),
             addTextBtn,
             addImageBtn,
@@ -380,7 +390,7 @@ public class Main extends Application {
             fontStyleCombo,
             rectBtn, circleBtn, lineBtn, arrowBtn,
             drawColorPicker,
-            lineWidthCombo
+            lineWidthComboBox
         );
     }
     
@@ -496,8 +506,8 @@ public class Main extends Application {
             currentSlideIndex + 1, slides.size()));
         
         // 更新按钮状态
-        prevSlideBtn.setDisable(currentSlideIndex <= 0);
-        nextSlideBtn.setDisable(currentSlideIndex >= slides.size() - 1);
+        previousSlideButton.setDisable(currentSlideIndex <= 0);
+        nextSlideButton.setDisable(currentSlideIndex >= slides.size() - 1);
     }
 
     private void showContextMenu(SlideElement element, double x, double y) {
@@ -577,7 +587,7 @@ public class Main extends Application {
     }
 
     private void createNewPresentation() {
-        // ��示保存当前文件
+        // 提示保存当前文件
         if (!slides.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("新建幻灯片");
