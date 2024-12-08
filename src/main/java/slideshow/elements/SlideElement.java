@@ -20,8 +20,19 @@ public abstract class SlideElement {
     public abstract boolean containsPoint(double x, double y);
     
     public void move(double deltaX, double deltaY) {
-        x += deltaX;
-        y += deltaY;
+        setPosition(x + deltaX, y + deltaY);
+    }
+    
+    public boolean isSelected() {
+        return selected;
+    }
+    
+    public double getX() {
+        return x;
+    }
+    
+    public double getY() {
+        return y;
     }
     
     public void setSelected(boolean selected) {
@@ -35,4 +46,6 @@ public abstract class SlideElement {
     public void setDefaultCursor(Canvas canvas) {
         canvas.setCursor(Cursor.DEFAULT);  // 默认光标
     }
+    
+    public abstract void setPosition(double x, double y);
 }

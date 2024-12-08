@@ -15,38 +15,46 @@ import javafx.scene.input.MouseEvent;
 import slideshow.util.Constants;
 import slideshow.model.Slide;
 import slideshow.elements.TextElement;
+import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ComboBox;
+import javafx.scene.text.FontWeight;
+import javafx.scene.control.Separator;
 import slideshow.elements.SlideElement;
 
 public class Main extends Application {
     private Canvas canvas;
     private GraphicsContext gc;
     private Slide currentSlide;
-    private TextElement selectedText;
+    private SlideElement selectedElement;
+    private double lastMouseX;
+    private double lastMouseY;
     
     @Override
     public void start(Stage primaryStage) {
         BorderPane root = new BorderPane();
         
-        // 创建工具栏
-        ToolBar toolBar = createToolBar();
-        root.setTop(toolBar);
-        
-        // 创建画布
+        // 先创建画布
         canvas = new Canvas(Constants.DEFAULT_SLIDE_WIDTH, Constants.DEFAULT_SLIDE_HEIGHT);
         gc = canvas.getGraphicsContext2D();
+        
+        // 再创建工具栏
+        ToolBar toolBar = createToolBar();
+        root.setTop(toolBar);
         
         // 添加鼠标事件处理
         canvas.setOnMousePressed(this::handleMousePressed);
         canvas.setOnMouseDragged(this::handleMouseDragged);
         canvas.setOnMouseReleased(this::handleMouseReleased);
+        canvas.setOnMouseMoved(this::handleMouseMoved);
         
         // 将画布放在中心
         BorderPane canvasHolder = new BorderPane(canvas);
         canvasHolder.setStyle("-fx-background-color: #f0f0f0;");
+        canvasHolder.setPadding(new Insets(20));
         root.setCenter(canvasHolder);
         
         Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);
-        primaryStage.setTitle("幻灯片编辑器");
+        primaryStage.setTitle("MDZ_Slider");
         primaryStage.setScene(scene);
         primaryStage.show();
         
@@ -56,27 +64,55 @@ public class Main extends Application {
     
     private void handleMousePressed(MouseEvent event) {
         if (currentSlide != null) {
-            SlideElement element = currentSlide.findElementAt(event.getX(), event.getY());
-            if (element instanceof TextElement) {
-                selectedText = (TextElement) element;
-                selectedText.setSelected(true);
-                refreshCanvas();
+            SlideElement clickedElement = currentSlide.findElementAt(event.getX(), event.getY());
+            
+            // 如果点击空白处，清除选中状态
+            if (clickedElement == null) {
+                clearSelection();
+                return;
             }
+            
+            // 如果点击了新元素，更新选中状态
+            if (selectedElement != clickedElement) {
+                if (selectedElement != null) {
+                    selectedElement.setSelected(false);
+                }
+                selectedElement = clickedElement;
+                selectedElement.setSelected(true);
+            }
+            
+            lastMouseX = event.getX();
+            lastMouseY = event.getY();
+            refreshCanvas();
         }
     }
     
     private void handleMouseDragged(MouseEvent event) {
-        if (selectedText != null) {
-            selectedText.move(event.getX(), event.getY());
+        if (selectedElement != null) {
+            double deltaX = event.getX() - lastMouseX;
+            double deltaY = event.getY() - lastMouseY;
+            selectedElement.move(deltaX, deltaY);
+            lastMouseX = event.getX();
+            lastMouseY = event.getY();
             refreshCanvas();
         }
     }
     
     private void handleMouseReleased(MouseEvent event) {
-        if (selectedText != null) {
-            selectedText.setSelected(false);
-            selectedText = null;
-            refreshCanvas();
+        // 移除取消选中的代码，只需要重置拖动状态
+        lastMouseX = 0;
+        lastMouseY = 0;
+        refreshCanvas();
+    }
+    
+    private void handleMouseMoved(MouseEvent event) {
+        if (currentSlide != null) {
+            SlideElement element = currentSlide.findElementAt(event.getX(), event.getY());
+            if (element != null) {
+                element.setHoverCursor(canvas);
+            } else {
+                canvas.setCursor(javafx.scene.Cursor.DEFAULT);
+            }
         }
     }
     
@@ -96,11 +132,70 @@ public class Main extends Application {
         Button addTextBtn = new Button("添加文本");
         Button addImageBtn = new Button("添加图片");
         
+        // 添加文字样式控制组件
+        ColorPicker colorPicker = new ColorPicker(Color.BLACK);
+        ComboBox<Integer> fontSizeCombo = new ComboBox<>();
+        fontSizeCombo.getItems().addAll(12, 14, 16, 18, 20, 24, 28, 32, 36, 48);
+        fontSizeCombo.setValue(20);
+        
+        ComboBox<String> fontStyleCombo = new ComboBox<>();
+        fontStyleCombo.getItems().addAll("普通", "粗体", "斜体");
+        fontStyleCombo.setValue("普通");
+        
+        // 添加样式更改监听器
+        colorPicker.setOnAction(e -> {
+            if (selectedElement instanceof TextElement) {
+                TextElement textElement = (TextElement) selectedElement;
+                textElement.setColor(colorPicker.getValue());
+                refreshCanvas();
+            }
+        });
+        
+        fontSizeCombo.setOnAction(e -> {
+            if (selectedElement instanceof TextElement) {
+                TextElement textElement = (TextElement) selectedElement;
+                textElement.setFontSize(fontSizeCombo.getValue());
+                refreshCanvas();
+            }
+        });
+        
+        fontStyleCombo.setOnAction(e -> {
+            if (selectedElement instanceof TextElement) {
+                TextElement textElement = (TextElement) selectedElement;
+                boolean italic = fontStyleCombo.getValue().equals("斜体");
+                FontWeight weight = fontStyleCombo.getValue().equals("粗体") ? 
+                    FontWeight.BOLD : FontWeight.NORMAL;
+                textElement.setFontStyle(weight, italic);
+                refreshCanvas();
+            }
+        });
+        
+        // 添加选中元素变化时的样式同步
+        canvas.setOnMouseClicked(e -> {
+            if (selectedElement instanceof TextElement) {
+                TextElement textElement = (TextElement) selectedElement;
+                colorPicker.setValue(textElement.getColor());
+                fontSizeCombo.setValue((int)textElement.getFontSize());
+                String style = textElement.getFontWeight() == FontWeight.BOLD ? "粗体" :
+                              textElement.isItalic() ? "斜体" : "普通";
+                fontStyleCombo.setValue(style);
+            }
+        });
+        
         newSlideBtn.setOnAction(e -> createNewSlide());
         addTextBtn.setOnAction(e -> addText());
         addImageBtn.setOnAction(e -> addImage());
         
-        return new ToolBar(newSlideBtn, addTextBtn, addImageBtn);
+        return new ToolBar(
+            newSlideBtn, 
+            new Separator(),
+            addTextBtn, 
+            addImageBtn,
+            new Separator(),
+            colorPicker,
+            fontSizeCombo,
+            fontStyleCombo
+        );
     }
     
     private void createNewSlide() {
@@ -118,7 +213,11 @@ public class Main extends Application {
             TextElement textElement = new TextElement(
                 canvas.getWidth() / 2,
                 canvas.getHeight() / 2,
-                text
+                text,
+                20, // 默认字体大小
+                Color.BLACK, // 默认颜色
+                FontWeight.NORMAL, // 默认字重
+                false // 默认非斜体
             );
             currentSlide.addElement(textElement);
             refreshCanvas();
@@ -127,6 +226,15 @@ public class Main extends Application {
     
     private void addImage() {
         // TODO: 实现添加图片功能
+    }
+
+    // 添加一个新方法用于清除选中状态
+    private void clearSelection() {
+        if (selectedElement != null) {
+            selectedElement.setSelected(false);
+            selectedElement = null;
+            refreshCanvas();
+        }
     }
 
     public static void main(String[] args) {
