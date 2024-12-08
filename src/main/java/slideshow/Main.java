@@ -19,7 +19,10 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.text.FontWeight;
 import javafx.scene.control.Separator;
+import javafx.scene.control.Label;
 import slideshow.elements.SlideElement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main extends Application {
     private Canvas canvas;
@@ -28,6 +31,11 @@ public class Main extends Application {
     private SlideElement selectedElement;
     private double lastMouseX;
     private double lastMouseY;
+    private List<Slide> slides = new ArrayList<>();
+    private int currentSlideIndex = -1;
+    private Button prevSlideBtn;
+    private Button nextSlideBtn;
+    private Label slideCountLabel;
     
     @Override
     public void start(Stage primaryStage) {
@@ -182,14 +190,26 @@ public class Main extends Application {
             }
         });
         
+        // 初始化类成员变量，而不是创建新的局部变量
+        prevSlideBtn = new Button("上一页");
+        nextSlideBtn = new Button("下一页");
+        slideCountLabel = new Label("1/1"); // 显示当前页码
+        
+        prevSlideBtn.setOnAction(e -> previousSlide());
+        nextSlideBtn.setOnAction(e -> nextSlide());
+        
         newSlideBtn.setOnAction(e -> createNewSlide());
         addTextBtn.setOnAction(e -> addText());
         addImageBtn.setOnAction(e -> addImage());
         
         return new ToolBar(
-            newSlideBtn, 
+            newSlideBtn,
             new Separator(),
-            addTextBtn, 
+            prevSlideBtn,
+            slideCountLabel,
+            nextSlideBtn,
+            new Separator(),
+            addTextBtn,
             addImageBtn,
             new Separator(),
             colorPicker,
@@ -199,8 +219,12 @@ public class Main extends Application {
     }
     
     private void createNewSlide() {
-        currentSlide = new Slide();
+        Slide newSlide = new Slide();
+        slides.add(newSlide);
+        currentSlideIndex = slides.size() - 1;
+        currentSlide = newSlide;
         refreshCanvas();
+        updateSlideControls(); // 更新幻灯片控制按钮状态
     }
     
     private void addText() {
@@ -235,6 +259,34 @@ public class Main extends Application {
             selectedElement = null;
             refreshCanvas();
         }
+    }
+
+    private void previousSlide() {
+        if (currentSlideIndex > 0) {
+            currentSlideIndex--;
+            currentSlide = slides.get(currentSlideIndex);
+            refreshCanvas();
+            updateSlideControls();
+        }
+    }
+
+    private void nextSlide() {
+        if (currentSlideIndex < slides.size() - 1) {
+            currentSlideIndex++;
+            currentSlide = slides.get(currentSlideIndex);
+            refreshCanvas();
+            updateSlideControls();
+        }
+    }
+
+    private void updateSlideControls() {
+        // 更新页码显示
+        slideCountLabel.setText(String.format("%d/%d", 
+            currentSlideIndex + 1, slides.size()));
+        
+        // 更新按钮状态
+        prevSlideBtn.setDisable(currentSlideIndex <= 0);
+        nextSlideBtn.setDisable(currentSlideIndex >= slides.size() - 1);
     }
 
     public static void main(String[] args) {
