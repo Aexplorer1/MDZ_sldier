@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+dependencies {
+    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.base.jar')
+    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.controls.jar')
+    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.graphics.jar')
+    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.fxml.jar')
+}
+
+application {
+    mainClass = 'slideshow.Main'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+test {
+    useJUnitPlatform()
+}
+
+run {
+    doFirst {
+        jvmArgs = [
+            '--module-path', 'lib/javafx-sdk-21.0.1/lib',
+            '--add-modules', 'javafx.controls,javafx.fxml',
+            '--add-exports', 'javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
+            '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED'
+        ]
+    }
+}
