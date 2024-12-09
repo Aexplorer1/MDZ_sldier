@@ -23,6 +23,9 @@ import javafx.scene.control.Label;
 import slideshow.elements.SlideElement;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.VBox;
 
 public class Main extends Application {
     private Canvas canvas;
@@ -39,35 +42,60 @@ public class Main extends Application {
     
     @Override
     public void start(Stage primaryStage) {
-        BorderPane root = new BorderPane();
+        VBox root = new VBox();
         
-        // 先创建画布
-        canvas = new Canvas(Constants.DEFAULT_SLIDE_WIDTH, Constants.DEFAULT_SLIDE_HEIGHT);
-        gc = canvas.getGraphicsContext2D();
+        // 创建工具栏
+        ToolBar toolBar = new ToolBar();
+        ToggleGroup group = new ToggleGroup();
         
-        // 再创建工具栏
-        ToolBar toolBar = createToolBar();
-        root.setTop(toolBar);
+        ToggleButton selectButton = new ToggleButton("选择");
+        ToggleButton rectangleButton = new ToggleButton("矩形");
+        ToggleButton circleButton = new ToggleButton("圆形");
+        ToggleButton arrowButton = new ToggleButton("箭头");
         
-        // 添加鼠标事件处理
-        canvas.setOnMousePressed(this::handleMousePressed);
-        canvas.setOnMouseDragged(this::handleMouseDragged);
-        canvas.setOnMouseReleased(this::handleMouseReleased);
-        canvas.setOnMouseMoved(this::handleMouseMoved);
+        selectButton.setToggleGroup(group);
+        rectangleButton.setToggleGroup(group);
+        circleButton.setToggleGroup(group);
+        arrowButton.setToggleGroup(group);
         
-        // 将画布放在中心
-        BorderPane canvasHolder = new BorderPane(canvas);
-        canvasHolder.setStyle("-fx-background-color: #f0f0f0;");
-        canvasHolder.setPadding(new Insets(20));
-        root.setCenter(canvasHolder);
+        // 添加颜色选择器
+        ColorPicker colorPicker = new ColorPicker(Color.BLACK);
         
-        Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);
-        primaryStage.setTitle("MDZ_Slider");
+        // 添加删除和清除按钮
+        Button deleteButton = new Button("删除所选");
+        Button clearButton = new Button("清除所有");
+        
+        toolBar.getItems().addAll(
+            selectButton, 
+            rectangleButton, 
+            circleButton, 
+            arrowButton,
+            new Separator(),
+            colorPicker,
+            new Separator(),
+            deleteButton,
+            clearButton
+        );
+        
+        // 创建画布
+        DrawingCanvas canvas = new DrawingCanvas(800, 600);
+        
+        // 设置按钮事件
+        selectButton.setOnAction(e -> canvas.setDrawMode(DrawMode.SELECT));
+        rectangleButton.setOnAction(e -> canvas.setDrawMode(DrawMode.RECTANGLE));
+        circleButton.setOnAction(e -> canvas.setDrawMode(DrawMode.CIRCLE));
+        arrowButton.setOnAction(e -> canvas.setDrawMode(DrawMode.ARROW));
+        
+        colorPicker.setOnAction(e -> canvas.setColor(colorPicker.getValue()));
+        deleteButton.setOnAction(e -> canvas.deleteSelected());
+        clearButton.setOnAction(e -> canvas.clearAll());
+        
+        root.getChildren().addAll(toolBar, canvas);
+        
+        Scene scene = new Scene(root);
         primaryStage.setScene(scene);
+        primaryStage.setTitle("简单画图程序");
         primaryStage.show();
-        
-        // 创建初始幻灯片
-        createNewSlide();
     }
     
     private void handleMousePressed(MouseEvent event) {

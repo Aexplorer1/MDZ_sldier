@@ -1,6 +1,6 @@
 module slideshow {
-    requires javafx.controls;
-    requires javafx.graphics;
+    requires transitive javafx.controls;
+    requires transitive javafx.graphics;
     requires javafx.base;
     requires javafx.fxml;
     
@@ -8,4 +8,5 @@ module slideshow {
     exports slideshow.elements;
     exports slideshow.model;
     exports slideshow.util;
-} 
+    exports slideshow.shape;
+}   
