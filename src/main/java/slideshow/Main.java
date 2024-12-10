@@ -12,6 +12,11 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.Cursor;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import slideshow.util.Constants;
 import slideshow.model.Slide;
 import slideshow.elements.TextElement;
@@ -23,6 +28,12 @@ import javafx.scene.control.Label;
 import slideshow.elements.SlideElement;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.stage.FileChooser;
+import java.io.File;
+import javafx.scene.control.Alert;
+import javafx.scene.image.Image;
+import slideshow.elements.ImageElement;
+import slideshow.util.UIStrings;
 
 public class Main extends Application {
     private Canvas canvas;
@@ -36,6 +47,7 @@ public class Main extends Application {
     private Button prevSlideBtn;
     private Button nextSlideBtn;
     private Label slideCountLabel;
+    private SlideElement.ResizeHandle currentResizeHandle = SlideElement.ResizeHandle.NONE;
     
     @Override
     public void start(Stage primaryStage) {
@@ -57,24 +69,49 @@ public class Main extends Application {
         
         // 将画布放在中心
         BorderPane canvasHolder = new BorderPane(canvas);
-        canvasHolder.setStyle("-fx-background-color: #f0f0f0;");
-        canvasHolder.setPadding(new Insets(20));
+        canvasHolder.getStyleClass().add("canvas-holder");
         root.setCenter(canvasHolder);
         
         Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);
+        
+        // 载CSS样式
+        String cssPath = getClass().getResource("/styles/theme.css").toExternalForm();
+        try {
+            scene.getStylesheets().add(cssPath);
+        } catch (Exception e) {
+            System.err.println("无法加载CSS文件: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         primaryStage.setTitle("MDZ_Slider");
         primaryStage.setScene(scene);
         primaryStage.show();
         
         // 创建初始幻灯片
         createNewSlide();
+        
+        // 添加键盘事件监听
+        scene.setOnKeyPressed(this::handleKeyPressed);
     }
     
     private void handleMousePressed(MouseEvent event) {
         if (currentSlide != null) {
+            if (selectedElement != null) {
+                currentResizeHandle = selectedElement.getResizeHandle(event.getX(), event.getY());
+                if (currentResizeHandle != SlideElement.ResizeHandle.NONE) {
+                    return;
+                }
+            }
+            
             SlideElement clickedElement = currentSlide.findElementAt(event.getX(), event.getY());
             
-            // 如果点击空白处，清除选中状态
+            // 如果是右键点击，显示上下文菜单
+            if (event.isSecondaryButtonDown() && clickedElement != null) {
+                showContextMenu(clickedElement, event.getScreenX(), event.getScreenY());
+                return;
+            }
+            
+            // 如果点击了空白处，清除选中状态
             if (clickedElement == null) {
                 clearSelection();
                 return;
@@ -96,6 +133,16 @@ public class Main extends Application {
     }
     
     private void handleMouseDragged(MouseEvent event) {
+        if (selectedElement != null && currentResizeHandle != SlideElement.ResizeHandle.NONE) {
+            double deltaX = event.getX() - lastMouseX;
+            double deltaY = event.getY() - lastMouseY;
+            selectedElement.resize(deltaX, deltaY, currentResizeHandle);
+            lastMouseX = event.getX();
+            lastMouseY = event.getY();
+            refreshCanvas();
+            return;
+        }
+        
         if (selectedElement != null) {
             double deltaX = event.getX() - lastMouseX;
             double deltaY = event.getY() - lastMouseY;
@@ -107,7 +154,7 @@ public class Main extends Application {
     }
     
     private void handleMouseReleased(MouseEvent event) {
-        // 移除取消选中的代码，只需要重置拖动状态
+        currentResizeHandle = SlideElement.ResizeHandle.NONE;
         lastMouseX = 0;
         lastMouseY = 0;
         refreshCanvas();
@@ -115,13 +162,48 @@ public class Main extends Application {
     
     private void handleMouseMoved(MouseEvent event) {
         if (currentSlide != null) {
+            if (selectedElement != null) {
+                Cursor cursor = Cursor.DEFAULT;
+                
+                if (selectedElement instanceof ImageElement) {
+                    ImageElement imageElement = (ImageElement) selectedElement;
+                    ImageElement.ResizeHandle handle = imageElement.getResizeHandle(event.getX(), event.getY());
+                    cursor = getResizeCursor(handle);
+                } else if (selectedElement instanceof TextElement) {
+                    TextElement textElement = (TextElement) selectedElement;
+                    TextElement.ResizeHandle handle = textElement.getResizeHandle(event.getX(), event.getY());
+                    cursor = getResizeCursor(handle);
+                }
+                
+                if (cursor == Cursor.DEFAULT && selectedElement.containsPoint(event.getX(), event.getY())) {
+                    cursor = Cursor.HAND;
+                }
+                
+                canvas.setCursor(cursor);
+                return;
+            }
+            
             SlideElement element = currentSlide.findElementAt(event.getX(), event.getY());
             if (element != null) {
                 element.setHoverCursor(canvas);
             } else {
-                canvas.setCursor(javafx.scene.Cursor.DEFAULT);
+                canvas.setCursor(Cursor.DEFAULT);
             }
         }
+    }
+    
+    private Cursor getResizeCursor(Object handle) {
+        if (handle instanceof SlideElement.ResizeHandle) {
+            SlideElement.ResizeHandle h = (SlideElement.ResizeHandle) handle;
+            switch (h) {
+                case NW: case SE: return Cursor.NW_RESIZE;
+                case NE: case SW: return Cursor.NE_RESIZE;
+                case N: case S: return Cursor.V_RESIZE;
+                case E: case W: return Cursor.H_RESIZE;
+                default: return Cursor.DEFAULT;
+            }
+        }
+        return Cursor.DEFAULT;
     }
     
     private void refreshCanvas() {
@@ -131,14 +213,20 @@ public class Main extends Application {
         
         // 重新绘制所有元素
         if (currentSlide != null) {
+            System.out.println("刷新画布");
             currentSlide.draw(gc);
         }
     }
     
     private ToolBar createToolBar() {
-        Button newSlideBtn = new Button("新建幻灯片");
-        Button addTextBtn = new Button("添加文本");
-        Button addImageBtn = new Button("添加图片");
+        Button newSlideBtn = new Button(UIStrings.NEW_SLIDE);
+        Button addTextBtn = new Button(UIStrings.ADD_TEXT);
+        Button addImageBtn = new Button(UIStrings.ADD_IMAGE);
+        
+        // 为所有按钮添加样式类
+        newSlideBtn.getStyleClass().add("button");
+        addTextBtn.getStyleClass().add("button");
+        addImageBtn.getStyleClass().add("button");
         
         // 添加文字样式控制组件
         ColorPicker colorPicker = new ColorPicker(Color.BLACK);
@@ -195,6 +283,9 @@ public class Main extends Application {
         nextSlideBtn = new Button("下一页");
         slideCountLabel = new Label("1/1"); // 显示当前页码
         
+        prevSlideBtn.getStyleClass().add("button");
+        nextSlideBtn.getStyleClass().add("button");
+        
         prevSlideBtn.setOnAction(e -> previousSlide());
         nextSlideBtn.setOnAction(e -> nextSlide());
         
@@ -249,7 +340,52 @@ public class Main extends Application {
     }
     
     private void addImage() {
-        // TODO: 实现添加图片功能
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("选择图片");
+        fileChooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("图片文件", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp")
+        );
+        
+        File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
+        if (file != null) {
+            try {
+                Image image = new Image(file.toURI().toString());
+                System.out.println("图片加载成功：" + image.getWidth() + "x" + image.getHeight());
+                
+                // 计算居中位置（考虑缩放后的尺寸）
+                double scale = Math.min(800 / image.getWidth(), 600 / image.getHeight());
+                double scaledWidth = image.getWidth() * scale;
+                double scaledHeight = image.getHeight() * scale;
+                
+                ImageElement imageElement = new ImageElement(
+                    (canvas.getWidth() - scaledWidth) / 2,  // 考虑缩放后的宽度
+                    (canvas.getHeight() - scaledHeight) / 2, // 考虑缩放后的高度
+                    image
+                );
+                
+                // 确保当前幻灯片存在
+                if (currentSlide == null) {
+                    System.out.println("错误：当前幻灯片为空");
+                    return;
+                }
+                
+                currentSlide.addElement(imageElement);
+                System.out.println("图片元素已添加到幻灯片");
+                
+                refreshCanvas();
+            } catch (Exception e) {
+                e.printStackTrace(); // 打印详细错误信息
+                showError("无法加载图片", "请确保选择的是有效的图片文件���错误：" + e.getMessage());
+            }
+        }
+    }
+
+    private void showError(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
     // 添加一个新方法用于清除选中状态
@@ -287,6 +423,30 @@ public class Main extends Application {
         // 更新按钮状态
         prevSlideBtn.setDisable(currentSlideIndex <= 0);
         nextSlideBtn.setDisable(currentSlideIndex >= slides.size() - 1);
+    }
+
+    private void showContextMenu(SlideElement element, double x, double y) {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem deleteItem = new MenuItem("删除");
+        deleteItem.setOnAction(e -> deleteElement(element));
+        contextMenu.getItems().add(deleteItem);
+        contextMenu.show(canvas, x, y);
+    }
+    
+    private void handleKeyPressed(KeyEvent event) {
+        if (event.getCode() == KeyCode.BACK_SPACE && selectedElement != null) {
+            deleteElement(selectedElement);
+        }
+    }
+    
+    private void deleteElement(SlideElement element) {
+        if (currentSlide != null) {
+            currentSlide.removeElement(element);
+            if (element == selectedElement) {
+                selectedElement = null;
+            }
+            refreshCanvas();
+        }
     }
 
     public static void main(String[] args) {

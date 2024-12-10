@@ -10,6 +10,9 @@ public class Slide {
     private List<SlideElement> elements = new ArrayList<>();
     
     public void addElement(SlideElement element) {
+        if (elements == null) {
+            elements = new ArrayList<>();
+        }
         elements.add(element);
     }
     
@@ -18,8 +21,13 @@ public class Slide {
     }
     
     public void draw(GraphicsContext gc) {
-        for (SlideElement element : elements) {
-            element.draw(gc);
+        // 添加调试信息
+        System.out.println("绘制幻灯片，元素数量：" + (elements != null ? elements.size() : 0));
+        
+        if (elements != null) {
+            for (SlideElement element : elements) {
+                element.draw(gc);
+            }
         }
     }
     

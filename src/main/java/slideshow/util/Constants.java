@@ -1,8 +1,8 @@
 package slideshow.util;
 
 public class Constants {
-    public static final int DEFAULT_WINDOW_WIDTH = 800;
-    public static final int DEFAULT_WINDOW_HEIGHT = 600;
-    public static final int DEFAULT_SLIDE_WIDTH = 640;
-    public static final int DEFAULT_SLIDE_HEIGHT = 480;
+    public static final double DEFAULT_WINDOW_WIDTH = 1200;
+    public static final double DEFAULT_WINDOW_HEIGHT = 900;
+    public static final double DEFAULT_SLIDE_WIDTH = 1024;
+    public static final double DEFAULT_SLIDE_HEIGHT = 768;
 } 

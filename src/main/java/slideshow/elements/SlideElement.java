@@ -10,6 +10,15 @@ public abstract class SlideElement {
     protected double y;
     protected boolean selected;
     
+    protected static final double HANDLE_SIZE = 8; // 控制点大小
+    protected static final double HANDLE_OFFSET = HANDLE_SIZE / 2;
+    
+    public enum ResizeHandle {
+        NONE, NW, NE, SW, SE, N, S, W, E
+    }
+    
+    protected ResizeHandle currentHandle = ResizeHandle.NONE;
+    
     public SlideElement(double x, double y) {
         this.x = x;
         this.y = y;
@@ -48,4 +57,7 @@ public abstract class SlideElement {
     }
     
     public abstract void setPosition(double x, double y);
+    
+    public abstract ResizeHandle getResizeHandle(double x, double y);
+    public abstract void resize(double deltaX, double deltaY, ResizeHandle handle);
 }
