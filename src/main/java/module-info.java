@@ -1,11 +1,11 @@
 module slideshow {
     requires javafx.controls;
     requires javafx.graphics;
-    requires javafx.base;
-    requires javafx.fxml;
+    requires com.google.gson;
     
     exports slideshow;
-    exports slideshow.elements;
     exports slideshow.model;
+    exports slideshow.elements;
     exports slideshow.util;
+    exports slideshow.presentation;
 } 

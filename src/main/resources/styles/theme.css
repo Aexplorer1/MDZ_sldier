@@ -166,4 +166,36 @@
 
 .dialog-pane .button:hover {
     -fx-background-color: rgba(30, 215, 96, 0.85);
+}
+
+/* 修改 ToggleButton 样式，使其与普通按钮一致 */
+.toggle-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-padding: 5 12;
+    -fx-cursor: hand;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.7);
+    -fx-border-width: 1;
+    -fx-font-size: 12px;
+    -fx-font-family: "Microsoft YaHei", "微软雅黑";
+}
+
+.toggle-button:hover {
+    -fx-background-color: rgba(255,255,255,0.15);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 5, 0, 0, 1);
+}
+
+.toggle-button:selected {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+}
+
+/* 删除之前的绘图工具按钮特定样式 */
+.draw-tool-button,
+.draw-tool-button:selected,
+.draw-tools-container {
+    /* 删除这些样式 */
 } 

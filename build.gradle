@@ -27,6 +27,7 @@ dependencies {
     implementation files('lib/javafx-sdk-21.0.1/lib/javafx.controls.jar')
     implementation files('lib/javafx-sdk-21.0.1/lib/javafx.graphics.jar')
     implementation files('lib/javafx-sdk-21.0.1/lib/javafx.fxml.jar')
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 application {
@@ -56,6 +57,10 @@ run {
 
 compileJava {
     options.encoding = 'UTF-8'
+    options.compilerArgs += [
+        '--add-modules', 'com.google.gson',
+        '--add-exports', 'com.google.gson/com.google.gson=slideshow'
+    ]
 }
 
 compileTestJava {

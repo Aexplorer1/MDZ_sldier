@@ -190,4 +190,16 @@ public class ImageElement extends SlideElement {
         this.x = x;
         this.y = y;
     }
+    
+    public String getImageUrl() {
+        return image.getUrl();
+    }
+    
+    public double getWidth() {
+        return width;
+    }
+    
+    public double getHeight() {
+        return height;
+    }
 } 
