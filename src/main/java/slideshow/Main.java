@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
+
 /**
  * MDZ_Slider主应用程序类
  * 负责管理用户界面和幻灯片编辑功能
@@ -167,6 +168,7 @@ public class Main extends Application {
     
     private void handleMouseDragged(MouseEvent event) {
         if (currentDrawing != null) {
+            
             // 更新绘制
             currentDrawing.updateEndPoint(event.getX(), event.getY());
             refreshCanvas();

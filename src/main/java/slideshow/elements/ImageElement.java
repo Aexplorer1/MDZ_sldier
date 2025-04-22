@@ -15,6 +15,7 @@ public class ImageElement extends SlideElement {
         super(x, y);
         this.image = image;
         
+        
         // 获取原始尺寸
         double originalWidth = image.getWidth();
         double originalHeight = image.getHeight();
