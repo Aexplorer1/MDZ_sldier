@@ -37,6 +37,7 @@ application {
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+    modularity.inferModulePath = true
 }
 
 test {
@@ -47,7 +48,7 @@ run {
     doFirst {
         jvmArgs = [
             '--module-path', 'lib/javafx-sdk-21.0.1/lib',
-            '--add-modules', 'javafx.controls,javafx.fxml',
+            '--add-modules', 'javafx.controls,javafx.fxml,java.logging',
             '--add-exports', 'javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
             '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
             '-Dfile.encoding=UTF-8'
@@ -58,8 +59,9 @@ run {
 compileJava {
     options.encoding = 'UTF-8'
     options.compilerArgs += [
-        '--add-modules', 'com.google.gson',
-        '--add-exports', 'com.google.gson/com.google.gson=slideshow'
+        '--add-modules', 'com.google.gson,java.logging',
+        '--add-exports', 'com.google.gson/com.google.gson=slideshow',
+        '--add-exports', 'java.logging/java.util.logging=slideshow'
     ]
 }
 
