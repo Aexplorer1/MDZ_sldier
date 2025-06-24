@@ -67,7 +67,7 @@ public class Main extends Application {
     private OpenAiChatModel aiModel;
 
     @Override
-    public void start(Stage primaryStage) {
+    public void     start(Stage primaryStage) {
         logger.info("Application starting...");
         BorderPane root = new BorderPane();
 
@@ -417,9 +417,9 @@ public class Main extends Application {
         lineWidthComboBox.getItems().addAll(1.0, 2.0, 3.0, 4.0, 5.0);
         lineWidthComboBox.setValue(2.0);
 
-        Button aiGenBtn = new Button("AI Generate PPT");
+        Button aiGenBtn = new Button("AI智能生成PPT");
         aiGenBtn.getStyleClass().add("button");
-        aiGenBtn.setOnAction(e -> showAIGenerateDialog());
+        aiGenBtn.setOnAction(e -> showAIChatDialog());
 
         return new ToolBar(
                 newSlideBtn,
@@ -670,14 +670,13 @@ public class Main extends Application {
         );
 
         File file = fileChooser.showSaveDialog(canvas.getScene().getWindow());
-        if (file != null) {
             try {
                 SlideSerializer.savePresentation(slides, file.getPath());
                 showInfo("Save Successful", "Presentation saved to: " + file.getPath());
             } catch (IOException e) {
                 showError("Save Failed", "Unable to save file: " + e.getMessage());
             }
-        }
+
     }
 
     private void startPresentation() {
@@ -736,39 +735,133 @@ public class Main extends Application {
         alert.showAndWait();
     }
 
-    private void showAIGenerateDialog() {
-        TextInputDialog dialog = new TextInputDialog("Please describe the PPT content you want, e.g., Generate a PPT introduction about artificial intelligence");
-        dialog.setTitle("AI Generate PPT");
-        dialog.setHeaderText("Enter your PPT requirements:");
-        dialog.setContentText("Requirements:");
-        dialog.showAndWait().ifPresent(prompt -> {
-            generatePPTWithAI(prompt);
-        });
-    }
+    private void showAIChatDialog() {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("AI智能生成PPT");
+        dialog.setHeaderText("请输入你的PPT需求，点击*生成建议*后可查看AI建议、PPT命令和演讲稿，编辑命令后点击*生成PPT*生成幻灯片");
 
-    private void generatePPTWithAI(String prompt) {
-        // 优化AI提示词，支持多种图形
-        String aiPrompt = "You are a PPT assistant, please generate a PPT outline based on user requirements. Requirements:\n" +
-                "1. One sentence per page, suitable as a slide title or key point.\n" +
-                "2. Return format must be strict: Page 1: xxx; Page 2: xxx; ..., no other content.\n" +
-                "3. Do not output explanations.\n" +
-                "4. If you need to draw a line, use: Draw: Line(x1,y1,x2,y2). If you need to draw a rectangle, use: Draw: Rectangle(x1,y1,x2,y2). If you need to draw a circle, use: Draw: Circle(centerX,centerY,radius). If you need to draw an arrow, use: Draw: Arrow(x1,y1,x2,y2). You can use multiple Draw instructions in one page.\n" +
-                "5. If you need to add a title, use: Title: xxx. If you need to add a subtitle, use: Subtitle: xxx. If you need to add a bullet, use: Bullet: xxx. You can use multiple Title, Subtitle, and Bullet instructions in one page.\n" +
-                "6. Each Title, Subtitle, Bullet, and Draw must be on its own line, do not merge multiple items into one line.\n" +
-                "7. All content for the same page (Title, Subtitle, Bullet, Draw, etc.) must be under the same Page n:, do not create a new Page n: for each line.\n" +
-                "User requirements: " + prompt;
-        new Thread(() -> {
-            try {
-                String aiResult = aiModel.chat(aiPrompt);
-                logger.info("aiResult: " + aiResult);
-                Platform.runLater(() -> {
-                    parseAndCreateSlides(aiResult);
-                    showInfo("AI Generation Complete", "PPT outline generated based on AI suggestions.");
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> showError("AI Generation Failed", e.getMessage()));
+        ButtonType generateBtnType = new ButtonType("生成建议", ButtonBar.ButtonData.LEFT);
+        ButtonType confirmBtnType = new ButtonType("生成PPT", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelBtnType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(generateBtnType, confirmBtnType, cancelBtnType);
+
+        TextArea inputArea = new TextArea();
+        inputArea.setPromptText("请输入你的PPT需求，例如：生成一个关于人工智能的PPT介绍，或直接提问如'今天星期几'");
+        inputArea.setPrefRowCount(3);
+        inputArea.setWrapText(true);
+
+        TextArea adviceArea = new TextArea();
+        adviceArea.setPromptText("AI建议与思考过程将在这里展示（只读）");
+        adviceArea.setPrefRowCount(5);
+        adviceArea.setWrapText(true);
+        adviceArea.setEditable(false);
+        adviceArea.setDisable(true);
+
+        TextArea suggestionArea = new TextArea();
+        suggestionArea.setPromptText("AI生成的PPT命令将在这里展示，可手动修改后再生成PPT");
+        suggestionArea.setPrefRowCount(10);
+        suggestionArea.setWrapText(true);
+        suggestionArea.setEditable(true);
+        suggestionArea.setDisable(true);
+
+        TextArea speechArea = new TextArea();
+        speechArea.setPromptText("AI生成的演讲稿将在这里展示（只读）");
+        speechArea.setPrefRowCount(8);
+        speechArea.setWrapText(true);
+        speechArea.setEditable(false);
+        speechArea.setDisable(true);
+
+        VBox vbox = new VBox(10,
+            new Label("PPT需求："), inputArea,
+            new Label("AI建议与反馈（只读）："), adviceArea,
+            new Label("PPT命令与大纲（可编辑）："), suggestionArea,
+            new Label("AI生成的演讲稿（只读）："), speechArea
+        );
+        vbox.setPadding(new Insets(10));
+        dialog.getDialogPane().setContent(vbox);
+
+        // 生成建议按钮逻辑
+        Button generateBtn = (Button) dialog.getDialogPane().lookupButton(generateBtnType);
+        generateBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            event.consume(); // 阻止关闭对话框
+            String userPrompt = inputArea.getText().trim();
+            if (userPrompt.isEmpty()) {
+                adviceArea.setText("请先输入PPT需求！");
+                suggestionArea.setText("");
+                speechArea.setText("");
+                return;
             }
-        }).start();
+            adviceArea.setDisable(false);
+            suggestionArea.setDisable(false);
+            speechArea.setDisable(false);
+            adviceArea.setText("AI正在思考并生成建议，请稍候...");
+            suggestionArea.setText("");
+            speechArea.setText("");
+            // 调用AI生成建议、命令和演讲稿
+            new Thread(() -> {
+                String aiPrompt = "你是PPT助手，请根据用户输入做如下三步：\n" +
+                        "1. 先用自然语言给出你的建议、思考或直接回答用户问题（如'今天星期三'），如果用户需求与PPT无关请直接回复建议或答案。\n" +
+                        "2. 如果用户需求与PPT制作有关，再用严格的PPT命令格式输出大纲，格式要求如下：\n" +
+                        "---PPT命令---\n" +
+                        "Page 1:\nTitle: ...\nSubtitle: ...\nBullet: ...\nDraw: ...\nPage 2: ...\n（每个命令单独一行，所有命令都在---PPT命令---下方，若无PPT需求则此部分可为空）\n" +
+                        "---演讲稿---\n" +
+                        "请为上面PPT内容生成一段完整的演讲稿，所有演讲稿内容都在---演讲稿---下方，若无PPT需求则此部分可为空。\n" +
+                        "请严格用'---PPT命令---'和'---演讲稿---'分隔建议、命令和演讲稿部分。\n用户输入：" + userPrompt;
+                try {
+                    String aiResult = aiModel.chat(aiPrompt);
+                    Platform.runLater(() -> {
+                        String[] parts = aiResult.split("---PPT命令---");
+                        String advice = parts.length > 0 ? parts[0].trim() : "";
+                        String pptCmd = "";
+                        String speech = "";
+                        if (parts.length > 1) {
+                            String[] subparts = parts[1].split("---演讲稿---");
+                            pptCmd = subparts.length > 0 ? subparts[0].trim() : "";
+                            speech = subparts.length > 1 ? subparts[1].trim() : "";
+                        }
+                        adviceArea.setText(advice);
+                        suggestionArea.setText(pptCmd);
+                        speechArea.setText(speech);
+                        adviceArea.setDisable(false);
+                        suggestionArea.setDisable(false);
+                        speechArea.setDisable(false);
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> {
+                        adviceArea.setText("AI生成失败：" + e.getMessage());
+                        suggestionArea.setText("");
+                        speechArea.setText("");
+                        adviceArea.setDisable(false);
+                        suggestionArea.setDisable(false);
+                        speechArea.setDisable(false);
+                    });
+                }
+            }).start();
+        });
+
+        // 生成PPT按钮逻辑
+        Button confirmBtn = (Button) dialog.getDialogPane().lookupButton(confirmBtnType);
+        confirmBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            String suggestion = suggestionArea.getText().trim();
+            if (suggestion.isEmpty() || adviceArea.getText().startsWith("AI正在思考")) {
+                event.consume();
+                suggestionArea.setText("请先生成并确认PPT命令！");
+                return;
+            }
+            // 关闭对话框后生成PPT
+            Platform.runLater(() -> {
+                parseAndCreateSlides(suggestion);
+                showInfo("AI生成完成", "PPT已根据建议生成，可继续编辑完善。");
+            });
+        });
+
+        // 初始时禁用"生成PPT"按钮
+        confirmBtn.setDisable(true);
+        suggestionArea.textProperty().addListener((obs, oldVal, newVal) -> {
+            confirmBtn.setDisable(newVal.trim().isEmpty() || adviceArea.getText().startsWith("AI正在思考"));
+        });
+
+        dialog.showAndWait();
     }
 
     private void parseAndCreateSlides(String aiResult) {
