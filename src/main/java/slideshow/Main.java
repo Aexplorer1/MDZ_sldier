@@ -754,6 +754,8 @@ public class Main extends Application {
                 "3. Do not output explanations.\n" +
                 "4. If you need to draw a line, use: Draw: Line(x1,y1,x2,y2). If you need to draw a rectangle, use: Draw: Rectangle(x1,y1,x2,y2). If you need to draw a circle, use: Draw: Circle(centerX,centerY,radius). If you need to draw an arrow, use: Draw: Arrow(x1,y1,x2,y2). You can use multiple Draw instructions in one page.\n" +
                 "5. If you need to add a title, use: Title: xxx. If you need to add a subtitle, use: Subtitle: xxx. If you need to add a bullet, use: Bullet: xxx. You can use multiple Title, Subtitle, and Bullet instructions in one page.\n" +
+                "6. Each Title, Subtitle, Bullet, and Draw must be on its own line, do not merge multiple items into one line.\n" +
+                "7. All content for the same page (Title, Subtitle, Bullet, Draw, etc.) must be under the same Page n:, do not create a new Page n: for each line.\n" +
                 "User requirements: " + prompt;
         new Thread(() -> {
             try {
