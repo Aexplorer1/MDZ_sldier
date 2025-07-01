@@ -13,8 +13,8 @@ public class TextElement extends SlideElement {
     private Color color;
     private FontWeight fontWeight;
     private boolean italic;
-    private double x;
-    private double y;
+    //private double x;
+    //private double y;
     private double width;
     private double height;
     private boolean selected;
