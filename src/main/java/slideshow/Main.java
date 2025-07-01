@@ -20,6 +20,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.text.FontWeight;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 
 import slideshow.util.Constants;
 import slideshow.model.Slide;
@@ -65,6 +67,7 @@ public class Main extends Application {
     private ComboBox<Double> lineWidthComboBox;
     private ToggleGroup drawGroup;
     private OpenAiChatModel aiModel;
+    private AIAgent aiAgent;
 
     @Override
     public void     start(Stage primaryStage) {
@@ -118,17 +121,31 @@ public class Main extends Application {
 
         String apiKey = getApiKey(); // Retrieve from secure source
 
-        aiModel = OpenAiChatModel.builder()
-                .apiKey(apiKey)
-                .baseUrl("https://api.deepseek.com")  // ⚠️ DeepSeek 的 baseUrl
-                .modelName("deepseek-chat")
-                .temperature(0.5)
-                .logRequests(true)
-                .logResponses(true)
-                .build();
+         aiModel = OpenAiChatModel.builder()
+                 .apiKey(apiKey)
+                 .baseUrl("https://api.deepseek.com")  // ⚠️ DeepSeek 的 baseUrl
+                 .modelName("deepseek-chat")
+                 .temperature(0.5)
+                 .logRequests(true)
+                 .logResponses(true)
+                 .build();
 
+//        // 本地部署模型调用
+//        aiModel = OpenAiChatModel.builder()
+//                .apiKey(apiKey)
+//                .baseUrl("http://localhost:11434/v1")  // ⚠️ DeepSeek 的 baseUrl
+//                .modelName("deepseek-r1:7b")
+//                .temperature(0.5)
+//                .logRequests(true)
+//                .logResponses(true)
+//                .build();
 
         logger.info("AI Model initialized: " + (aiModel != null ? "Success" : "Failure"));
+        
+        // 初始化AIAgent
+        aiAgent = new AIAgent(aiModel);
+        logger.info("AIAgent initialized: " + (aiAgent != null ? "Success" : "Failure"));
+        
 //        testAIMessage();
         logger.info("Application startup completed");
     }
@@ -420,6 +437,10 @@ public class Main extends Application {
         Button aiGenBtn = new Button("AI智能生成PPT");
         aiGenBtn.getStyleClass().add("button");
         aiGenBtn.setOnAction(e -> showAIChatDialog());
+        
+        Button speechGenBtn = new Button("生成演讲稿");
+        speechGenBtn.getStyleClass().add("button");
+        speechGenBtn.setOnAction(e -> generateSpeechFromSlides());
 
         return new ToolBar(
                 newSlideBtn,
@@ -438,7 +459,8 @@ public class Main extends Application {
                 drawColorPicker,
                 lineWidthComboBox,
                 new Separator(),
-                aiGenBtn
+                aiGenBtn,
+                speechGenBtn
         );
     }
 
@@ -734,6 +756,98 @@ public class Main extends Application {
         alert.setContentText(content);
         alert.showAndWait();
     }
+    
+    /**
+     * 使用AIAgent生成演讲稿
+     * 演示如何使用generateSpeechBySlides方法
+     */
+    private void generateSpeechFromSlides() {
+        if (slides.isEmpty()) {
+            showError("生成演讲稿失败", "当前没有幻灯片内容");
+            return;
+        }
+        // 新增：判断所有幻灯片内容是否都为空
+        boolean allEmpty = true;
+        for (Slide slide : slides) {
+            if (slide.getTextContent() != null && !slide.getTextContent().isEmpty()) {
+                allEmpty = false;
+                break;
+            }
+        }
+        if (allEmpty) {
+            showError("生成演讲稿失败", "当前没有可用的PPT内容，无法生成演讲稿");
+            return;
+        }
+        
+        // 显示进度提示
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("生成演讲稿");
+        progressAlert.setHeaderText("正在根据幻灯片内容生成演讲稿...");
+        progressAlert.setContentText("请稍候，这可能需要几秒钟时间");
+        progressAlert.show();
+        
+        // 在新线程中执行AI调用
+        new Thread(() -> {
+            try {
+                String speech = aiAgent.generateSpeechBySlides(slides);
+                
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showSpeechDialog(speech);
+                });
+                
+            } catch (AIAgent.AIException e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("AI调用失败", "生成演讲稿时发生错误: " + e.getMessage());
+                });
+            } catch (IllegalArgumentException e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("参数错误", "参数验证失败: " + e.getMessage());
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("未知错误", "生成演讲稿时发生未知错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+    
+    /**
+     * 显示演讲稿对话框
+     * @param speech 演讲稿内容
+     */
+    private void showSpeechDialog(String speech) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("生成的演讲稿");
+        dialog.setHeaderText("根据当前幻灯片内容生成的演讲稿");
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        ButtonType copyButtonType = new ButtonType("复制到剪贴板", ButtonBar.ButtonData.OTHER);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType, copyButtonType);
+        
+        TextArea speechArea = new TextArea(speech);
+        speechArea.setPrefRowCount(15);
+        speechArea.setPrefColumnCount(60);
+        speechArea.setWrapText(true);
+        speechArea.setEditable(false);
+        
+        dialog.getDialogPane().setContent(speechArea);
+        
+        // 复制按钮事件
+        Button copyButton = (Button) dialog.getDialogPane().lookupButton(copyButtonType);
+        copyButton.setOnAction(e -> {
+            final Clipboard clipboard = Clipboard.getSystemClipboard();
+            final ClipboardContent content = new ClipboardContent();
+            content.putString(speech);
+            clipboard.setContent(content);
+            showInfo("复制成功", "演讲稿已复制到剪贴板");
+        });
+        
+        dialog.showAndWait();
+    }
 
     private void showAIChatDialog() {
         Dialog<String> dialog = new Dialog<>();
@@ -764,18 +878,10 @@ public class Main extends Application {
         suggestionArea.setEditable(true);
         suggestionArea.setDisable(true);
 
-        TextArea speechArea = new TextArea();
-        speechArea.setPromptText("AI生成的演讲稿将在这里展示（只读）");
-        speechArea.setPrefRowCount(8);
-        speechArea.setWrapText(true);
-        speechArea.setEditable(false);
-        speechArea.setDisable(true);
-
         VBox vbox = new VBox(10,
             new Label("PPT需求："), inputArea,
             new Label("AI建议与反馈（只读）："), adviceArea,
-            new Label("PPT命令与大纲（可编辑）："), suggestionArea,
-            new Label("AI生成的演讲稿（只读）："), speechArea
+            new Label("PPT命令与大纲（可编辑）："), suggestionArea
         );
         vbox.setPadding(new Insets(10));
         dialog.getDialogPane().setContent(vbox);
@@ -788,52 +894,37 @@ public class Main extends Application {
             if (userPrompt.isEmpty()) {
                 adviceArea.setText("请先输入PPT需求！");
                 suggestionArea.setText("");
-                speechArea.setText("");
                 return;
             }
             adviceArea.setDisable(false);
             suggestionArea.setDisable(false);
-            speechArea.setDisable(false);
             adviceArea.setText("AI正在思考并生成建议，请稍候...");
             suggestionArea.setText("");
-            speechArea.setText("");
-            // 调用AI生成建议、命令和演讲稿
+            // 调用AI生成建议、命令
             new Thread(() -> {
-                String aiPrompt = "你是PPT助手，请根据用户输入做如下三步：\n" +
+                String aiPrompt = "你是PPT助手，请根据用户输入做如下两步：\n" +
                         "1. 先用自然语言给出你的建议、思考或直接回答用户问题（如'今天星期三'），如果用户需求与PPT无关请直接回复建议或答案。\n" +
                         "2. 如果用户需求与PPT制作有关，再用严格的PPT命令格式输出大纲，格式要求如下：\n" +
                         "---PPT命令---\n" +
                         "Page 1:\nTitle: ...\nSubtitle: ...\nBullet: ...\nDraw: ...\nPage 2: ...\n（每个命令单独一行，所有命令都在---PPT命令---下方，若无PPT需求则此部分可为空）\n" +
-                        "---演讲稿---\n" +
-                        "请为上面PPT内容生成一段完整的演讲稿，所有演讲稿内容都在---演讲稿---下方，若无PPT需求则此部分可为空。\n" +
-                        "请严格用'---PPT命令---'和'---演讲稿---'分隔建议、命令和演讲稿部分。\n用户输入：" + userPrompt;
+                        "请严格用'---PPT命令---'分隔建议和命令部分。\n用户输入：" + userPrompt;
                 try {
                     String aiResult = aiModel.chat(aiPrompt);
                     Platform.runLater(() -> {
                         String[] parts = aiResult.split("---PPT命令---");
                         String advice = parts.length > 0 ? parts[0].trim() : "";
-                        String pptCmd = "";
-                        String speech = "";
-                        if (parts.length > 1) {
-                            String[] subparts = parts[1].split("---演讲稿---");
-                            pptCmd = subparts.length > 0 ? subparts[0].trim() : "";
-                            speech = subparts.length > 1 ? subparts[1].trim() : "";
-                        }
+                        String pptCmd = parts.length > 1 ? parts[1].trim() : "";
                         adviceArea.setText(advice);
                         suggestionArea.setText(pptCmd);
-                        speechArea.setText(speech);
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
-                        speechArea.setDisable(false);
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
                         adviceArea.setText("AI生成失败：" + e.getMessage());
                         suggestionArea.setText("");
-                        speechArea.setText("");
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
-                        speechArea.setDisable(false);
                     });
                 }
             }).start();

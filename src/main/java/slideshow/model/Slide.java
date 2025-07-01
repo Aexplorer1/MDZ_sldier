@@ -20,6 +20,32 @@ public class Slide {
         elements.remove(element);
     }
     
+    /**
+     * 获取幻灯片中的所有元素
+     * @return 元素列表的副本
+     */
+    public List<SlideElement> getElements() {
+        return new ArrayList<>(elements);
+    }
+    
+    /**
+     * 获取幻灯片中文本元素的内容
+     * @return 文本内容列表
+     */
+    public List<String> getTextContent() {
+        List<String> textContent = new ArrayList<>();
+        for (SlideElement element : elements) {
+            if (element instanceof slideshow.elements.TextElement) {
+                slideshow.elements.TextElement textElement = (slideshow.elements.TextElement) element;
+                String text = textElement.getText();
+                if (text != null && !text.trim().isEmpty()) {
+                    textContent.add(text.trim());
+                }
+            }
+        }
+        return textContent;
+    }
+    
     public void draw(GraphicsContext gc) {
         // 添加调试信息
         System.out.println("绘制幻灯片，元素数量：" + (elements != null ? elements.size() : 0));
