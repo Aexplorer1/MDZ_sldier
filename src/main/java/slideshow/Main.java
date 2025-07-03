@@ -30,6 +30,7 @@ import slideshow.elements.TextElement;
 import slideshow.elements.ImageElement;
 import slideshow.util.UIStrings;
 import slideshow.util.SlideSerializer;
+import slideshow.util.SlideParser;
 import slideshow.presentation.PresentationWindow;
 import slideshow.elements.DrawElement;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -121,14 +122,14 @@ public class Main extends Application {
 
         String apiKey = getApiKey(); // Retrieve from secure source
 
-         aiModel = OpenAiChatModel.builder()
-                 .apiKey(apiKey)
-                 .baseUrl("https://api.deepseek.com")  // ⚠️ DeepSeek 的 baseUrl
-                 .modelName("deepseek-chat")
-                 .temperature(0.5)
-                 .logRequests(true)
-                 .logResponses(true)
-                 .build();
+        aiModel = OpenAiChatModel.builder()
+                .apiKey(apiKey)
+                .baseUrl("https://api.deepseek.com")  // ⚠️ DeepSeek 的 baseUrl
+                .modelName("deepseek-chat")
+                .temperature(0.5)
+                .logRequests(true)
+                .logResponses(true)
+                .build();
 
 //        // 本地部署模型调用
 //        aiModel = OpenAiChatModel.builder()
@@ -756,7 +757,7 @@ public class Main extends Application {
         alert.setContentText(content);
         alert.showAndWait();
     }
-    
+
     /**
      * 使用AIAgent生成演讲稿
      * 演示如何使用generateSpeechBySlides方法
@@ -901,16 +902,16 @@ public class Main extends Application {
             adviceArea.setText("AI正在思考并生成建议，请稍候...");
             suggestionArea.setText("");
             // 调用AI生成建议、命令
-            new Thread(() -> {
+        new Thread(() -> {
                 String aiPrompt = "你是PPT助手，请根据用户输入做如下两步：\n" +
                         "1. 先用自然语言给出你的建议、思考或直接回答用户问题（如'今天星期三'），如果用户需求与PPT无关请直接回复建议或答案。\n" +
                         "2. 如果用户需求与PPT制作有关，再用严格的PPT命令格式输出大纲，格式要求如下：\n" +
                         "---PPT命令---\n" +
                         "Page 1:\nTitle: ...\nSubtitle: ...\nBullet: ...\nDraw: ...\nPage 2: ...\n（每个命令单独一行，所有命令都在---PPT命令---下方，若无PPT需求则此部分可为空）\n" +
                         "请严格用'---PPT命令---'分隔建议和命令部分。\n用户输入：" + userPrompt;
-                try {
-                    String aiResult = aiModel.chat(aiPrompt);
-                    Platform.runLater(() -> {
+            try {
+                String aiResult = aiModel.chat(aiPrompt);
+                Platform.runLater(() -> {
                         String[] parts = aiResult.split("---PPT命令---");
                         String advice = parts.length > 0 ? parts[0].trim() : "";
                         String pptCmd = parts.length > 1 ? parts[1].trim() : "";
@@ -918,16 +919,16 @@ public class Main extends Application {
                         suggestionArea.setText(pptCmd);
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
-                    });
-                } catch (Exception e) {
+                });
+            } catch (Exception e) {
                     Platform.runLater(() -> {
                         adviceArea.setText("AI生成失败：" + e.getMessage());
                         suggestionArea.setText("");
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
                     });
-                }
-            }).start();
+            }
+        }).start();
         });
 
         // 生成PPT按钮逻辑
@@ -956,122 +957,16 @@ public class Main extends Application {
     }
 
     private void parseAndCreateSlides(String aiResult) {
-        slides.clear();
-        currentSlideIndex = -1;
-
-        String[] pages = aiResult.split("Page\\s*\\d+[:：]");
-        for (String page : pages) {
-            String content = page.trim();
-            if (content.isEmpty()) continue;
-
-            createNewSlide();
-
-            double slideWidth = canvas.getWidth();
-            double y = 60;
-            double lineSpacing = 8;
-
-            // 用正则提取所有Title, Subtitle, Bullet, Draw指令
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
-                "(Title:([^;\\n]+))|(Subtitle:([^;\\n]+))|(Bullet:([^;\\n]+))|(Draw:\\s*(Line|Rectangle|Circle|Arrow)\\([^)]*\\))"
-            );
-            java.util.regex.Matcher matcher = pattern.matcher(content);
-
-            while (matcher.find()) {
-                if (matcher.group(1) != null) { // Title
-                    String text = matcher.group(2).trim();
-                    TextElement titleElem = new TextElement(slideWidth/2, y, text, 28, Color.DARKBLUE, FontWeight.BOLD, false);
-                    titleElem.setPosition(slideWidth/2 - titleElem.getWidth()/2, y + titleElem.getHeight());
-                    currentSlide.addElement(titleElem);
-                    y += titleElem.getHeight() + lineSpacing + 4;
-                } else if (matcher.group(3) != null) { // Subtitle
-                    String text = matcher.group(4).trim();
-                    TextElement subElem = new TextElement(slideWidth/2, y, text, 20, Color.DARKGRAY, FontWeight.NORMAL, false);
-                    subElem.setPosition(slideWidth/2 - subElem.getWidth()/2, y + subElem.getHeight());
-                    currentSlide.addElement(subElem);
-                    y += subElem.getHeight() + lineSpacing;
-                } else if (matcher.group(5) != null) { // Bullet
-                    String text = matcher.group(6).trim();
-                    TextElement bulletElem = new TextElement(slideWidth/2, y, text, 18, Color.BLACK, FontWeight.NORMAL, false);
-                    bulletElem.setPosition(slideWidth/2 - bulletElem.getWidth()/2, y + bulletElem.getHeight());
-                    currentSlide.addElement(bulletElem);
-                    y += bulletElem.getHeight() + lineSpacing;
-                } else if (matcher.group(7) != null) { // Draw
-                    // 只做绘图，不生成文本框
-                    String drawCmd = matcher.group(7);
-                    java.util.regex.Pattern drawPattern = java.util.regex.Pattern.compile("Draw:\\s*(Line|Rectangle|Circle|Arrow)\\(([^)]*)\\)");
-                    java.util.regex.Matcher drawMatcher = drawPattern.matcher(drawCmd);
-                    if (drawMatcher.find()) {
-                        String shapeType = drawMatcher.group(1);
-                        String params = drawMatcher.group(2);
-                        try {
-                            switch (shapeType) {
-                                case "Line": {
-                                    String[] xy = params.split(",");
-                                    if (xy.length == 4) {
-                                        double x1 = Double.parseDouble(xy[0].trim());
-                                        double y1 = Double.parseDouble(xy[1].trim());
-                                        double x2 = Double.parseDouble(xy[2].trim());
-                                        double y2 = Double.parseDouble(xy[3].trim());
-                                        DrawElement line = new DrawElement(x1, y1, DrawElement.ShapeType.LINE, Color.BLACK, 2.0);
-                                        line.updateEndPoint(x2, y2);
-                                        currentSlide.addElement(line);
-                                    }
-                                    break;
-                                }
-                                case "Rectangle": {
-                                    String[] xy = params.split(",");
-                                    if (xy.length == 4) {
-                                        double x1 = Double.parseDouble(xy[0].trim());
-                                        double y1 = Double.parseDouble(xy[1].trim());
-                                        double x2 = Double.parseDouble(xy[2].trim());
-                                        double y2 = Double.parseDouble(xy[3].trim());
-                                        DrawElement rect = new DrawElement(x1, y1, DrawElement.ShapeType.RECTANGLE, Color.ORANGE, 2.0);
-                                        rect.updateEndPoint(x2, y2);
-                                        currentSlide.addElement(rect);
-                                    }
-                                    break;
-                                }
-                                case "Circle": {
-                                    String[] xy = params.split(",");
-                                    if (xy.length == 3) {
-                                        double centerX = Double.parseDouble(xy[0].trim());
-                                        double centerY = Double.parseDouble(xy[1].trim());
-                                        double radius = Double.parseDouble(xy[2].trim());
-                                        DrawElement circle = new DrawElement(centerX - radius, centerY, DrawElement.ShapeType.CIRCLE, Color.GREEN, 2.0);
-                                        circle.updateEndPoint(centerX + radius, centerY);
-                                        currentSlide.addElement(circle);
-                                    }
-                                    break;
-                                }
-                                case "Arrow": {
-                                    String[] xy = params.split(",");
-                                    if (xy.length == 4) {
-                                        double x1 = Double.parseDouble(xy[0].trim());
-                                        double y1 = Double.parseDouble(xy[1].trim());
-                                        double x2 = Double.parseDouble(xy[2].trim());
-                                        double y2 = Double.parseDouble(xy[3].trim());
-                                        DrawElement arrow = new DrawElement(x1, y1, DrawElement.ShapeType.ARROW, Color.RED, 2.0);
-                                        arrow.updateEndPoint(x2, y2);
-                                        currentSlide.addElement(arrow);
-                                    }
-                                    break;
-                                }
-                            }
-                        } catch (Exception e) {
-                            // 忽略解析错误
-                        }
-                    }
-                }
-            }
-            refreshCanvas();
-        }
+        // 使用SlideParser解析AI生成的PPT命令
+        slides = SlideParser.parseAndCreateSlides(aiResult, canvas.getWidth());
+        
+        // 更新当前幻灯片索引和显示
+        currentSlideIndex = slides.isEmpty() ? -1 : 0;
+        currentSlide = slides.isEmpty() ? null : slides.get(0);
+        
+        // 刷新画布和控件状态
+        refreshCanvas();
         updateSlideControls();
-        if (!slides.isEmpty()) {
-            currentSlideIndex = 0;
-            currentSlide = slides.get(0);
-            refreshCanvas();
-            updateSlideControls();
-        }
     }
 
     public static void main(String[] args) {
