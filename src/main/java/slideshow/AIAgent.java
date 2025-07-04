@@ -169,6 +169,66 @@ public class AIAgent {
     }
     
     /**
+     * 根据主题生成演讲稿结构
+     * @param topic 演讲主题
+     * @param duration 演讲时长（分钟）
+     * @param audience 目标听众
+     * @return 生成的演讲稿结构
+     * @throws AIException 当AI调用失败时抛出
+     * @throws IllegalArgumentException 当参数无效时抛出
+     */
+    public String generateSlidesByTopic(String topic, int duration, String audience) throws AIException, IllegalArgumentException {
+        // 参数验证
+        if (topic == null || topic.trim().isEmpty()) {
+            throw new IllegalArgumentException("演讲主题不能为空");
+        }
+        
+        if (duration <= 0 || duration > 120) {
+            throw new IllegalArgumentException("演讲时长必须在1-120分钟之间");
+        }
+        
+        if (audience == null || audience.trim().isEmpty()) {
+            audience = "一般听众";
+        }
+        
+        try {
+            logger.info("开始生成演讲稿结构，主题: " + topic + ", 时长: " + duration + "分钟");
+            
+            // 构建提示词
+            String prompt = String.format(
+                "请为以下演讲设计一个结构化的演讲稿大纲：\n" +
+                "主题：%s\n" +
+                "时长：%d分钟\n" +
+                "听众：%s\n\n" +
+                "要求：\n" +
+                "1. 包含开场白、主要内容、结尾\n" +
+                "2. 每个部分标明时长\n" +
+                "3. 主要内容分层次，逻辑清晰\n" +
+                "4. 适合目标听众\n" +
+                "5. 使用中文输出\n\n" +
+                "请生成演讲稿结构：",
+                topic, duration, audience
+            );
+            
+            // 调用AI模型
+            String response = callAIModel(prompt);
+            
+            logger.info("演讲稿结构生成成功");
+            return response.trim();
+            
+        } catch (AIException e) {
+            logger.log(Level.SEVERE, "AI调用失败", e);
+            throw e;
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.SEVERE, "参数验证失败", e);
+            throw e;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "生成演讲稿结构时发生未知错误", e);
+            throw new AIException("生成演讲稿结构时发生未知错误: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
      * 自定义AI异常类
      */
     public static class AIException extends Exception {

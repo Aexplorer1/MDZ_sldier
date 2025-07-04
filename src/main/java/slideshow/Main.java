@@ -442,6 +442,10 @@ public class Main extends Application {
         Button speechGenBtn = new Button("生成演讲稿");
         speechGenBtn.getStyleClass().add("button");
         speechGenBtn.setOnAction(e -> generateSpeechFromSlides());
+        
+        Button speechStructureBtn = new Button("演讲稿结构");
+        speechStructureBtn.getStyleClass().add("button");
+        speechStructureBtn.setOnAction(e -> showSpeechStructureDialog());
 
         return new ToolBar(
                 newSlideBtn,
@@ -461,7 +465,8 @@ public class Main extends Application {
                 lineWidthComboBox,
                 new Separator(),
                 aiGenBtn,
-                speechGenBtn
+                speechGenBtn,
+                speechStructureBtn
         );
     }
 
@@ -785,6 +790,7 @@ public class Main extends Application {
         progressAlert.setTitle("生成演讲稿");
         progressAlert.setHeaderText("正在根据幻灯片内容生成演讲稿...");
         progressAlert.setContentText("请稍候，这可能需要几秒钟时间");
+        progressAlert.setResizable(false);
         progressAlert.show();
         
         // 在新线程中执行AI调用
@@ -821,7 +827,8 @@ public class Main extends Application {
      * @param speech 演讲稿内容
      */
     private void showSpeechDialog(String speech) {
-        Dialog<Void> dialog = new Dialog<>();
+       // 使用Dialog而不是Alert，因为我们需要自定义内容
+       Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("生成的演讲稿");
         dialog.setHeaderText("根据当前幻灯片内容生成的演讲稿");
         
@@ -837,18 +844,25 @@ public class Main extends Application {
         
         dialog.getDialogPane().setContent(speechArea);
         
-        // 复制按钮事件
-        Button copyButton = (Button) dialog.getDialogPane().lookupButton(copyButtonType);
-        copyButton.setOnAction(e -> {
-            final Clipboard clipboard = Clipboard.getSystemClipboard();
-            final ClipboardContent content = new ClipboardContent();
-            content.putString(speech);
-            clipboard.setContent(content);
-            showInfo("复制成功", "演讲稿已复制到剪贴板");
+         // 设置结果转换器
+         dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == copyButtonType) {
+                final Clipboard clipboard = Clipboard.getSystemClipboard();
+                final ClipboardContent content = new ClipboardContent();
+                content.putString(speech);
+                clipboard.setContent(content);
+                showInfo("复制成功", "演讲稿已复制到剪贴板");
+            }
+            return null;
         });
         
+        // 显示对话框
         dialog.showAndWait();
     }
+    
+
+    
+
 
     private void showAIChatDialog() {
         Dialog<String> dialog = new Dialog<>();
@@ -967,6 +981,127 @@ public class Main extends Application {
         // 刷新画布和控件状态
         refreshCanvas();
         updateSlideControls();
+    }
+
+    /**
+     * 显示演讲稿结构生成对话框
+     */
+    private void showSpeechStructureDialog() {
+        // 创建输入对话框
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("生成演讲稿结构");
+        dialog.setHeaderText("请输入演讲信息");
+        
+        ButtonType generateButtonType = new ButtonType("生成", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(generateButtonType, cancelButtonType);
+        
+        // 创建输入控件
+        TextField topicField = new TextField();
+        topicField.setPromptText("演讲主题");
+        
+        ComboBox<Integer> durationCombo = new ComboBox<>();
+        durationCombo.getItems().addAll(5, 10, 15, 20, 30, 45, 60);
+        durationCombo.setValue(15);
+        
+        ComboBox<String> audienceCombo = new ComboBox<>();
+        audienceCombo.getItems().addAll("一般听众", "学生", "专业人士", "管理层");
+        audienceCombo.setValue("一般听众");
+        
+        VBox inputBox = new VBox(10);
+        inputBox.getChildren().addAll(
+            new Label("主题："), topicField,
+            new Label("时长（分钟）："), durationCombo,
+            new Label("听众："), audienceCombo
+        );
+        inputBox.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(inputBox);
+        
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == generateButtonType) {
+                String topic = topicField.getText().trim();
+                if (topic.isEmpty()) {
+                    showError("输入错误", "请输入演讲主题");
+                    return null;
+                }
+                return topic + "|" + durationCombo.getValue() + "|" + audienceCombo.getValue();
+            }
+            return null;
+        });
+        
+        // 显示对话框并处理结果
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(input -> {
+            String[] parts = input.split("\\|");
+            if (parts.length == 3) {
+                generateSpeechStructure(parts[0], Integer.parseInt(parts[1]), parts[2]);
+            }
+        });
+    }
+    
+    /**
+     * 生成演讲稿结构
+     */
+    private void generateSpeechStructure(String topic, int duration, String audience) {
+        // 显示进度提示
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("生成中");
+        progressAlert.setHeaderText("正在生成演讲稿结构...");
+        progressAlert.setContentText("请稍候");
+        progressAlert.setResizable(false);
+        progressAlert.show();
+        
+        // 在新线程中执行AI调用
+        new Thread(() -> {
+            try {
+                String speechStructure = aiAgent.generateSlidesByTopic(topic, duration, audience);
+                
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showSpeechStructureResult(speechStructure);
+                });
+                
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("生成失败", "生成演讲稿结构时发生错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+    
+    /**
+     * 显示演讲稿结构结果
+     */
+    private void showSpeechStructureResult(String speechStructure) {
+        Alert resultDialog = new Alert(Alert.AlertType.INFORMATION);
+        resultDialog.setTitle("演讲稿结构");
+        resultDialog.setHeaderText("生成的演讲稿结构");
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        ButtonType copyButtonType = new ButtonType("复制", ButtonBar.ButtonData.OTHER);
+        resultDialog.getButtonTypes().setAll(closeButtonType, copyButtonType);
+        
+        // 创建文本区域
+        TextArea textArea = new TextArea(speechStructure);
+        textArea.setPrefRowCount(15);
+        textArea.setPrefColumnCount(60);
+        textArea.setWrapText(true);
+        textArea.setEditable(false);
+        
+        resultDialog.getDialogPane().setContent(textArea);
+        
+        // 显示对话框并处理结果
+        Optional<ButtonType> result = resultDialog.showAndWait();
+        if (result.isPresent() && result.get() == copyButtonType) {
+            final Clipboard clipboard = Clipboard.getSystemClipboard();
+            final ClipboardContent content = new ClipboardContent();
+            content.putString(speechStructure);
+            clipboard.setContent(content);
+            showInfo("复制成功", "演讲稿结构已复制到剪贴板");
+        }
     }
 
     public static void main(String[] args) {
