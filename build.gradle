@@ -21,7 +21,7 @@ sourceSets {
 }
 
 tasks.withType(JavaExec){
-    jvmArgs = ['-Xmx512m', '-Dfile.encoding=UTF-8', '-Dsun.stdout.encoding=UTF-8','-Dsun.stderr.encoding=UTF-8']
+    jvmArgs = ['-Xmx512m', '-Dfile.encoding=UTF-8', '-Dsun.stdout.encoding=UTF-8','-Dsun.stderr.encoding=UTF-8', '-Duser.language=zh', '-Duser.country=CN', '-Dsun.jnu.encoding=UTF-8']
 }
 
 tasks.withType(JavaCompile) {
@@ -51,8 +51,8 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_23
-    targetCompatibility = JavaVersion.VERSION_23
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     // 移除 modularity.inferModulePath，因为不再使用模块系统
 }
 
@@ -67,7 +67,27 @@ run {
                 '--add-modules', 'javafx.controls,javafx.fxml,javafx.base,javafx.graphics,java.logging',
                 '--add-exports', 'javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
                 '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
-                '-Dfile.encoding=UTF-8'
+                '-Dfile.encoding=UTF-8',
+                '-Duser.language=zh',
+                '-Duser.country=CN',
+                '-Dsun.jnu.encoding=UTF-8'
+        ]
+    }
+}
+
+task runEncodingTest(type: JavaExec) {
+    mainClass = 'slideshow.EncodingTest'
+    classpath = sourceSets.main.runtimeClasspath
+    doFirst {
+        jvmArgs = [
+                '--module-path', 'lib/javafx-sdk-21.0.1/lib',
+                '--add-modules', 'javafx.controls,javafx.fxml,javafx.base,javafx.graphics,java.logging',
+                '--add-exports', 'javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
+                '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
+                '-Dfile.encoding=UTF-8',
+                '-Duser.language=zh',
+                '-Duser.country=CN',
+                '-Dsun.jnu.encoding=UTF-8'
         ]
     }
 }

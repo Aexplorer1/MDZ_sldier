@@ -2,11 +2,14 @@ package slideshow;
 
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import slideshow.model.Slide;
+import slideshow.model.PromptTemplate;
 import slideshow.elements.SlideElement;
 import slideshow.elements.TextElement;
+import slideshow.util.TemplateManager;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -16,11 +19,13 @@ import java.util.logging.Level;
  */
 public class AIAgent {
     private static final Logger logger = Logger.getLogger(AIAgent.class.getName());
-    
+
     private OpenAiChatModel aiModel;
-    
+    private TemplateManager templateManager;
+
     /**
      * 构造函数
+     * 
      * @param aiModel AI模型实例
      */
     public AIAgent(OpenAiChatModel aiModel) {
@@ -28,14 +33,16 @@ public class AIAgent {
             throw new IllegalArgumentException("AI模型不能为空");
         }
         this.aiModel = aiModel;
+        this.templateManager = new TemplateManager();
         logger.info("AIAgent初始化成功");
     }
-    
+
     /**
      * 根据幻灯片内容生成演讲稿
+     * 
      * @param slides 幻灯片列表
      * @return 生成的演讲稿文本
-     * @throws AIException 当AI调用失败时抛出
+     * @throws AIException              当AI调用失败时抛出
      * @throws IllegalArgumentException 当参数无效时抛出
      */
     public String generateSpeechBySlides(List<Slide> slides) throws AIException, IllegalArgumentException {
@@ -43,34 +50,34 @@ public class AIAgent {
         if (slides == null) {
             throw new IllegalArgumentException("幻灯片列表不能为空");
         }
-        
+
         if (slides.isEmpty()) {
             throw new IllegalArgumentException("幻灯片列表不能为空");
         }
-        
+
         try {
             logger.info("开始根据幻灯片生成演讲稿，幻灯片数量: " + slides.size());
-            
+
             // 提取幻灯片内容
             String slideContent = extractSlideContent(slides);
-            
+
             if (slideContent.trim().isEmpty()) {
                 logger.warning("提取的幻灯片内容为空");
                 throw new AIException("无法从幻灯片中提取有效内容");
             }
-            
+
             // 构建AI提示词
             String prompt = buildSpeechPrompt(slideContent);
-            
+
             // 调用AI模型
             String aiResponse = callAIModel(prompt);
-            
+
             // 解析AI响应
             String speech = parseAIResponse(aiResponse);
-            
+
             logger.info("演讲稿生成成功，长度: " + speech.length());
             return speech;
-            
+
         } catch (AIException e) {
             logger.log(Level.SEVERE, "AI调用失败", e);
             throw e;
@@ -82,51 +89,54 @@ public class AIAgent {
             throw new AIException("生成演讲稿时发生未知错误: " + e.getMessage(), e);
         }
     }
-    
+
     /**
      * 提取幻灯片内容
+     * 
      * @param slides 幻灯片列表
      * @return 提取的文本内容
      */
     private String extractSlideContent(List<Slide> slides) {
         StringBuilder content = new StringBuilder();
-        
+
         for (int i = 0; i < slides.size(); i++) {
             Slide slide = slides.get(i);
             content.append("第").append(i + 1).append("页：\n");
-            
+
             // 获取幻灯片中的文本内容
             List<String> textContent = slide.getTextContent();
-            
+
             for (String text : textContent) {
                 content.append(text).append("\n");
             }
             content.append("\n");
         }
-        
+
         return content.toString();
     }
-    
+
     /**
      * 构建演讲稿生成的提示词
+     * 
      * @param slideContent 幻灯片内容
      * @return 构建的提示词
      */
     private String buildSpeechPrompt(String slideContent) {
         return "你是一个专业的演讲助手。请根据以下PPT内容生成一份完整的演讲稿。\n" +
-               "要求：\n" +
-               "1. 演讲稿要流畅自然，适合口头表达\n" +
-               "2. 每页PPT对应一段演讲稿内容\n" +
-               "3. 语言要生动有趣，吸引听众注意力\n" +
-               "4. 适当添加过渡语句，使各页内容衔接自然\n" +
-               "5. 演讲稿长度要适中，每页大约1-2分钟的演讲时间\n" +
-               "6. 使用中文输出\n\n" +
-               "PPT内容：\n" + slideContent + "\n\n" +
-               "请生成演讲稿：";
+                "要求：\n" +
+                "1. 演讲稿要流畅自然，适合口头表达\n" +
+                "2. 每页PPT对应一段演讲稿内容\n" +
+                "3. 语言要生动有趣，吸引听众注意力\n" +
+                "4. 适当添加过渡语句，使各页内容衔接自然\n" +
+                "5. 演讲稿长度要适中，每页大约1-2分钟的演讲时间\n" +
+                "6. 使用中文输出\n\n" +
+                "PPT内容：\n" + slideContent + "\n\n" +
+                "请生成演讲稿：";
     }
-    
+
     /**
      * 调用AI模型
+     * 
      * @param prompt 提示词
      * @return AI响应
      * @throws AIException 当AI调用失败时抛出
@@ -134,28 +144,29 @@ public class AIAgent {
     private String callAIModel(String prompt) throws AIException {
         try {
             logger.info("开始调用AI模型");
-            
+
             if (aiModel == null) {
                 throw new AIException("AI模型未初始化");
             }
-            
+
             String response = aiModel.chat(prompt);
-            
+
             if (response == null || response.trim().isEmpty()) {
                 throw new AIException("AI返回的响应为空");
             }
-            
+
             logger.info("AI模型调用成功，响应长度: " + response.length());
             return response;
-            
+
         } catch (Exception e) {
             logger.log(Level.SEVERE, "AI模型调用失败", e);
             throw new AIException("AI模型调用失败: " + e.getMessage(), e);
         }
     }
-    
+
     /**
      * 解析AI响应
+     * 
      * @param aiResponse AI响应文本
      * @return 解析后的演讲稿
      */
@@ -163,59 +174,60 @@ public class AIAgent {
         if (aiResponse == null || aiResponse.trim().isEmpty()) {
             return "无法生成演讲稿，AI响应为空";
         }
-        
+
         // 简单的响应处理，可以根据需要添加更复杂的解析逻辑
         return aiResponse.trim();
     }
-    
+
     /**
      * 根据主题生成演讲稿结构
-     * @param topic 演讲主题
+     * 
+     * @param topic    演讲主题
      * @param duration 演讲时长（分钟）
      * @param audience 目标听众
      * @return 生成的演讲稿结构
-     * @throws AIException 当AI调用失败时抛出
+     * @throws AIException              当AI调用失败时抛出
      * @throws IllegalArgumentException 当参数无效时抛出
      */
-    public String generateSlidesByTopic(String topic, int duration, String audience) throws AIException, IllegalArgumentException {
+    public String generateSlidesByTopic(String topic, int duration, String audience)
+            throws AIException, IllegalArgumentException {
         // 参数验证
         if (topic == null || topic.trim().isEmpty()) {
             throw new IllegalArgumentException("演讲主题不能为空");
         }
-        
+
         if (duration <= 0 || duration > 120) {
             throw new IllegalArgumentException("演讲时长必须在1-120分钟之间");
         }
-        
+
         if (audience == null || audience.trim().isEmpty()) {
             audience = "一般听众";
         }
-        
+
         try {
             logger.info("开始生成演讲稿结构，主题: " + topic + ", 时长: " + duration + "分钟");
-            
+
             // 构建提示词
             String prompt = String.format(
-                "请为以下演讲设计一个结构化的演讲稿大纲：\n" +
-                "主题：%s\n" +
-                "时长：%d分钟\n" +
-                "听众：%s\n\n" +
-                "要求：\n" +
-                "1. 包含开场白、主要内容、结尾\n" +
-                "2. 每个部分标明时长\n" +
-                "3. 主要内容分层次，逻辑清晰\n" +
-                "4. 适合目标听众\n" +
-                "5. 使用中文输出\n\n" +
-                "请生成演讲稿结构：",
-                topic, duration, audience
-            );
-            
+                    "请为以下演讲设计一个结构化的演讲稿大纲：\n" +
+                            "主题：%s\n" +
+                            "时长：%d分钟\n" +
+                            "听众：%s\n\n" +
+                            "要求：\n" +
+                            "1. 包含开场白、主要内容、结尾\n" +
+                            "2. 每个部分标明时长\n" +
+                            "3. 主要内容分层次，逻辑清晰\n" +
+                            "4. 适合目标听众\n" +
+                            "5. 使用中文输出\n\n" +
+                            "请生成演讲稿结构：",
+                    topic, duration, audience);
+
             // 调用AI模型
             String response = callAIModel(prompt);
-            
+
             logger.info("演讲稿结构生成成功");
             return response.trim();
-            
+
         } catch (AIException e) {
             logger.log(Level.SEVERE, "AI调用失败", e);
             throw e;
@@ -227,7 +239,86 @@ public class AIAgent {
             throw new AIException("生成演讲稿结构时发生未知错误: " + e.getMessage(), e);
         }
     }
-    
+
+    /**
+     * 使用模板生成内容
+     * 
+     * @param templateId 模板ID
+     * @param args       模板参数
+     * @return 生成的内容
+     * @throws AIException              当AI调用失败时抛出
+     * @throws IllegalArgumentException 当参数无效时抛出
+     */
+    public String generateWithTemplate(String templateId, Object... args) throws AIException, IllegalArgumentException {
+        try {
+            Optional<PromptTemplate> template = templateManager.getTemplate(templateId);
+            if (!template.isPresent()) {
+                throw new IllegalArgumentException("模板不存在: " + templateId);
+            }
+
+            PromptTemplate promptTemplate = template.get();
+
+            // 格式化模板内容
+            String formattedPrompt = promptTemplate.formatContent(args);
+
+            // 调用AI模型
+            String response = callAIModel(formattedPrompt);
+
+            // 记录模板使用次数
+            templateManager.useTemplate(templateId);
+
+            logger.info("使用模板生成内容成功: " + promptTemplate.getName());
+            return response.trim();
+
+        } catch (AIException e) {
+            logger.log(Level.SEVERE, "使用模板生成内容失败", e);
+            throw e;
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.SEVERE, "模板参数验证失败", e);
+            throw e;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "使用模板生成内容时发生未知错误", e);
+            throw new AIException("使用模板生成内容时发生未知错误: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 使用模板名称生成内容
+     * 
+     * @param templateName 模板名称
+     * @param args         模板参数
+     * @return 生成的内容
+     * @throws AIException              当AI调用失败时抛出
+     * @throws IllegalArgumentException 当参数无效时抛出
+     */
+    public String generateWithTemplateByName(String templateName, Object... args)
+            throws AIException, IllegalArgumentException {
+        try {
+            Optional<PromptTemplate> template = templateManager.getTemplateByName(templateName);
+            if (!template.isPresent()) {
+                throw new IllegalArgumentException("模板不存在: " + templateName);
+            }
+
+            return generateWithTemplate(template.get().getId(), args);
+
+        } catch (AIException e) {
+            logger.log(Level.SEVERE, "使用模板名称生成内容失败", e);
+            throw e;
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.SEVERE, "模板名称验证失败", e);
+            throw e;
+        }
+    }
+
+    /**
+     * 获取模板管理器
+     * 
+     * @return 模板管理器实例
+     */
+    public TemplateManager getTemplateManager() {
+        return templateManager;
+    }
+
     /**
      * 自定义AI异常类
      */
@@ -235,9 +326,9 @@ public class AIAgent {
         public AIException(String message) {
             super(message);
         }
-        
+
         public AIException(String message, Throwable cause) {
             super(message, cause);
         }
     }
-} 
+}

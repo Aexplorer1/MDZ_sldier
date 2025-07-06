@@ -34,6 +34,7 @@ import slideshow.util.SlideParser;
 import slideshow.presentation.PresentationWindow;
 import slideshow.elements.DrawElement;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import slideshow.model.PromptTemplate;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,7 +72,7 @@ public class Main extends Application {
     private AIAgent aiAgent;
 
     @Override
-    public void     start(Stage primaryStage) {
+    public void start(Stage primaryStage) {
         logger.info("Application starting...");
         BorderPane root = new BorderPane();
 
@@ -124,51 +125,51 @@ public class Main extends Application {
 
         aiModel = OpenAiChatModel.builder()
                 .apiKey(apiKey)
-                .baseUrl("https://api.deepseek.com")  // ⚠️ DeepSeek 的 baseUrl
+                .baseUrl("https://api.deepseek.com") // ⚠️ DeepSeek 的 baseUrl
                 .modelName("deepseek-chat")
                 .temperature(0.5)
                 .logRequests(true)
                 .logResponses(true)
                 .build();
 
-//        // 本地部署模型调用
-//        aiModel = OpenAiChatModel.builder()
-//                .apiKey(apiKey)
-//                .baseUrl("http://localhost:11434/v1")  // ⚠️ DeepSeek 的 baseUrl
-//                .modelName("deepseek-r1:7b")
-//                .temperature(0.5)
-//                .logRequests(true)
-//                .logResponses(true)
-//                .build();
+        // // 本地部署模型调用
+        // aiModel = OpenAiChatModel.builder()
+        // .apiKey(apiKey)
+        // .baseUrl("http://localhost:11434/v1") // ⚠️ DeepSeek 的 baseUrl
+        // .modelName("deepseek-r1:7b")
+        // .temperature(0.5)
+        // .logRequests(true)
+        // .logResponses(true)
+        // .build();
 
         logger.info("AI Model initialized: " + (aiModel != null ? "Success" : "Failure"));
-        
+
         // 初始化AIAgent
         aiAgent = new AIAgent(aiModel);
         logger.info("AIAgent initialized: " + (aiAgent != null ? "Success" : "Failure"));
-        
-//        testAIMessage();
+
+        // testAIMessage();
         logger.info("Application startup completed");
     }
 
-
-//    private void testAIMessage() {
-//        String testPrompt = "Hello, can you respond?";
-//        try {
-//            String response = aiModel.chat(testPrompt);
-//            logger.info("Test message response: " + response);
-//            Platform.runLater(() -> showInfo("AI Test Successful", "Response: " + response));
-//        } catch (Exception e) {
-//            logger.log(Level.SEVERE, "Failed to send test message", e);
-//            Platform.runLater(() -> showError("AI Test Failed", "Error: " + e.getMessage()));
-//        }
-//    }
-
+    // private void testAIMessage() {
+    // String testPrompt = "Hello, can you respond?";
+    // try {
+    // String response = aiModel.chat(testPrompt);
+    // logger.info("Test message response: " + response);
+    // Platform.runLater(() -> showInfo("AI Test Successful", "Response: " +
+    // response));
+    // } catch (Exception e) {
+    // logger.log(Level.SEVERE, "Failed to send test message", e);
+    // Platform.runLater(() -> showError("AI Test Failed", "Error: " +
+    // e.getMessage()));
+    // }
+    // }
 
     private String getApiKey() {
         // Retrieve from environment variable first
         String key = System.getenv("DEEPSEEK_API_KEY");
-//        logger.info("API Key: " + key);
+        // logger.info("API Key: " + key);
         if (key == null) {
             throw new RuntimeException("API Key not configured");
         }
@@ -182,8 +183,7 @@ public class Main extends Application {
                     event.getX(), event.getY(),
                     currentShape,
                     drawColorPicker.getValue(),
-                    lineWidthComboBox.getValue()
-            );
+                    lineWidthComboBox.getValue());
             currentSlide.addElement(currentDrawing);
             return;
         }
@@ -308,11 +308,20 @@ public class Main extends Application {
         if (handle instanceof SlideElement.ResizeHandle) {
             SlideElement.ResizeHandle h = (SlideElement.ResizeHandle) handle;
             switch (h) {
-                case NW: case SE: return Cursor.NW_RESIZE;
-                case NE: case SW: return Cursor.NE_RESIZE;
-                case N: case S: return Cursor.V_RESIZE;
-                case E: case W: return Cursor.H_RESIZE;
-                default: return Cursor.DEFAULT;
+                case NW:
+                case SE:
+                    return Cursor.NW_RESIZE;
+                case NE:
+                case SW:
+                    return Cursor.NE_RESIZE;
+                case N:
+                case S:
+                    return Cursor.V_RESIZE;
+                case E:
+                case W:
+                    return Cursor.H_RESIZE;
+                default:
+                    return Cursor.DEFAULT;
             }
         }
         return Cursor.DEFAULT;
@@ -371,8 +380,7 @@ public class Main extends Application {
             if (selectedElement instanceof TextElement) {
                 TextElement textElement = (TextElement) selectedElement;
                 boolean italic = fontStyleCombo.getValue().equals("Italic");
-                FontWeight weight = fontStyleCombo.getValue().equals("Bold") ?
-                        FontWeight.BOLD : FontWeight.NORMAL;
+                FontWeight weight = fontStyleCombo.getValue().equals("Bold") ? FontWeight.BOLD : FontWeight.NORMAL;
                 textElement.setFontStyle(weight, italic);
                 refreshCanvas();
             }
@@ -383,9 +391,9 @@ public class Main extends Application {
             if (selectedElement instanceof TextElement) {
                 TextElement textElement = (TextElement) selectedElement;
                 colorPicker.setValue(textElement.getColor());
-                fontSizeCombo.setValue((int)textElement.getFontSize());
-                String style = textElement.getFontWeight() == FontWeight.BOLD ? "Bold" :
-                        textElement.isItalic() ? "Italic" : "Regular";
+                fontSizeCombo.setValue((int) textElement.getFontSize());
+                String style = textElement.getFontWeight() == FontWeight.BOLD ? "Bold"
+                        : textElement.isItalic() ? "Italic" : "Regular";
                 fontStyleCombo.setValue(style);
             }
         });
@@ -438,14 +446,19 @@ public class Main extends Application {
         Button aiGenBtn = new Button("AI智能生成PPT");
         aiGenBtn.getStyleClass().add("button");
         aiGenBtn.setOnAction(e -> showAIChatDialog());
-        
+
         Button speechGenBtn = new Button("生成演讲稿");
         speechGenBtn.getStyleClass().add("button");
         speechGenBtn.setOnAction(e -> generateSpeechFromSlides());
-        
+
         Button speechStructureBtn = new Button("演讲稿结构");
         speechStructureBtn.getStyleClass().add("button");
         speechStructureBtn.setOnAction(e -> showSpeechStructureDialog());
+
+        // Add template management button
+        Button templateManageBtn = new Button("Template Manager");
+        templateManageBtn.getStyleClass().add("button");
+        templateManageBtn.setOnAction(e -> openTemplateManager());
 
         return new ToolBar(
                 newSlideBtn,
@@ -466,8 +479,9 @@ public class Main extends Application {
                 new Separator(),
                 aiGenBtn,
                 speechGenBtn,
-                speechStructureBtn
-        );
+                speechStructureBtn,
+                new Separator(),
+                templateManageBtn);
     }
 
     private void createNewSlide() {
@@ -504,8 +518,7 @@ public class Main extends Application {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Image");
         fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp")
-        );
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp"));
 
         File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
         if (file != null) {
@@ -519,10 +532,9 @@ public class Main extends Application {
                 double scaledHeight = image.getHeight() * scale;
 
                 ImageElement imageElement = new ImageElement(
-                        (canvas.getWidth() - scaledWidth) / 2,  // Consider scaled width
+                        (canvas.getWidth() - scaledWidth) / 2, // Consider scaled width
                         (canvas.getHeight() - scaledHeight) / 2, // Consider scaled height
-                        image
-                );
+                        image);
 
                 // Ensure current slide exists
                 if (currentSlide == null) {
@@ -612,7 +624,7 @@ public class Main extends Application {
 
     private MenuBar createMenuBar() {
         MenuBar menuBar = new MenuBar();
-        menuBar.setUseSystemMenuBar(true);  // Use system menu bar on macOS
+        menuBar.setUseSystemMenuBar(true); // Use system menu bar on macOS
 
         // File menu
         Menu fileMenu = new Menu("File");
@@ -694,16 +706,15 @@ public class Main extends Application {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save As");
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Presentation File", "*.mdz")
-        );
+                new FileChooser.ExtensionFilter("Presentation File", "*.mdz"));
 
         File file = fileChooser.showSaveDialog(canvas.getScene().getWindow());
-            try {
-                SlideSerializer.savePresentation(slides, file.getPath());
-                showInfo("Save Successful", "Presentation saved to: " + file.getPath());
-            } catch (IOException e) {
-                showError("Save Failed", "Unable to save file: " + e.getMessage());
-            }
+        try {
+            SlideSerializer.savePresentation(slides, file.getPath());
+            showInfo("Save Successful", "Presentation saved to: " + file.getPath());
+        } catch (IOException e) {
+            showError("Save Failed", "Unable to save file: " + e.getMessage());
+        }
 
     }
 
@@ -712,13 +723,11 @@ public class Main extends Application {
         presentation.start();
     }
 
-
     private void savePresentation() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Presentation");
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Presentation File", "*.mdz")
-        );
+                new FileChooser.ExtensionFilter("Presentation File", "*.mdz"));
 
         File file = fileChooser.showSaveDialog(canvas.getScene().getWindow());
         if (file != null) {
@@ -736,8 +745,7 @@ public class Main extends Application {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open Presentation");
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Presentation File", "*.mdz")
-        );
+                new FileChooser.ExtensionFilter("Presentation File", "*.mdz"));
 
         File file = fileChooser.showOpenDialog(canvas.getScene().getWindow());
         if (file != null) {
@@ -784,7 +792,7 @@ public class Main extends Application {
             showError("生成演讲稿失败", "当前没有可用的PPT内容，无法生成演讲稿");
             return;
         }
-        
+
         // 显示进度提示
         Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
         progressAlert.setTitle("生成演讲稿");
@@ -792,17 +800,17 @@ public class Main extends Application {
         progressAlert.setContentText("请稍候，这可能需要几秒钟时间");
         progressAlert.setResizable(false);
         progressAlert.show();
-        
+
         // 在新线程中执行AI调用
         new Thread(() -> {
             try {
                 String speech = aiAgent.generateSpeechBySlides(slides);
-                
+
                 Platform.runLater(() -> {
                     progressAlert.close();
                     showSpeechDialog(speech);
                 });
-                
+
             } catch (AIAgent.AIException e) {
                 Platform.runLater(() -> {
                     progressAlert.close();
@@ -821,31 +829,32 @@ public class Main extends Application {
             }
         }).start();
     }
-    
+
     /**
      * 显示演讲稿对话框
+     * 
      * @param speech 演讲稿内容
      */
     private void showSpeechDialog(String speech) {
-       // 使用Dialog而不是Alert，因为我们需要自定义内容
-       Dialog<Void> dialog = new Dialog<>();
+        // 使用Dialog而不是Alert，因为我们需要自定义内容
+        Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("生成的演讲稿");
         dialog.setHeaderText("根据当前幻灯片内容生成的演讲稿");
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         ButtonType copyButtonType = new ButtonType("复制到剪贴板", ButtonBar.ButtonData.OTHER);
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType, copyButtonType);
-        
+
         TextArea speechArea = new TextArea(speech);
         speechArea.setPrefRowCount(15);
         speechArea.setPrefColumnCount(60);
         speechArea.setWrapText(true);
         speechArea.setEditable(false);
-        
+
         dialog.getDialogPane().setContent(speechArea);
-        
-         // 设置结果转换器
-         dialog.setResultConverter(dialogButton -> {
+
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
             if (dialogButton == copyButtonType) {
                 final Clipboard clipboard = Clipboard.getSystemClipboard();
                 final ClipboardContent content = new ClipboardContent();
@@ -855,24 +864,85 @@ public class Main extends Application {
             }
             return null;
         });
-        
+
         // 显示对话框
         dialog.showAndWait();
     }
-    
-
-    
-
 
     private void showAIChatDialog() {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("AI智能生成PPT");
-        dialog.setHeaderText("请输入你的PPT需求，点击*生成建议*后可查看AI建议、PPT命令和演讲稿，编辑命令后点击*生成PPT*生成幻灯片");
+        dialog.setHeaderText("选择模板并输入需求，点击*生成建议*后可查看AI建议、PPT命令和演讲稿，编辑命令后点击*生成PPT并保持窗口*生成幻灯片（窗口不会自动关闭）");
 
         ButtonType generateBtnType = new ButtonType("生成建议", ButtonBar.ButtonData.LEFT);
-        ButtonType confirmBtnType = new ButtonType("生成PPT", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelBtnType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType confirmBtnType = new ButtonType("生成PPT并保持窗口", ButtonBar.ButtonData.OTHER);
+        ButtonType cancelBtnType = new ButtonType("关闭", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(generateBtnType, confirmBtnType, cancelBtnType);
+
+        // 添加模板选择功能
+        ComboBox<PromptTemplate> templateCombo = new ComboBox<>();
+        templateCombo.setPromptText("选择提示词模板（可选）");
+        templateCombo.setPrefWidth(300);
+
+        // 设置自定义单元格工厂来格式化显示
+        templateCombo.setCellFactory(param -> new ListCell<PromptTemplate>() {
+            @Override
+            protected void updateItem(PromptTemplate item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    if ("no-template".equals(item.getId())) {
+                        setText("不使用模板");
+                    } else {
+                        setText(item.getName() + " (" + item.getCategory().getDisplayName() + ")");
+                    }
+                }
+            }
+        });
+
+        // 设置按钮单元格工厂
+        templateCombo.setButtonCell(templateCombo.getCellFactory().call(null));
+
+        // 加载所有模板
+        List<PromptTemplate> allTemplates = aiAgent.getTemplateManager().getAllTemplates();
+        templateCombo.getItems().addAll(allTemplates);
+
+        // 添加一个"不使用模板"选项
+        PromptTemplate noTemplate = new PromptTemplate("不使用模板", "直接使用默认提示词", "",
+                slideshow.model.TemplateCategory.CUSTOM);
+        noTemplate.setId("no-template");
+        templateCombo.getItems().add(0, noTemplate);
+        templateCombo.setValue(noTemplate);
+
+        // 显示当前选择的模板信息
+        Label templateInfoLabel = new Label("当前模板: 不使用模板");
+        templateInfoLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 12;");
+
+        // 模板选择监听器
+        templateCombo.setOnAction(e -> {
+            PromptTemplate selected = templateCombo.getValue();
+            if (selected != null) {
+                if ("no-template".equals(selected.getId())) {
+                    templateInfoLabel.setText("当前模板: 不使用模板 (使用默认提示词)");
+                } else {
+                    String info = "当前模板: " + selected.getName() +
+                            " (" + selected.getCategory().getDisplayName() + ")";
+
+                    // 添加使用次数信息
+                    if (selected.getMetadata() != null && selected.getMetadata().getUseCount() > 0) {
+                        info += " | 使用次数: " + selected.getMetadata().getUseCount();
+                    }
+
+                    // 添加评分信息
+                    if (selected.getMetadata() != null && selected.getMetadata().getAverageRating() > 0) {
+                        info += " | 评分: " + String.format("%.1f", selected.getMetadata().getAverageRating());
+                    }
+
+                    templateInfoLabel.setText(info);
+                }
+            }
+        });
 
         TextArea inputArea = new TextArea();
         inputArea.setPromptText("请输入你的PPT需求，例如：生成一个关于人工智能的PPT介绍，或直接提问如'今天星期几'");
@@ -894,10 +964,10 @@ public class Main extends Application {
         suggestionArea.setDisable(true);
 
         VBox vbox = new VBox(10,
-            new Label("PPT需求："), inputArea,
-            new Label("AI建议与反馈（只读）："), adviceArea,
-            new Label("PPT命令与大纲（可编辑）："), suggestionArea
-        );
+                new Label("选择模板："), templateCombo, templateInfoLabel,
+                new Label("PPT需求："), inputArea,
+                new Label("AI建议与反馈（只读）："), adviceArea,
+                new Label("PPT命令与大纲（可编辑）："), suggestionArea);
         vbox.setPadding(new Insets(10));
         dialog.getDialogPane().setContent(vbox);
 
@@ -911,38 +981,157 @@ public class Main extends Application {
                 suggestionArea.setText("");
                 return;
             }
+
+            // 获取选择的模板
+            PromptTemplate selectedTemplate = templateCombo.getValue();
+
             adviceArea.setDisable(false);
             suggestionArea.setDisable(false);
             adviceArea.setText("AI正在思考并生成建议，请稍候...");
             suggestionArea.setText("");
+
+            // 创建AI思考提示
+            final long startTime = System.currentTimeMillis();
+
+            // 创建时间更新器
+            final javafx.animation.Timeline timeTimeline = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(javafx.util.Duration.millis(500), e -> {
+                        long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+                        adviceArea.setText("AI正在思考中... (已用时: " + elapsed + "秒)");
+                    }));
+            timeTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+            timeTimeline.play();
+
             // 调用AI生成建议、命令
-        new Thread(() -> {
-                String aiPrompt = "你是PPT助手，请根据用户输入做如下两步：\n" +
-                        "1. 先用自然语言给出你的建议、思考或直接回答用户问题（如'今天星期三'），如果用户需求与PPT无关请直接回复建议或答案。\n" +
-                        "2. 如果用户需求与PPT制作有关，再用严格的PPT命令格式输出大纲，格式要求如下：\n" +
-                        "---PPT命令---\n" +
-                        "Page 1:\nTitle: ...\nSubtitle: ...\nBullet: ...\nDraw: ...\nPage 2: ...\n（每个命令单独一行，所有命令都在---PPT命令---下方，若无PPT需求则此部分可为空）\n" +
-                        "请严格用'---PPT命令---'分隔建议和命令部分。\n用户输入：" + userPrompt;
-            try {
-                String aiResult = aiModel.chat(aiPrompt);
-                Platform.runLater(() -> {
-                        String[] parts = aiResult.split("---PPT命令---");
-                        String advice = parts.length > 0 ? parts[0].trim() : "";
-                        String pptCmd = parts.length > 1 ? parts[1].trim() : "";
+            new Thread(() -> {
+                String aiPrompt;
+
+                // 根据是否选择模板来构建不同的提示词
+                if (selectedTemplate != null && !"no-template".equals(selectedTemplate.getId())) {
+                    // 使用选择的模板
+                    try {
+                        String formattedPrompt = selectedTemplate.formatContent(userPrompt);
+
+                        // 确保模板输出标准PPT格式
+                        aiPrompt = formattedPrompt +
+                                "\n\n重要要求：请根据以上模板要求处理用户输入，但必须严格按照以下标准PPT格式输出：" +
+                                "\n---PPT命令---" +
+                                "\nPage 1:" +
+                                "\nTitle: [页面标题]" +
+                                "\nSubtitle: [页面副标题]" +
+                                "\nBullet: [项目符号内容]" +
+                                "\nDraw: [绘图描述]" +
+                                "\nPage 2:" +
+                                "\nTitle: [页面标题]" +
+                                "\nSubtitle: [页面副标题]" +
+                                "\nBullet: [项目符号内容]" +
+                                "\nDraw: [绘图描述]" +
+                                "\n（继续更多页面...）" +
+                                "\n\n请确保使用'---PPT命令---'分隔符，并严格按照Page X:格式分页。" +
+                                "\n用户输入：" + userPrompt;
+
+                        // 记录模板使用次数
+                        aiAgent.getTemplateManager().useTemplate(selectedTemplate.getId());
+
+                    } catch (Exception e) {
+                        // 如果模板格式化失败，使用默认提示词
+                        aiPrompt = buildDefaultPrompt(userPrompt);
+                    }
+                } else {
+                    // 使用默认提示词
+                    aiPrompt = buildDefaultPrompt(userPrompt);
+                }
+
+                try {
+                    String aiResult = aiModel.chat(aiPrompt);
+                    Platform.runLater(() -> {
+                        // 停止时间更新器
+                        timeTimeline.stop();
+
+                        // 智能解析AI响应
+                        String advice = "";
+                        String pptCmd = "";
+
+                        if (selectedTemplate != null && !"no-template".equals(selectedTemplate.getId())) {
+                            // 使用自定义模板时的处理逻辑
+                            if (aiResult.contains("---PPT命令---")) {
+                                // 如果包含分隔符，按原逻辑处理
+                                String[] parts = aiResult.split("---PPT命令---");
+                                advice = parts.length > 0 ? parts[0].trim() : "";
+                                pptCmd = parts.length > 1 ? parts[1].trim() : "";
+                            } else {
+                                // 如果不包含分隔符，尝试智能解析并转换为标准格式
+                                String[] lines = aiResult.split("\n");
+                                boolean foundPptContent = false;
+                                StringBuilder pptBuilder = new StringBuilder();
+                                StringBuilder adviceBuilder = new StringBuilder();
+                                int pageNumber = 1;
+
+                                for (String line : lines) {
+                                    line = line.trim();
+                                    if (line.isEmpty())
+                                        continue;
+
+                                    // 检查是否是PPT命令格式
+                                    if (line.startsWith("Page ") ||
+                                            line.startsWith("Title:") ||
+                                            line.startsWith("Subtitle:") ||
+                                            line.startsWith("Bullet:") ||
+                                            line.startsWith("Draw:") ||
+                                            line.startsWith("Image:") ||
+                                            line.matches("^\\d+\\..*")) {
+                                        foundPptContent = true;
+
+                                        // 如果是Page开头，确保格式正确
+                                        if (line.startsWith("Page ")) {
+                                            pptBuilder.append("Page ").append(pageNumber).append(":\n");
+                                            pageNumber++;
+                                        } else {
+                                            pptBuilder.append(line).append("\n");
+                                        }
+                                    } else if (foundPptContent) {
+                                        // 如果已经找到PPT内容，后续内容也归为PPT
+                                        pptBuilder.append(line).append("\n");
+                                    } else {
+                                        // 否则归为建议
+                                        adviceBuilder.append(line).append("\n");
+                                    }
+                                }
+
+                                advice = adviceBuilder.toString().trim();
+                                pptCmd = pptBuilder.toString().trim();
+
+                                // 如果没有找到PPT内容，尝试将整个响应转换为标准格式
+                                if (pptCmd.isEmpty()) {
+                                    advice = aiResult.trim();
+                                    // 尝试将响应内容转换为标准PPT格式
+                                    pptCmd = convertToStandardPPTFormat(aiResult.trim());
+                                }
+                            }
+                        } else {
+                            // 使用默认模板时的处理逻辑
+                            String[] parts = aiResult.split("---PPT命令---");
+                            advice = parts.length > 0 ? parts[0].trim() : "";
+                            pptCmd = parts.length > 1 ? parts[1].trim() : "";
+                        }
+
                         adviceArea.setText(advice);
                         suggestionArea.setText(pptCmd);
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
-                });
-            } catch (Exception e) {
+                    });
+                } catch (Exception e) {
                     Platform.runLater(() -> {
+                        // 停止时间更新器
+                        timeTimeline.stop();
+
                         adviceArea.setText("AI生成失败：" + e.getMessage());
                         suggestionArea.setText("");
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
                     });
-            }
-        }).start();
+                }
+            }).start();
         });
 
         // 生成PPT按钮逻辑
@@ -954,11 +1143,20 @@ public class Main extends Application {
                 suggestionArea.setText("请先生成并确认PPT命令！");
                 return;
             }
-            // 关闭对话框后生成PPT
+
+            System.out.println("Main: 开始生成PPT，PPT命令内容:");
+            System.out.println(suggestion);
+            System.out.println("Main: PPT命令内容长度: " + suggestion.length());
+
+            // 生成PPT但不关闭对话框
             Platform.runLater(() -> {
                 parseAndCreateSlides(suggestion);
-                showInfo("AI生成完成", "PPT已根据建议生成，可继续编辑完善。");
+                // 在对话框内显示成功信息，而不是弹出新窗口
+                adviceArea.setText("✓ PPT已成功生成！您可以继续查看和编辑AI建议，或关闭窗口。");
             });
+            
+            // 阻止对话框关闭
+            event.consume();
         });
 
         // 初始时禁用"生成PPT"按钮
@@ -971,16 +1169,100 @@ public class Main extends Application {
     }
 
     private void parseAndCreateSlides(String aiResult) {
+        System.out.println("Main: parseAndCreateSlides 开始");
+        System.out.println("Main: 输入内容长度: " + aiResult.length());
+
         // 使用SlideParser解析AI生成的PPT命令
         slides = SlideParser.parseAndCreateSlides(aiResult, canvas.getWidth());
-        
+
+        System.out.println("Main: 解析完成，创建了 " + slides.size() + " 个幻灯片");
+
         // 更新当前幻灯片索引和显示
         currentSlideIndex = slides.isEmpty() ? -1 : 0;
         currentSlide = slides.isEmpty() ? null : slides.get(0);
-        
+
+        System.out.println("Main: 当前幻灯片索引: " + currentSlideIndex);
+        if (currentSlide != null) {
+            System.out.println("Main: 当前幻灯片元素数量: " + currentSlide.getElements().size());
+        }
+
         // 刷新画布和控件状态
         refreshCanvas();
         updateSlideControls();
+
+        System.out.println("Main: parseAndCreateSlides 完成");
+    }
+
+    /**
+     * 构建默认的AI提示词
+     */
+    private String buildDefaultPrompt(String userPrompt) {
+        return "你是PPT助手，请根据用户输入做如下两步：\n" +
+                "1. 先用自然语言给出你的建议、思考或直接回答用户问题（如'今天星期三'），如果用户需求与PPT无关请直接回复建议或答案。\n" +
+                "2. 如果用户需求与PPT制作有关，再用严格的PPT命令格式输出大纲，格式要求如下：\n" +
+                "---PPT命令---\n" +
+                "Page 1:\nTitle: ...\nSubtitle: ...\nBullet: ...\nDraw: ...\nPage 2: ...\n（每个命令单独一行，所有命令都在---PPT命令---下方，若无PPT需求则此部分可为空）\n"
+                +
+                "请严格用'---PPT命令---'分隔建议和命令部分。\n用户输入：" + userPrompt;
+    }
+
+    /**
+     * 将任意内容转换为标准PPT格式
+     */
+    private String convertToStandardPPTFormat(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder();
+        String[] lines = content.split("\n");
+        int pageNumber = 1;
+        boolean hasContent = false;
+
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty())
+                continue;
+
+            // 如果内容看起来像PPT结构，尝试转换为标准格式
+            if (line.contains("标题") || line.contains("Title") || line.contains("主题")) {
+                if (hasContent) {
+                    result.append("\n");
+                }
+                result.append("Page ").append(pageNumber).append(":\n");
+                result.append("Title: ").append(line.replaceAll(".*[标题|Title|主题][：:]*\\s*", "")).append("\n");
+                pageNumber++;
+                hasContent = true;
+            } else if (line.contains("副标题") || line.contains("Subtitle")) {
+                result.append("Subtitle: ").append(line.replaceAll(".*[副标题|Subtitle][：:]*\\s*", "")).append("\n");
+            } else if (line.contains("要点") || line.contains("Bullet") || line.contains("•") || line.contains("-")) {
+                String bulletContent = line.replaceAll(".*[要点|Bullet|•|-][：:]*\\s*", "");
+                if (!bulletContent.isEmpty()) {
+                    result.append("Bullet: ").append(bulletContent).append("\n");
+                }
+            } else if (line.matches("^\\d+\\..*")) {
+                // 编号列表
+                String listContent = line.substring(line.indexOf('.') + 1).trim();
+                if (!listContent.isEmpty()) {
+                    result.append("Bullet: ").append(listContent).append("\n");
+                }
+            } else if (line.contains("图片") || line.contains("Image") || line.contains("图表")) {
+                result.append("Draw: ").append(line.replaceAll(".*[图片|Image|图表][：:]*\\s*", "")).append("\n");
+            } else if (!line.startsWith("Page") && !line.startsWith("---")) {
+                // 其他内容作为普通文本
+                result.append("Bullet: ").append(line).append("\n");
+            }
+        }
+
+        // 如果没有找到任何结构化的内容，创建一个简单的页面
+        if (!hasContent) {
+            result.append("Page 1:\n");
+            result.append("Title: ").append(content.substring(0, Math.min(50, content.length()))).append("\n");
+            result.append("Subtitle: 内容概述\n");
+            result.append("Bullet: ").append(content).append("\n");
+        }
+
+        return result.toString().trim();
     }
 
     /**
@@ -991,33 +1273,32 @@ public class Main extends Application {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("生成演讲稿结构");
         dialog.setHeaderText("请输入演讲信息");
-        
+
         ButtonType generateButtonType = new ButtonType("生成", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(generateButtonType, cancelButtonType);
-        
+
         // 创建输入控件
         TextField topicField = new TextField();
         topicField.setPromptText("演讲主题");
-        
+
         ComboBox<Integer> durationCombo = new ComboBox<>();
         durationCombo.getItems().addAll(5, 10, 15, 20, 30, 45, 60);
         durationCombo.setValue(15);
-        
+
         ComboBox<String> audienceCombo = new ComboBox<>();
         audienceCombo.getItems().addAll("一般听众", "学生", "专业人士", "管理层");
         audienceCombo.setValue("一般听众");
-        
+
         VBox inputBox = new VBox(10);
         inputBox.getChildren().addAll(
-            new Label("主题："), topicField,
-            new Label("时长（分钟）："), durationCombo,
-            new Label("听众："), audienceCombo
-        );
+                new Label("主题："), topicField,
+                new Label("时长（分钟）："), durationCombo,
+                new Label("听众："), audienceCombo);
         inputBox.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(inputBox);
-        
+
         // 设置结果转换器
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == generateButtonType) {
@@ -1030,7 +1311,7 @@ public class Main extends Application {
             }
             return null;
         });
-        
+
         // 显示对话框并处理结果
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(input -> {
@@ -1040,7 +1321,7 @@ public class Main extends Application {
             }
         });
     }
-    
+
     /**
      * 生成演讲稿结构
      */
@@ -1052,17 +1333,17 @@ public class Main extends Application {
         progressAlert.setContentText("请稍候");
         progressAlert.setResizable(false);
         progressAlert.show();
-        
+
         // 在新线程中执行AI调用
         new Thread(() -> {
             try {
                 String speechStructure = aiAgent.generateSlidesByTopic(topic, duration, audience);
-                
+
                 Platform.runLater(() -> {
                     progressAlert.close();
                     showSpeechStructureResult(speechStructure);
                 });
-                
+
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     progressAlert.close();
@@ -1071,7 +1352,7 @@ public class Main extends Application {
             }
         }).start();
     }
-    
+
     /**
      * 显示演讲稿结构结果
      */
@@ -1079,20 +1360,20 @@ public class Main extends Application {
         Alert resultDialog = new Alert(Alert.AlertType.INFORMATION);
         resultDialog.setTitle("演讲稿结构");
         resultDialog.setHeaderText("生成的演讲稿结构");
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         ButtonType copyButtonType = new ButtonType("复制", ButtonBar.ButtonData.OTHER);
         resultDialog.getButtonTypes().setAll(closeButtonType, copyButtonType);
-        
+
         // 创建文本区域
         TextArea textArea = new TextArea(speechStructure);
         textArea.setPrefRowCount(15);
         textArea.setPrefColumnCount(60);
         textArea.setWrapText(true);
         textArea.setEditable(false);
-        
+
         resultDialog.getDialogPane().setContent(textArea);
-        
+
         // 显示对话框并处理结果
         Optional<ButtonType> result = resultDialog.showAndWait();
         if (result.isPresent() && result.get() == copyButtonType) {
@@ -1101,6 +1382,20 @@ public class Main extends Application {
             content.putString(speechStructure);
             clipboard.setContent(content);
             showInfo("复制成功", "演讲稿结构已复制到剪贴板");
+        }
+    }
+
+    /**
+     * 打开模板管理窗口
+     */
+    private void openTemplateManager() {
+        try {
+            slideshow.presentation.TemplateManagerWindow templateWindow = new slideshow.presentation.TemplateManagerWindow();
+            templateWindow.show();
+            logger.info("Template manager window opened successfully");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to open template manager window", e);
+            showError("错误", "无法打开模板管理窗口: " + e.getMessage());
         }
     }
 

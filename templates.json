@@ -1,0 +1,141 @@
+[
+  {
+    "id": "b87b66ce-12d2-419a-987f-90e736bcf36a",
+    "name": "PPT Outline Generation",
+    "description": "Generate structured PPT outline based on the topic",
+    "content": "You are a PPT assistant. Please generate a complete PPT outline based on the following content.\nRequirements:\n1. Design a logical and clear PPT structure\n2. Each slide should have appropriate title, subtitle, and bullet points\n3. Content should be well-organized and easy to understand\n4. Suitable for presentation duration: {0} minutes\n5. Output in Chinese\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nContent: {1}\n\nPlease generate the PPT outline:",
+    "category": "PPT_OUTLINE",
+    "tags": [
+      "PPT",
+      "outline"
+    ],
+    "metadata": {
+      "createdAt": "2025-07-06 08:46:12",
+      "updatedAt": "2025-07-06 08:46:12",
+      "useCount": 0,
+      "rating": 0.0,
+      "ratingCount": 0,
+      "author": "User",
+      "version": "1.0",
+      "isFavorite": false
+    },
+    "isDefault": true,
+    "isPublic": false
+  },
+  {
+    "id": "e8c44ed5-23bc-4de7-aefa-9452f2bc044f",
+    "name": "Theme-based PPT Generation",
+    "description": "Generate PPT content based on specific theme or topic",
+    "content": "You are a PPT assistant. Please generate a complete PPT outline for the following theme:\nTheme: {0}\nTarget Audience: {1}\nPresentation Duration: {2} minutes\n\nRequirements:\n1. Create a comprehensive PPT structure for the theme\n2. Each slide should include title, subtitle, and relevant bullet points\n3. Content should be engaging and informative\n4. Include appropriate visual elements descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the PPT outline:",
+    "category": "PPT_THEME",
+    "tags": [
+      "PPT",
+      "theme"
+    ],
+    "metadata": {
+      "createdAt": "2025-07-06 08:46:12",
+      "updatedAt": "2025-07-06 08:53:10",
+      "useCount": 0,
+      "rating": 5.0,
+      "ratingCount": 1,
+      "author": "User",
+      "version": "1.0",
+      "isFavorite": true
+    },
+    "isDefault": true,
+    "isPublic": false
+  },
+  {
+    "id": "d2af26da-23c4-4660-ac58-b166fb1d7db8",
+    "name": "Educational PPT Generation",
+    "description": "Generate educational PPT content for learning purposes",
+    "content": "You are an educational PPT assistant. Please generate a complete PPT outline for educational content:\nSubject: {0}\nTarget Students: {1}\nLesson Duration: {2} minutes\n\nRequirements:\n1. Create an educational PPT structure with clear learning objectives\n2. Each slide should include title, subtitle, and key learning points\n3. Content should be easy to understand and follow\n4. Include examples and visual aids descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the educational PPT outline:",
+    "category": "PPT_EDUCATION",
+    "tags": [
+      "PPT",
+      "education"
+    ],
+    "metadata": {
+      "createdAt": "2025-07-06 08:46:12",
+      "updatedAt": "2025-07-06 08:46:12",
+      "useCount": 0,
+      "rating": 0.0,
+      "ratingCount": 0,
+      "author": "User",
+      "version": "1.0",
+      "isFavorite": false
+    },
+    "isDefault": true,
+    "isPublic": false
+  },
+  {
+    "id": "b958b78b-df85-4942-a93b-adcbb9a6d6da",
+    "name": "Business PPT Generation",
+    "description": "Generate professional business presentation content",
+    "content": "You are a business PPT assistant. Please generate a complete PPT outline for business content:\nBusiness Topic: {0}\nTarget Audience: {1}\nPresentation Duration: {2} minutes\n\nRequirements:\n1. Create a professional business PPT structure\n2. Each slide should include title, subtitle, and key business points\n3. Content should be professional and data-driven\n4. Include charts, graphs, and business visual elements descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the business PPT outline:",
+    "category": "PPT_BUSINESS",
+    "tags": [
+      "PPT",
+      "business"
+    ],
+    "metadata": {
+      "createdAt": "2025-07-06 08:46:12",
+      "updatedAt": "2025-07-06 08:46:12",
+      "useCount": 0,
+      "rating": 0.0,
+      "ratingCount": 0,
+      "author": "User",
+      "version": "1.0",
+      "isFavorite": false
+    },
+    "isDefault": true,
+    "isPublic": false
+  },
+  {
+    "id": "c095751c-bdc7-45b0-b28d-3a66608ad5b9",
+    "name": "Technical PPT Generation",
+    "description": "Generate technical presentation content with detailed explanations",
+    "content": "You are a technical PPT assistant. Please generate a complete PPT outline for technical content:\nTechnical Topic: {0}\nTarget Audience: {1}\nPresentation Duration: {2} minutes\n\nRequirements:\n1. Create a detailed technical PPT structure\n2. Each slide should include title, subtitle, and technical explanations\n3. Content should be technically accurate and comprehensive\n4. Include diagrams, flowcharts, and technical visual elements descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the technical PPT outline:",
+    "category": "PPT_TECHNICAL",
+    "tags": [
+      "PPT",
+      "technical"
+    ],
+    "metadata": {
+      "createdAt": "2025-07-06 08:46:12",
+      "updatedAt": "2025-07-06 08:46:12",
+      "useCount": 0,
+      "rating": 0.0,
+      "ratingCount": 0,
+      "author": "User",
+      "version": "1.0",
+      "isFavorite": false
+    },
+    "isDefault": true,
+    "isPublic": false
+  },
+  {
+    "id": "eed6c641-1726-4ff0-af6a-bcbdaa67bdfb",
+    "name": "Creative PPT Generation",
+    "description": "Generate creative and engaging presentation content",
+    "content": "You are a creative PPT assistant. Please generate a complete PPT outline for creative content:\nCreative Topic: {0}\nTarget Audience: {1}\nPresentation Duration: {2} minutes\n\nRequirements:\n1. Create an innovative and creative PPT structure\n2. Each slide should include title, subtitle, and creative content\n3. Content should be engaging, inspiring, and visually appealing\n4. Include creative visual elements, metaphors, and storytelling elements descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the creative PPT outline:",
+    "category": "PPT_CREATIVE",
+    "tags": [
+      "PPT",
+      "creative"
+    ],
+    "metadata": {
+      "createdAt": "2025-07-06 08:46:12",
+      "updatedAt": "2025-07-06 08:46:32",
+      "lastUsedAt": "2025-07-06 08:46:32",
+      "useCount": 1,
+      "rating": 0.0,
+      "ratingCount": 0,
+      "author": "User",
+      "version": "1.0",
+      "isFavorite": false
+    },
+    "isDefault": true,
+    "isPublic": false
+  }
+]

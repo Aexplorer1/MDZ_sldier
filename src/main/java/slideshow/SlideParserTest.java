@@ -12,11 +12,11 @@ import java.util.List;
  * 用于验证AI生成PPT的分页逻辑
  */
 public class SlideParserTest {
-    
+
     public static void main(String[] args) {
         testSlideParser();
     }
-    
+
     /**
      * 测试SlideParser的各种功能
      */
@@ -66,7 +66,7 @@ public class SlideParserTest {
         
         System.out.println("=== SlideParser 测试完成 ===");
     }
-    
+
     /**
      * 测试解析命令
      */
@@ -101,22 +101,22 @@ public class SlideParserTest {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * 测试验证方法
      */
     private static void testValidationMethods() {
         System.out.println("\n--- 验证方法测试 ---");
-        
+
         String validCommand = "Page 1:\nTitle: 测试\nPage 2:\nTitle: 测试2";
         String invalidCommand = "这是无效的命令";
-        
+
         System.out.println("有效命令验证: " + SlideParser.isValidPPTCommand(validCommand));
         System.out.println("无效命令验证: " + SlideParser.isValidPPTCommand(invalidCommand));
         System.out.println("空命令验证: " + SlideParser.isValidPPTCommand(""));
-        
+
         System.out.println("有效命令页面数: " + SlideParser.getPageCount(validCommand));
         System.out.println("无效命令页面数: " + SlideParser.getPageCount(invalidCommand));
         System.out.println("空命令页面数: " + SlideParser.getPageCount(""));
     }
-} 
+}
