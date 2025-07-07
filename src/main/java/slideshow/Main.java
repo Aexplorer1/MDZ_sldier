@@ -455,6 +455,11 @@ public class Main extends Application {
         speechStructureBtn.getStyleClass().add("button");
         speechStructureBtn.setOnAction(e -> showSpeechStructureDialog());
 
+        // Add keyword analysis button
+        Button keywordAnalysisBtn = new Button("关键词分析");
+        keywordAnalysisBtn.getStyleClass().add("button");
+        keywordAnalysisBtn.setOnAction(e -> performKeywordAnalysis());
+
         // Add template management button
         Button templateManageBtn = new Button("Template Manager");
         templateManageBtn.getStyleClass().add("button");
@@ -480,6 +485,7 @@ public class Main extends Application {
                 aiGenBtn,
                 speechGenBtn,
                 speechStructureBtn,
+                keywordAnalysisBtn,
                 new Separator(),
                 templateManageBtn);
     }
@@ -836,14 +842,14 @@ public class Main extends Application {
      * @param speech 演讲稿内容
      */
     private void showSpeechDialog(String speech) {
-        // 使用Dialog而不是Alert，因为我们需要自定义内容
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("生成的演讲稿");
-        dialog.setHeaderText("根据当前幻灯片内容生成的演讲稿");
+        // 使用Alert而不是Dialog，这样更简单且不会有关闭问题
+        Alert resultDialog = new Alert(Alert.AlertType.INFORMATION);
+        resultDialog.setTitle("生成的演讲稿");
+        resultDialog.setHeaderText("根据当前幻灯片内容生成的演讲稿");
 
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         ButtonType copyButtonType = new ButtonType("复制到剪贴板", ButtonBar.ButtonData.OTHER);
-        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType, copyButtonType);
+        resultDialog.getButtonTypes().setAll(closeButtonType, copyButtonType);
 
         TextArea speechArea = new TextArea(speech);
         speechArea.setPrefRowCount(15);
@@ -851,22 +857,17 @@ public class Main extends Application {
         speechArea.setWrapText(true);
         speechArea.setEditable(false);
 
-        dialog.getDialogPane().setContent(speechArea);
+        resultDialog.getDialogPane().setContent(speechArea);
 
-        // 设置结果转换器
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == copyButtonType) {
-                final Clipboard clipboard = Clipboard.getSystemClipboard();
-                final ClipboardContent content = new ClipboardContent();
-                content.putString(speech);
-                clipboard.setContent(content);
-                showInfo("复制成功", "演讲稿已复制到剪贴板");
-            }
-            return null;
-        });
-
-        // 显示对话框
-        dialog.showAndWait();
+        // 显示对话框并处理结果
+        Optional<ButtonType> result = resultDialog.showAndWait();
+        if (result.isPresent() && result.get() == copyButtonType) {
+            final Clipboard clipboard = Clipboard.getSystemClipboard();
+            final ClipboardContent content = new ClipboardContent();
+            content.putString(speech);
+            clipboard.setContent(content);
+            showInfo("复制成功", "演讲稿已复制到剪贴板");
+        }
     }
 
     private void showAIChatDialog() {
@@ -1382,6 +1383,137 @@ public class Main extends Application {
             content.putString(speechStructure);
             clipboard.setContent(content);
             showInfo("复制成功", "演讲稿结构已复制到剪贴板");
+        }
+    }
+
+    /**
+     * 执行关键词分析
+     */
+    private void performKeywordAnalysis() {
+        if (slides.isEmpty()) {
+            showError("关键词分析失败", "当前没有幻灯片内容");
+            return;
+        }
+
+        // 检查是否有内容
+        boolean hasContent = false;
+        for (Slide slide : slides) {
+            if (slide.getTextContent() != null && !slide.getTextContent().isEmpty()) {
+                hasContent = true;
+                break;
+            }
+        }
+
+        if (!hasContent) {
+            showError("关键词分析失败", "当前幻灯片没有可分析的文本内容");
+            return;
+        }
+
+        // 显示进度提示
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("关键词分析");
+        progressAlert.setHeaderText("正在分析幻灯片内容...");
+        progressAlert.setContentText("请稍候，这可能需要几秒钟时间");
+        progressAlert.setResizable(false);
+        progressAlert.show();
+
+        // 在新线程中执行AI调用
+        new Thread(() -> {
+            try {
+                AIAgent.SlideAnalysis analysis = aiAgent.parseSlides(slides);
+
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showKeywordAnalysisResult(analysis);
+                });
+
+            } catch (AIAgent.AIException e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("AI调用失败", "关键词分析时发生错误: " + e.getMessage());
+                });
+            } catch (IllegalArgumentException e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("参数错误", "参数验证失败: " + e.getMessage());
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("未知错误", "关键词分析时发生未知错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 显示关键词分析结果
+     * 
+     * @param analysis 分析结果
+     */
+    private void showKeywordAnalysisResult(AIAgent.SlideAnalysis analysis) {
+        // 创建详细的分析结果文本
+        StringBuilder resultText = new StringBuilder();
+        resultText.append("=== 幻灯片分析报告 ===\n\n");
+        
+        resultText.append("📊 基本信息:\n");
+        resultText.append("• 幻灯片总数: ").append(analysis.getTotalSlides()).append("\n");
+        resultText.append("• 总字数: ").append(analysis.getTotalWords()).append("\n\n");
+        
+        resultText.append("🎯 主要主题:\n");
+        resultText.append(analysis.getMainTopic() != null ? analysis.getMainTopic() : "未识别").append("\n\n");
+        
+        resultText.append("🔑 关键词 (共").append(analysis.getKeywords().size()).append("个):\n");
+        for (int i = 0; i < analysis.getKeywords().size(); i++) {
+            String keyword = analysis.getKeywords().get(i);
+            Integer frequency = analysis.getKeywordFrequency().get(keyword);
+            resultText.append(i + 1).append(". ").append(keyword);
+            if (frequency != null) {
+                resultText.append(" (出现").append(frequency).append("次)");
+            }
+            resultText.append("\n");
+        }
+        resultText.append("\n");
+        
+        if (!analysis.getThemes().isEmpty()) {
+            resultText.append("📂 主题分类:\n");
+            for (int i = 0; i < analysis.getThemes().size(); i++) {
+                resultText.append(i + 1).append(". ").append(analysis.getThemes().get(i)).append("\n");
+            }
+            resultText.append("\n");
+        }
+        
+        resultText.append("📝 内容摘要:\n");
+        resultText.append(analysis.getSummary() != null ? analysis.getSummary() : "未生成摘要").append("\n\n");
+        
+        resultText.append("=== 分析完成 ===");
+
+        // 使用Alert而不是Dialog，这样更简单且不会有关闭问题
+        Alert resultDialog = new Alert(Alert.AlertType.INFORMATION);
+        resultDialog.setTitle("关键词分析结果");
+        resultDialog.setHeaderText("幻灯片内容分析");
+
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        ButtonType copyButtonType = new ButtonType("复制结果", ButtonBar.ButtonData.OTHER);
+        resultDialog.getButtonTypes().setAll(closeButtonType, copyButtonType);
+
+        // 创建文本区域
+        TextArea resultArea = new TextArea(resultText.toString());
+        resultArea.setPrefRowCount(20);
+        resultArea.setPrefColumnCount(60);
+        resultArea.setWrapText(true);
+        resultArea.setEditable(false);
+
+        resultDialog.getDialogPane().setContent(resultArea);
+
+        // 显示对话框并处理结果
+        Optional<ButtonType> result = resultDialog.showAndWait();
+        if (result.isPresent() && result.get() == copyButtonType) {
+            final Clipboard clipboard = Clipboard.getSystemClipboard();
+            final ClipboardContent content = new ClipboardContent();
+            content.putString(resultText.toString());
+            clipboard.setContent(content);
+            showInfo("复制成功", "分析结果已复制到剪贴板");
         }
     }
 
