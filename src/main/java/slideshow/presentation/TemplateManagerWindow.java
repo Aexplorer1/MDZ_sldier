@@ -377,10 +377,23 @@ public class TemplateManagerWindow {
             return;
         }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Confirm Delete");
-        alert.setHeaderText("Delete Template");
-        alert.setContentText("Are you sure you want to delete template \"" + selectedTemplate.getName() + "\"?");
+        Alert alert;
+        if (selectedTemplate.isDefault()) {
+            // For default templates, show special confirmation dialog
+            alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Confirm Delete Default Template");
+            alert.setHeaderText("Delete Default Template");
+            alert.setContentText("You are trying to delete the default template \"" + selectedTemplate.getName()
+                    + "\".\n\n" +
+                    "Default templates are important system presets. Deleting them may affect system functionality.\n" +
+                    "Are you sure you want to delete this default template?");
+        } else {
+            // For regular templates, show standard confirmation dialog
+            alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Confirm Delete");
+            alert.setHeaderText("Delete Template");
+            alert.setContentText("Are you sure you want to delete template \"" + selectedTemplate.getName() + "\"?");
+        }
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {

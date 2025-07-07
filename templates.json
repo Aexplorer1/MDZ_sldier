@@ -1,28 +1,5 @@
 [
   {
-    "id": "b87b66ce-12d2-419a-987f-90e736bcf36a",
-    "name": "PPT Outline Generation",
-    "description": "Generate structured PPT outline based on the topic",
-    "content": "You are a PPT assistant. Please generate a complete PPT outline based on the following content.\nRequirements:\n1. Design a logical and clear PPT structure\n2. Each slide should have appropriate title, subtitle, and bullet points\n3. Content should be well-organized and easy to understand\n4. Suitable for presentation duration: {0} minutes\n5. Output in Chinese\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nContent: {1}\n\nPlease generate the PPT outline:",
-    "category": "PPT_OUTLINE",
-    "tags": [
-      "PPT",
-      "outline"
-    ],
-    "metadata": {
-      "createdAt": "2025-07-06 08:46:12",
-      "updatedAt": "2025-07-06 08:46:12",
-      "useCount": 0,
-      "rating": 0.0,
-      "ratingCount": 0,
-      "author": "User",
-      "version": "1.0",
-      "isFavorite": false
-    },
-    "isDefault": true,
-    "isPublic": false
-  },
-  {
     "id": "e8c44ed5-23bc-4de7-aefa-9452f2bc044f",
     "name": "Theme-based PPT Generation",
     "description": "Generate PPT content based on specific theme or topic",

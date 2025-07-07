@@ -121,8 +121,33 @@ public class TemplateManager {
                 return false;
             }
 
-            // 不允许删除默认模板
-            if (template.get().isDefault()) {
+            boolean success = storage.deleteTemplate(id);
+
+            if (success) {
+                logger.info("模板删除成功: " + template.get().getName());
+            }
+
+            return success;
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "删除模板失败", e);
+            return false;
+        }
+    }
+
+    /**
+     * 删除模板（包括默认模板）
+     */
+    public boolean deleteTemplate(String id, boolean forceDelete) {
+        try {
+            Optional<PromptTemplate> template = storage.getTemplateById(id);
+            if (!template.isPresent()) {
+                logger.warning("模板不存在: " + id);
+                return false;
+            }
+
+            // 如果不强制删除，则不允许删除默认模板
+            if (!forceDelete && template.get().isDefault()) {
                 logger.warning("不能删除默认模板: " + template.get().getName());
                 return false;
             }
