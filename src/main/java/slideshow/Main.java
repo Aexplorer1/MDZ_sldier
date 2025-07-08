@@ -22,6 +22,8 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.text.FontWeight;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.HBox;
+import javafx.geometry.Pos;
 
 import slideshow.util.Constants;
 import slideshow.model.Slide;
@@ -460,6 +462,11 @@ public class Main extends Application {
         keywordAnalysisBtn.getStyleClass().add("button");
         keywordAnalysisBtn.setOnAction(e -> performKeywordAnalysis());
 
+        // Add AI Q&A button
+        Button aiQABtn = new Button("AI问答");
+        aiQABtn.getStyleClass().add("button");
+        aiQABtn.setOnAction(e -> showAIDialog());
+
         // Add template management button
         Button templateManageBtn = new Button("Template Manager");
         templateManageBtn.getStyleClass().add("button");
@@ -486,6 +493,7 @@ public class Main extends Application {
                 speechGenBtn,
                 speechStructureBtn,
                 keywordAnalysisBtn,
+                aiQABtn,
                 new Separator(),
                 templateManageBtn);
     }
@@ -871,15 +879,24 @@ public class Main extends Application {
     }
 
     private void showAIChatDialog() {
-        Dialog<String> dialog = new Dialog<>();
-        dialog.setTitle("AI智能生成PPT");
-        dialog.setHeaderText("选择模板并输入需求，点击*生成建议*后可查看AI建议、PPT命令和演讲稿，编辑命令后点击*生成PPT并保持窗口*生成幻灯片（窗口不会自动关闭）");
-
-        ButtonType generateBtnType = new ButtonType("生成建议", ButtonBar.ButtonData.LEFT);
-        ButtonType confirmBtnType = new ButtonType("生成PPT并保持窗口", ButtonBar.ButtonData.OTHER);
-        ButtonType cancelBtnType = new ButtonType("关闭", ButtonBar.ButtonData.CANCEL_CLOSE);
-        dialog.getDialogPane().getButtonTypes().addAll(generateBtnType, confirmBtnType, cancelBtnType);
-
+        // 创建一个独立的Stage而不是Dialog，这样可以有完整的窗口控制
+        Stage aiStage = new Stage();
+        aiStage.setTitle("AI智能生成PPT");
+        aiStage.setMinWidth(800);
+        aiStage.setMinHeight(600);
+        
+        // 设置窗口图标（如果有的话）
+        // aiStage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
+        
+        // 创建主容器
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(10));
+        
+        // 创建标题
+        Label titleLabel = new Label("选择模板并输入需求，点击*生成建议*后可查看AI建议、PPT命令和演讲稿，编辑命令后点击*生成PPT并保持窗口*生成幻灯片");
+        titleLabel.setWrapText(true);
+        titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        
         // 添加模板选择功能
         ComboBox<PromptTemplate> templateCombo = new ComboBox<>();
         templateCombo.setPromptText("选择提示词模板（可选）");
@@ -964,18 +981,37 @@ public class Main extends Application {
         suggestionArea.setEditable(true);
         suggestionArea.setDisable(true);
 
-        VBox vbox = new VBox(10,
-                new Label("选择模板："), templateCombo, templateInfoLabel,
-                new Label("PPT需求："), inputArea,
-                new Label("AI建议与反馈（只读）："), adviceArea,
-                new Label("PPT命令与大纲（可编辑）："), suggestionArea);
-        vbox.setPadding(new Insets(10));
-        dialog.getDialogPane().setContent(vbox);
+        // 创建按钮容器
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        
+        Button generateBtn = new Button("生成建议");
+        Button confirmBtn = new Button("生成PPT并保持窗口");
+        Button closeBtn = new Button("关闭");
+        
+        // 设置按钮样式
+        generateBtn.getStyleClass().add("button");
+        confirmBtn.getStyleClass().add("button");
+        closeBtn.getStyleClass().add("button");
+        
+        buttonBox.getChildren().addAll(generateBtn, confirmBtn, closeBtn);
+        
+        // 添加所有组件到主容器
+        root.getChildren().addAll(
+            titleLabel,
+            new Label("选择模板："), templateCombo, templateInfoLabel,
+            new Label("PPT需求："), inputArea,
+            new Label("AI建议与反馈（只读）："), adviceArea,
+            new Label("PPT命令与大纲（可编辑）："), suggestionArea,
+            buttonBox
+        );
 
+        // 创建Scene并设置到Stage
+        Scene scene = new Scene(root);
+        aiStage.setScene(scene);
+        
         // 生成建议按钮逻辑
-        Button generateBtn = (Button) dialog.getDialogPane().lookupButton(generateBtnType);
-        generateBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
-            event.consume(); // 阻止关闭对话框
+        generateBtn.setOnAction(event -> {
             String userPrompt = inputArea.getText().trim();
             if (userPrompt.isEmpty()) {
                 adviceArea.setText("请先输入PPT需求！");
@@ -1136,11 +1172,9 @@ public class Main extends Application {
         });
 
         // 生成PPT按钮逻辑
-        Button confirmBtn = (Button) dialog.getDialogPane().lookupButton(confirmBtnType);
-        confirmBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+        confirmBtn.setOnAction(event -> {
             String suggestion = suggestionArea.getText().trim();
             if (suggestion.isEmpty() || adviceArea.getText().startsWith("AI正在思考")) {
-                event.consume();
                 suggestionArea.setText("请先生成并确认PPT命令！");
                 return;
             }
@@ -1149,16 +1183,16 @@ public class Main extends Application {
             System.out.println(suggestion);
             System.out.println("Main: PPT命令内容长度: " + suggestion.length());
 
-            // 生成PPT但不关闭对话框
+            // 生成PPT但不关闭窗口
             Platform.runLater(() -> {
                 parseAndCreateSlides(suggestion);
-                // 在对话框内显示成功信息，而不是弹出新窗口
+                // 在窗口内显示成功信息
                 adviceArea.setText("✓ PPT已成功生成！您可以继续查看和编辑AI建议，或关闭窗口。");
             });
-            
-            // 阻止对话框关闭
-            event.consume();
         });
+
+        // 关闭按钮逻辑
+        closeBtn.setOnAction(event -> aiStage.close());
 
         // 初始时禁用"生成PPT"按钮
         confirmBtn.setDisable(true);
@@ -1166,7 +1200,8 @@ public class Main extends Application {
             confirmBtn.setDisable(newVal.trim().isEmpty() || adviceArea.getText().startsWith("AI正在思考"));
         });
 
-        dialog.showAndWait();
+        // 显示窗口
+        aiStage.show();
     }
 
     private void parseAndCreateSlides(String aiResult) {
@@ -1514,6 +1549,133 @@ public class Main extends Application {
             content.putString(resultText.toString());
             clipboard.setContent(content);
             showInfo("复制成功", "分析结果已复制到剪贴板");
+        }
+    }
+
+    /**
+     * 显示AI问答对话框
+     */
+    private void showAIDialog() {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("AI智能问答");
+        dialog.setHeaderText("向AI提问，获取智能回答");
+
+        ButtonType askButtonType = new ButtonType("提问", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = new ButtonType("关闭", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(askButtonType, cancelButtonType);
+
+        // 创建输入控件
+        TextArea questionArea = new TextArea();
+        questionArea.setPromptText("请输入您的问题，例如：\n• 什么是人工智能？\n• 如何制作PPT？\n• 今天天气怎么样？");
+        questionArea.setPrefRowCount(4);
+        questionArea.setWrapText(true);
+
+        TextArea answerArea = new TextArea();
+        answerArea.setPromptText("AI回答将在这里显示");
+        answerArea.setPrefRowCount(8);
+        answerArea.setWrapText(true);
+        answerArea.setEditable(false);
+
+        VBox inputBox = new VBox(10);
+        inputBox.getChildren().addAll(
+                new Label("您的问题："), questionArea,
+                new Label("AI回答："), answerArea);
+        inputBox.setPadding(new Insets(10));
+
+        dialog.getDialogPane().setContent(inputBox);
+
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == askButtonType) {
+                String question = questionArea.getText().trim();
+                if (question.isEmpty()) {
+                    showError("输入错误", "请输入您的问题");
+                    return null;
+                }
+                return question;
+            }
+            return null;
+        });
+
+        // 显示对话框并处理结果
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(question -> {
+            // 显示进度提示
+            Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+            progressAlert.setTitle("AI思考中");
+            progressAlert.setHeaderText("正在思考您的问题...");
+            progressAlert.setContentText("请稍候，这可能需要几秒钟时间");
+            progressAlert.setResizable(false);
+            progressAlert.show();
+
+            // 在新线程中执行AI调用
+            new Thread(() -> {
+                try {
+                    String answer = aiAgent.askAI(question);
+
+                    Platform.runLater(() -> {
+                        progressAlert.close();
+                        showAIAnswerDialog(question, answer);
+                    });
+
+                } catch (AIAgent.AIException e) {
+                    Platform.runLater(() -> {
+                        progressAlert.close();
+                        showError("AI调用失败", "AI问答时发生错误: " + e.getMessage());
+                    });
+                } catch (IllegalArgumentException e) {
+                    Platform.runLater(() -> {
+                        progressAlert.close();
+                        showError("参数错误", "参数验证失败: " + e.getMessage());
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> {
+                        progressAlert.close();
+                        showError("未知错误", "AI问答时发生未知错误: " + e.getMessage());
+                    });
+                }
+            }).start();
+        });
+    }
+
+    /**
+     * 显示AI回答对话框
+     * 
+     * @param question 用户问题
+     * @param answer AI回答
+     */
+    private void showAIAnswerDialog(String question, String answer) {
+        Alert resultDialog = new Alert(Alert.AlertType.INFORMATION);
+        resultDialog.setTitle("AI回答");
+        resultDialog.setHeaderText("AI智能回答");
+
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        ButtonType copyButtonType = new ButtonType("复制回答", ButtonBar.ButtonData.OTHER);
+        resultDialog.getButtonTypes().setAll(closeButtonType, copyButtonType);
+
+        // 创建格式化的显示内容
+        StringBuilder displayContent = new StringBuilder();
+        displayContent.append("❓ 您的问题：\n");
+        displayContent.append(question).append("\n\n");
+        displayContent.append("🤖 AI回答：\n");
+        displayContent.append(answer);
+
+        TextArea resultArea = new TextArea(displayContent.toString());
+        resultArea.setPrefRowCount(15);
+        resultArea.setPrefColumnCount(60);
+        resultArea.setWrapText(true);
+        resultArea.setEditable(false);
+
+        resultDialog.getDialogPane().setContent(resultArea);
+
+        // 显示对话框并处理结果
+        Optional<ButtonType> result = resultDialog.showAndWait();
+        if (result.isPresent() && result.get() == copyButtonType) {
+            final Clipboard clipboard = Clipboard.getSystemClipboard();
+            final ClipboardContent content = new ClipboardContent();
+            content.putString(answer);
+            clipboard.setContent(content);
+            showInfo("复制成功", "AI回答已复制到剪贴板");
         }
     }
 

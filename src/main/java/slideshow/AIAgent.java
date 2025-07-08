@@ -604,6 +604,79 @@ public class AIAgent {
     }
 
     /**
+     * 向AI提问并获取回答
+     * 
+     * @param question 用户问题
+     * @return AI回答
+     * @throws AIException              当AI调用失败时抛出
+     * @throws IllegalArgumentException 当参数无效时抛出
+     */
+    public String askAI(String question) throws AIException, IllegalArgumentException {
+        // 参数验证
+        if (question == null || question.trim().isEmpty()) {
+            throw new IllegalArgumentException("问题不能为空");
+        }
+
+        try {
+            logger.info("开始向AI提问，问题长度: " + question.length());
+
+            // 构建AI提示词
+            String prompt = buildQuestionPrompt(question);
+
+            // 调用AI模型
+            String aiResponse = callAIModel(prompt);
+
+            // 解析AI响应
+            String answer = parseAIAnswer(aiResponse);
+
+            logger.info("AI回答生成成功，回答长度: " + answer.length());
+            return answer;
+
+        } catch (AIException e) {
+            logger.log(Level.SEVERE, "AI调用失败", e);
+            throw e;
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.SEVERE, "参数验证失败", e);
+            throw e;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "AI问答时发生未知错误", e);
+            throw new AIException("AI问答时发生未知错误: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 构建问答提示词
+     * 
+     * @param question 用户问题
+     * @return 构建的提示词
+     */
+    private String buildQuestionPrompt(String question) {
+        return "你是一个智能助手，请回答用户的问题。要求：\n" +
+                "1. 回答要准确、简洁、易懂\n" +
+                "2. 如果是技术问题，提供具体的解决方案\n" +
+                "3. 如果是概念性问题，给出清晰的解释\n" +
+                "4. 使用中文回答\n" +
+                "5. 如果问题不明确，请询问更多细节\n\n" +
+                "用户问题：" + question + "\n\n" +
+                "请回答：";
+    }
+
+    /**
+     * 解析AI回答
+     * 
+     * @param aiResponse AI响应文本
+     * @return 解析后的回答
+     */
+    private String parseAIAnswer(String aiResponse) {
+        if (aiResponse == null || aiResponse.trim().isEmpty()) {
+            return "抱歉，AI暂时无法回答您的问题，请稍后再试。";
+        }
+
+        // 简单的响应处理，可以根据需要添加更复杂的解析逻辑
+        return aiResponse.trim();
+    }
+
+    /**
      * 自定义AI异常类
      */
     public static class AIException extends Exception {
