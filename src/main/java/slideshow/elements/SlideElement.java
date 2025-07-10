@@ -44,6 +44,14 @@ public abstract class SlideElement {
         return y;
     }
     
+    public void setX(double x) {
+        this.x = x;
+    }
+    
+    public void setY(double y) {
+        this.y = y;
+    }
+    
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
@@ -60,4 +68,14 @@ public abstract class SlideElement {
     
     public abstract ResizeHandle getResizeHandle(double x, double y);
     public abstract void resize(double deltaX, double deltaY, ResizeHandle handle);
+    
+    /**
+     * 获取元素宽度
+     */
+    public abstract double getWidth();
+    
+    /**
+     * 获取元素高度
+     */
+    public abstract double getHeight();
 }

@@ -135,6 +135,16 @@ public class DrawElement extends SlideElement {
         // 实现调整大小的逻辑
     }
     
+    @Override
+    public double getWidth() {
+        return Math.abs(endX - startX);
+    }
+    
+    @Override
+    public double getHeight() {
+        return Math.abs(endY - startY);
+    }
+    
     private void drawSelectionHandles(GraphicsContext gc) {
         gc.setFill(Color.WHITE);
         gc.setStroke(Color.BLUE);

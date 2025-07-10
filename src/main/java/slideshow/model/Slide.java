@@ -8,6 +8,8 @@ import java.util.List;
 
 public class Slide {
     private List<SlideElement> elements = new ArrayList<>();
+    private double width = 800.0;  // 默认宽度
+    private double height = 600.0; // 默认高度
     
     public void addElement(SlideElement element) {
         if (elements == null) {
@@ -18,6 +20,13 @@ public class Slide {
     
     public void removeElement(SlideElement element) {
         elements.remove(element);
+    }
+    
+    /**
+     * 清除所有元素
+     */
+    public void clearElements() {
+        elements.clear();
     }
     
     /**
@@ -66,5 +75,33 @@ public class Slide {
             }
         }
         return null;
+    }
+    
+    /**
+     * 获取幻灯片宽度
+     */
+    public double getWidth() {
+        return width;
+    }
+    
+    /**
+     * 设置幻灯片宽度
+     */
+    public void setWidth(double width) {
+        this.width = width;
+    }
+    
+    /**
+     * 获取幻灯片高度
+     */
+    public double getHeight() {
+        return height;
+    }
+    
+    /**
+     * 设置幻灯片高度
+     */
+    public void setHeight(double height) {
+        this.height = height;
     }
 } 

@@ -24,6 +24,8 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.geometry.Pos;
+import javafx.concurrent.Task;
+import javafx.scene.control.ProgressIndicator;
 
 import slideshow.util.Constants;
 import slideshow.model.Slide;
@@ -37,6 +39,9 @@ import slideshow.presentation.PresentationWindow;
 import slideshow.elements.DrawElement;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import slideshow.model.PromptTemplate;
+import slideshow.util.IntelligentLayoutEngine;
+import slideshow.util.MultilingualSupport;
+import slideshow.AIEnhancedAgent;
 
 import java.io.File;
 import java.io.IOException;
@@ -674,8 +679,23 @@ public class Main extends Application {
         MenuItem settingsItem = new MenuItem("Presentation Settings");
 
         playMenu.getItems().addAll(startItem, settingsItem);
+        
+        // 智能排版菜单
+        Menu layoutMenu = new Menu("智能排版");
+        MenuItem optimizeLayoutItem = new MenuItem("优化布局");
+        MenuItem responsiveLayoutItem = new MenuItem("响应式调整");
+        MenuItem autoTextSizeItem = new MenuItem("自动文本调整");
+        layoutMenu.getItems().addAll(optimizeLayoutItem, responsiveLayoutItem, autoTextSizeItem);
+        
+        // 多语言菜单
+        Menu languageMenu = new Menu("多语言");
+        MenuItem translateContentItem = new MenuItem("一键翻译当前幻灯片");
+        MenuItem translateAllItem = new MenuItem("批量翻译所有幻灯片");
+        MenuItem generateMultilingualItem = new MenuItem("生成多语言PPT");
+        MenuItem switchLanguageItem = new MenuItem("切换语言");
+        languageMenu.getItems().addAll(translateContentItem, translateAllItem, generateMultilingualItem, switchLanguageItem);
 
-        menuBar.getMenus().addAll(fileMenu, editMenu, playMenu);
+        menuBar.getMenus().addAll(fileMenu, editMenu, playMenu, layoutMenu, languageMenu);
 
         // Add event handling
         newItem.setOnAction(e -> createNewPresentation());
@@ -684,6 +704,17 @@ public class Main extends Application {
         saveAsItem.setOnAction(e -> saveAsPresentation());
         exitItem.setOnAction(e -> Platform.exit());
         startItem.setOnAction(e -> startPresentation());
+        
+        // 智能排版功能事件处理
+        optimizeLayoutItem.setOnAction(e -> optimizeCurrentSlideLayout());
+        responsiveLayoutItem.setOnAction(e -> responsiveAdjustCurrentSlide());
+        autoTextSizeItem.setOnAction(e -> autoAdjustTextSize());
+        
+        // 多语言功能事件处理
+        translateContentItem.setOnAction(e -> translateCurrentContent());
+        translateAllItem.setOnAction(e -> translateAllContent());
+        generateMultilingualItem.setOnAction(e -> generateMultilingualPPT());
+        switchLanguageItem.setOnAction(e -> showLanguageSelectionDialog());
 
         return menuBar;
     }
@@ -1696,4 +1727,676 @@ public class Main extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+    
+    // ==================== 新增功能方法实现 ====================
+    
+    /**
+     * 优化当前幻灯片布局
+     */
+    private void optimizeCurrentSlideLayout() {
+        if (currentSlide == null) {
+            showError("优化失败", "当前没有选中的幻灯片");
+            return;
+        }
+        
+        try {
+            // 创建增强的AI代理
+            AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
+            
+            // 应用智能布局优化
+            enhancedAgent.optimizeSlideLayout(currentSlide, canvas.getWidth(), canvas.getHeight(), 
+                                           IntelligentLayoutEngine.LayoutType.CENTERED);
+            
+            refreshCanvas();
+            showInfo("布局优化", "当前幻灯片布局已优化");
+            
+        } catch (Exception e) {
+            showError("优化失败", "布局优化时发生错误: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 响应式调整当前幻灯片
+     */
+    private void responsiveAdjustCurrentSlide() {
+        if (currentSlide == null) {
+            showError("调整失败", "当前没有选中的幻灯片");
+            return;
+        }
+        
+        try {
+            // 创建增强的AI代理
+            AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
+            
+            // 获取当前画布尺寸
+            double newWidth = canvas.getWidth();
+            double newHeight = canvas.getHeight();
+            
+            // 应用响应式调整
+            enhancedAgent.responsiveAdjustLayout(currentSlide, newWidth, newHeight);
+            
+            refreshCanvas();
+            showInfo("响应式调整", "幻灯片已根据当前尺寸调整");
+            
+        } catch (Exception e) {
+            showError("调整失败", "响应式调整时发生错误: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 自动调整文本大小
+     */
+    private void autoAdjustTextSize() {
+        if (selectedElement == null || !(selectedElement instanceof TextElement)) {
+            showError("调整失败", "请先选择一个文本元素");
+            return;
+        }
+        
+        try {
+            TextElement textElement = (TextElement) selectedElement;
+            
+            // 创建增强的AI代理
+            AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
+            
+            // 自动调整文本大小
+            enhancedAgent.autoAdjustTextSize(textElement, 400.0, 100.0);
+            
+            refreshCanvas();
+            showInfo("文本调整", "文本大小已自动调整");
+            
+        } catch (Exception e) {
+            showError("调整失败", "自动调整文本大小时发生错误: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 翻译当前内容
+     */
+    private void translateCurrentContent() {
+        if (currentSlide == null) {
+            showError("翻译失败", "当前没有选中的幻灯片");
+            return;
+        }
+        
+        // 显示语言选择对话框
+        showLanguageSelectionDialogForTranslation();
+    }
+    
+    /**
+     * 生成多语言PPT
+     */
+    private void generateMultilingualPPT() {
+        // 显示主题输入对话框
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("生成多语言PPT");
+        dialog.setHeaderText("请输入PPT主题");
+        dialog.setContentText("主题:");
+        
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent() && !result.get().trim().isEmpty()) {
+            String topic = result.get().trim();
+            
+            try {
+                // 创建增强的AI代理
+                AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
+                
+                // 生成多语言PPT（默认英文）
+                String pptCommands = enhancedAgent.generateIntelligentMultilingualPPT(
+                    topic, 
+                    MultilingualSupport.SupportedLanguage.ENGLISH,
+                    IntelligentLayoutEngine.LayoutType.CENTERED);
+                
+                // 解析并创建幻灯片
+                parseAndCreateSlides(pptCommands);
+                
+                showInfo("生成成功", "多语言PPT已生成");
+                
+            } catch (Exception e) {
+                showError("生成失败", "生成多语言PPT时发生错误: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * 显示语言选择对话框
+     */
+    private void showLanguageSelectionDialog() {
+        Dialog<MultilingualSupport.SupportedLanguage> dialog = new Dialog<>();
+        dialog.setTitle("选择语言");
+        dialog.setHeaderText("请选择要切换的语言");
+        
+        ButtonType confirmButtonType = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(confirmButtonType, cancelButtonType);
+        
+        // 创建语言选择列表
+        ComboBox<MultilingualSupport.SupportedLanguage> languageCombo = new ComboBox<>();
+        languageCombo.getItems().addAll(MultilingualSupport.getSupportedLanguages());
+        languageCombo.setCellFactory(param -> new ListCell<MultilingualSupport.SupportedLanguage>() {
+            @Override
+            protected void updateItem(MultilingualSupport.SupportedLanguage item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getDisplayName());
+                }
+            }
+        });
+        languageCombo.setButtonCell(languageCombo.getCellFactory().call(null));
+        
+        VBox content = new VBox(10);
+        content.getChildren().addAll(new Label("语言:"), languageCombo);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == confirmButtonType) {
+                return languageCombo.getValue();
+            }
+            return null;
+        });
+        
+        // 显示对话框并处理结果
+        Optional<MultilingualSupport.SupportedLanguage> result = dialog.showAndWait();
+        result.ifPresent(language -> {
+            try {
+                MultilingualSupport.switchLanguage(language);
+                showInfo("语言切换", "语言已切换到: " + language.getDisplayName());
+            } catch (Exception e) {
+                showError("切换失败", "切换语言时发生错误: " + e.getMessage());
+            }
+        });
+    }
+    
+    /**
+     * 显示翻译语言选择对话框
+     */
+    private void showLanguageSelectionDialogForTranslation() {
+        Dialog<MultilingualSupport.SupportedLanguage> dialog = new Dialog<>();
+        dialog.setTitle("选择翻译语言");
+        dialog.setHeaderText("请选择要翻译成的语言");
+        
+        ButtonType confirmButtonType = new ButtonType("翻译", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(confirmButtonType, cancelButtonType);
+        
+        // 创建语言选择列表
+        ComboBox<MultilingualSupport.SupportedLanguage> languageCombo = new ComboBox<>();
+        languageCombo.getItems().addAll(MultilingualSupport.getSupportedLanguages());
+        languageCombo.setCellFactory(param -> new ListCell<MultilingualSupport.SupportedLanguage>() {
+            @Override
+            protected void updateItem(MultilingualSupport.SupportedLanguage item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getDisplayName());
+                }
+            }
+        });
+        languageCombo.setButtonCell(languageCombo.getCellFactory().call(null));
+        
+        VBox content = new VBox(10);
+        content.getChildren().addAll(new Label("目标语言:"), languageCombo);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == confirmButtonType) {
+                return languageCombo.getValue();
+            }
+            return null;
+        });
+        
+        // 显示对话框并处理结果
+        Optional<MultilingualSupport.SupportedLanguage> result = dialog.showAndWait();
+        result.ifPresent(language -> {
+            // 执行一键翻译功能
+            translateCurrentSlideContent(language);
+        });
+    }
+    
+    /**
+     * 显示批量翻译语言选择对话框
+     */
+    private void showLanguageSelectionDialogForBatchTranslation() {
+        Dialog<MultilingualSupport.SupportedLanguage> dialog = new Dialog<>();
+        dialog.setTitle("选择批量翻译语言");
+        dialog.setHeaderText("请选择要翻译成的语言（将翻译所有幻灯片）");
+        
+        ButtonType confirmButtonType = new ButtonType("批量翻译", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(confirmButtonType, cancelButtonType);
+        
+        // 创建语言选择列表
+        ComboBox<MultilingualSupport.SupportedLanguage> languageCombo = new ComboBox<>();
+        languageCombo.getItems().addAll(MultilingualSupport.getSupportedLanguages());
+        languageCombo.setCellFactory(param -> new ListCell<MultilingualSupport.SupportedLanguage>() {
+            @Override
+            protected void updateItem(MultilingualSupport.SupportedLanguage item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getDisplayName());
+                }
+            }
+        });
+        languageCombo.setButtonCell(languageCombo.getCellFactory().call(null));
+        
+        VBox content = new VBox(10);
+        content.getChildren().addAll(
+            new Label("目标语言:"), 
+            languageCombo,
+            new Label("注意: 此操作将翻译所有幻灯片的内容")
+        );
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == confirmButtonType) {
+                return languageCombo.getValue();
+            }
+            return null;
+        });
+        
+        // 显示对话框并处理结果
+        Optional<MultilingualSupport.SupportedLanguage> result = dialog.showAndWait();
+        result.ifPresent(language -> {
+            // 执行批量翻译功能
+            translateAllSlidesContent(language);
+        });
+    }
+    
+    /**
+     * 显示翻译结果
+     */
+    private void showTranslationResult(String originalContent, String translatedContent, 
+                                     MultilingualSupport.SupportedLanguage language) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("翻译结果");
+        dialog.setHeaderText("翻译为: " + language.getDisplayName());
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
+        
+        // 创建内容显示区域
+        VBox content = new VBox(10);
+        
+        // 使用stripPPTStructureFields处理，确保只显示内容本身
+        String cleanOriginal = stripPPTStructureFields(originalContent);
+        String cleanTranslated = stripPPTStructureFields(translatedContent);
+        
+        Label originalLabel = new Label("原文:");
+        TextArea originalArea = new TextArea(cleanOriginal);
+        originalArea.setPrefRowCount(3);
+        originalArea.setEditable(false);
+        
+        Label translatedLabel = new Label("译文:");
+        TextArea translatedArea = new TextArea(cleanTranslated);
+        translatedArea.setPrefRowCount(3);
+        translatedArea.setEditable(false);
+        
+        content.getChildren().addAll(originalLabel, originalArea, translatedLabel, translatedArea);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        dialog.showAndWait();
+    }
+    
+    /**
+     * 一键翻译当前幻灯片内容（异步，无等待窗口，AI提示词极致收紧）
+     */
+    private void translateCurrentSlideContent(MultilingualSupport.SupportedLanguage targetLanguage) {
+        if (currentSlide == null) {
+            showError("翻译失败", "当前没有选中的幻灯片");
+            return;
+        }
+        List<SlideElement> elements = currentSlide.getElements();
+        List<TextElement> textElements = new ArrayList<>();
+        for (SlideElement element : elements) {
+            if (element instanceof TextElement) {
+                textElements.add((TextElement) element);
+            }
+        }
+        if (textElements.isEmpty()) {
+            showError("翻译失败", "当前幻灯片没有可翻译的文本内容");
+            return;
+        }
+        Task<StringBuilder> translationTask = new Task<>() {
+            @Override
+            protected StringBuilder call() {
+                StringBuilder translationLog = new StringBuilder();
+                int count = 0;
+                for (TextElement textElement : textElements) {
+                    String originalText = textElement.getText();
+                    if (originalText != null && !originalText.trim().isEmpty()) {
+                        String translatedText = MultilingualSupport.generateMultilingualContent(originalText, targetLanguage);
+                        if (translatedText.equals(originalText)) {
+                            // 极致收紧AI提示词，明确禁止输出结构字段
+                            String prompt = String.format(
+                                "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                targetLanguage.getDisplayName(), originalText
+                            );
+                            try {
+                                translatedText = aiModel.chat(prompt).trim();
+                            } catch (Exception ex) {
+                                translatedText = "[AI翻译失败] " + originalText;
+                            }
+                        }
+                        // 使用stripPPTStructureFields处理，确保统计和日志只显示内容本身
+                        String cleanOriginal = stripPPTStructureFields(originalText);
+                        String cleanTranslated = stripPPTStructureFields(translatedText);
+                        translationLog.append(String.format("原文: %s\n译文: %s\n", cleanOriginal, cleanTranslated));
+                        textElement.setText(translatedText);
+                        count++;
+                    }
+                }
+                translationLog.insert(0, String.format("已翻译 %d 个文本元素为: %s\n\n", count, targetLanguage.getDisplayName()));
+                return translationLog;
+            }
+        };
+        translationTask.setOnSucceeded(e -> {
+            // 翻译后自动优化布局
+            try {
+                AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
+                enhancedAgent.optimizeSlideLayout(currentSlide, canvas.getWidth(), canvas.getHeight(),
+                    IntelligentLayoutEngine.LayoutType.CENTERED);
+            } catch (Exception ex) {
+                logger.warning("翻译后自动优化布局失败: " + ex.getMessage());
+            }
+            refreshCanvas();
+            showTranslationResultDialog(translationTask.getValue().toString(), textElements.size(), targetLanguage);
+        });
+        translationTask.setOnFailed(e -> {
+            showError("翻译失败", "翻译过程中发生错误: " + translationTask.getException().getMessage());
+        });
+        new Thread(translationTask).start();
+    }
+
+    /**
+     * 批量翻译所有幻灯片内容（异步，无等待窗口，AI提示词极致收紧）
+     */
+    private void translateAllSlidesContent(MultilingualSupport.SupportedLanguage targetLanguage) {
+        if (slides.isEmpty()) {
+            showError("翻译失败", "没有可翻译的幻灯片");
+            return;
+        }
+        Task<StringBuilder> translationTask = new Task<>() {
+            @Override
+            protected StringBuilder call() {
+                int translatedSlides = 0;
+                int translatedElements = 0;
+                StringBuilder translationLog = new StringBuilder();
+                for (int slideIndex = 0; slideIndex < slides.size(); slideIndex++) {
+                    Slide slide = slides.get(slideIndex);
+                    List<SlideElement> elements = slide.getElements();
+                    boolean slideTranslated = false;
+                    translationLog.append(String.format("\n=== 幻灯片 %d ===\n", slideIndex + 1));
+                    for (SlideElement element : elements) {
+                        if (element instanceof TextElement) {
+                            TextElement textElement = (TextElement) element;
+                            String originalText = textElement.getText();
+                            if (originalText != null && !originalText.trim().isEmpty()) {
+                                String translatedText = MultilingualSupport.generateMultilingualContent(originalText, targetLanguage);
+                                if (translatedText.equals(originalText)) {
+                                    String prompt = String.format(
+                                        "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                        targetLanguage.getDisplayName(), originalText
+                                    );
+                                    try {
+                                        translatedText = aiModel.chat(prompt).trim();
+                                    } catch (Exception ex) {
+                                        translatedText = "[AI翻译失败] " + originalText;
+                                    }
+                                }
+                                // 使用stripPPTStructureFields处理，确保统计和日志只显示内容本身
+                                String cleanOriginal = stripPPTStructureFields(originalText);
+                                String cleanTranslated = stripPPTStructureFields(translatedText);
+                                translationLog.append(String.format("原文: %s\n译文: %s\n", cleanOriginal, cleanTranslated));
+                                textElement.setText(translatedText);
+                                translatedElements++;
+                                slideTranslated = true;
+                            }
+                        }
+                    }
+                    if (slideTranslated) {
+                        translatedSlides++;
+                    }
+                }
+                translationLog.insert(0, String.format("已翻译 %d 个幻灯片，共 %d 个文本元素为: %s\n\n", translatedSlides, translatedElements, targetLanguage.getDisplayName()));
+                return translationLog;
+            }
+        };
+        translationTask.setOnSucceeded(e -> {
+            // 批量翻译后自动优化所有幻灯片布局
+            try {
+                AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
+                for (Slide slide : slides) {
+                    enhancedAgent.optimizeSlideLayout(slide, canvas.getWidth(), canvas.getHeight(),
+                        IntelligentLayoutEngine.LayoutType.CENTERED);
+                }
+            } catch (Exception ex) {
+                logger.warning("批量翻译后自动优化布局失败: " + ex.getMessage());
+            }
+            if (currentSlide != null) refreshCanvas();
+            // 从translationLog中提取实际的翻译统计信息
+            String translationLog = translationTask.getValue().toString();
+            String[] lines = translationLog.split("\n");
+            int actualTranslatedSlides = 0;
+            int actualTranslatedElements = 0;
+            // 从第一行提取统计信息
+            if (lines.length > 0 && lines[0].contains("已翻译")) {
+                String firstLine = lines[0];
+                if (firstLine.contains("个幻灯片，共") && firstLine.contains("个文本元素")) {
+                    try {
+                        String parts = firstLine.split("已翻译 ")[1].split(" 个幻灯片，共 ")[0];
+                        actualTranslatedSlides = Integer.parseInt(parts);
+                        String elementsPart = firstLine.split(" 个幻灯片，共 ")[1].split(" 个文本元素")[0];
+                        actualTranslatedElements = Integer.parseInt(elementsPart);
+                    } catch (Exception ex) {
+                        actualTranslatedSlides = 0;
+                        actualTranslatedElements = 0;
+                    }
+                }
+            }
+            showBatchTranslationResultDialog(translationLog, actualTranslatedSlides, actualTranslatedElements, targetLanguage);
+        });
+        translationTask.setOnFailed(e -> {
+            showError("批量翻译失败", "翻译过程中发生错误: " + translationTask.getException().getMessage());
+        });
+        new Thread(translationTask).start();
+    }
+    
+    /**
+     * 显示翻译结果对话框
+     */
+    private void showTranslationResultDialog(String translationLog, int translatedCount, 
+                                          MultilingualSupport.SupportedLanguage targetLanguage) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("翻译完成");
+        dialog.setHeaderText(String.format("已翻译 %d 个文本元素为: %s", translatedCount, targetLanguage.getDisplayName()));
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
+        
+        // 创建内容显示区域
+        VBox content = new VBox(10);
+        
+        Label summaryLabel = new Label(String.format("翻译统计: %d 个文本元素", translatedCount));
+        summaryLabel.setStyle("-fx-font-weight: bold;");
+        
+        TextArea logArea = new TextArea(translationLog);
+        logArea.setPrefRowCount(10);
+        logArea.setEditable(false);
+        logArea.setPromptText("翻译详情...");
+        
+        content.getChildren().addAll(summaryLabel, new Label("翻译详情:"), logArea);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        dialog.showAndWait();
+    }
+    
+    /**
+     * 显示批量翻译结果对话框
+     */
+    private void showBatchTranslationResultDialog(String translationLog, int translatedSlides, int translatedElements,
+                                               MultilingualSupport.SupportedLanguage targetLanguage) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("批量翻译完成");
+        dialog.setHeaderText(String.format("已翻译 %d 个幻灯片，共 %d 个文本元素为: %s", 
+            translatedSlides, translatedElements, targetLanguage.getDisplayName()));
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
+        
+        // 创建内容显示区域
+        VBox content = new VBox(10);
+        
+        Label summaryLabel = new Label(String.format("翻译统计: %d 个幻灯片，%d 个文本元素", translatedSlides, translatedElements));
+        summaryLabel.setStyle("-fx-font-weight: bold;");
+        
+        TextArea logArea = new TextArea(translationLog);
+        logArea.setPrefRowCount(15);
+        logArea.setEditable(false);
+        logArea.setPromptText("翻译详情...");
+        
+        content.getChildren().addAll(summaryLabel, new Label("翻译详情:"), logArea);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        dialog.showAndWait();
+    }
+    
+    /**
+     * 批量翻译所有内容
+     */
+    private void translateAllContent() {
+        if (slides.isEmpty()) {
+            showError("翻译失败", "没有可翻译的幻灯片");
+            return;
+        }
+        
+        // 显示语言选择对话框
+        showLanguageSelectionDialogForBatchTranslation();
+    }
+
+    /**
+     * 翻译PPT命令文本，仅翻译内容部分，保留格式字段和排版
+     */
+    private String translatePPTCommandsWithAI(String pptCommandText, MultilingualSupport.SupportedLanguage targetLanguage) {
+        // 优化AI提示词，要求仅翻译冒号后的内容，保留格式字段和排版，不要添加任何解释
+        String prompt = String.format(
+            "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版，不要添加任何解释、说明或多余内容。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+            targetLanguage.getDisplayName(), pptCommandText
+        );
+        try {
+            String translated = aiModel.chat(prompt).trim();
+            return translated;
+        } catch (Exception ex) {
+            return "[AI翻译失败] " + pptCommandText;
+        }
+    }
+
+    // 使用示例：
+    // String translatedCommands = translatePPTCommandsWithAI(originalCommands, MultilingualSupport.SupportedLanguage.ENGLISH);
+    // parseAndCreateSlides(translatedCommands);
+
+    /**
+     * 去除PPT命令结构字段，仅保留内容（终极版：连续结构字段行后只保留第一个非结构字段内容行，其余全部丢弃）
+     */
+    private String stripPPTStructureFields(String pptCommandText) {
+        if (pptCommandText == null || pptCommandText.trim().isEmpty()) {
+            return "";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        String[] lines = pptCommandText.split("\\r?\\n");
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+            // 如果是结构字段行（包括Title:、Subtitle:、Bullet:、Draw:、Page X:等）
+            if (line.matches("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*(.*)")) {
+                String content = line.replaceFirst("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*", "");
+                if (!content.isEmpty()) {
+                    sb.append(content).append('\n');
+                } else {
+                    // 跳过连续结构字段行，直到遇到内容行
+                    while (i + 1 < lines.length) {
+                        String nextLine = lines[i + 1].trim();
+                        if (nextLine.matches("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*.*") || nextLine.isEmpty()) {
+                            i++;
+                        } else {
+                            sb.append(nextLine).append('\n');
+                            i++;
+                            break;
+                        }
+                    }
+                }
+            } else if (!line.isEmpty() && !line.matches("^---.*---$")) {
+                // 不是结构字段，也不是分隔符，直接保留
+                sb.append(line).append('\n');
+            }
+        }
+        return sb.toString().trim();
+    }
+
+    /**
+     * 翻译并渲染PPT命令文本（整体翻译后自动渲染，仅保留内容，自动智能排版）
+     */
+    private void translateAndRenderPPTCommands(String pptCommandText, MultilingualSupport.SupportedLanguage targetLanguage) {
+        String prompt = String.format(
+            "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+            targetLanguage.getDisplayName(), pptCommandText
+        );
+        Task<String> translationTask = new Task<>() {
+            @Override
+            protected String call() {
+                try {
+                    String translated = aiModel.chat(prompt).trim();
+                    return translated;
+                } catch (Exception ex) {
+                    return "[AI翻译失败] " + pptCommandText;
+                }
+            }
+        };
+        translationTask.setOnSucceeded(e -> {
+            String translatedCommands = translationTask.getValue();
+            // 去除结构字段，只保留内容
+            String contentOnly = stripPPTStructureFields(translatedCommands);
+            parseAndCreateSlides(contentOnly);
+            // 自动智能排版
+            if (!slides.isEmpty()) {
+                for (Slide slide : slides) {
+                    IntelligentLayoutEngine.optimizeLayout(
+                        slide,
+                        canvas.getWidth(),
+                        canvas.getHeight(),
+                        IntelligentLayoutEngine.LayoutType.CENTERED
+                    );
+                }
+                refreshCanvas();
+            }
+            // 使用stripPPTStructureFields处理，确保提示信息也只显示内容本身
+            String cleanContent = stripPPTStructureFields(contentOnly);
+            showInfo("PPT翻译并渲染完成", "已将PPT命令翻译为 " + targetLanguage.getDisplayName() + " 并自动排版渲染，仅保留内容");
+        });
+        translationTask.setOnFailed(e -> {
+            showError("PPT翻译失败", "翻译过程中发生错误: " + translationTask.getException().getMessage());
+        });
+        new Thread(translationTask).start();
+    }
+
+    // 使用示例：
+    // translateAndRenderPPTCommands(originalCommands, MultilingualSupport.SupportedLanguage.JAPANESE);
 }
