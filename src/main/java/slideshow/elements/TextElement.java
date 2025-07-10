@@ -17,7 +17,7 @@ public class TextElement extends SlideElement {
     //private double y;
     private double width;
     private double height;
-    private boolean selected;
+    //private boolean selected;
     
     private static final double HANDLE_SIZE = 8; // 控制点大小
     private static final double HANDLE_OFFSET = HANDLE_SIZE / 2;

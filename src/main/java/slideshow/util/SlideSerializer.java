@@ -12,7 +12,7 @@ import java.lang.reflect.Type;
 public class SlideSerializer {
     private static final Gson gson = new GsonBuilder()
         .registerTypeAdapter(SlideElement.class, new SlideElementSerializer())
-            .excludeFieldsWithoutExposeAnnotation()
+            //.excludeFieldsWithoutExposeAnnotation()
         .create();
     
     public static void savePresentation(List<Slide> slides, String filePath) throws IOException {
