@@ -70,7 +70,8 @@ run {
                 '-Dfile.encoding=UTF-8',
                 '-Duser.language=zh',
                 '-Duser.country=CN',
-                '-Dsun.jnu.encoding=UTF-8'
+                '-Dsun.jnu.encoding=UTF-8',
+                '--add-opens=javafx.graphics/javafx.scene.paint=ALL-UNNAMED'
         ]
     }
 }

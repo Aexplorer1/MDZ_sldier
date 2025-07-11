@@ -13,11 +13,11 @@ public class TextElement extends SlideElement {
     private Color color;
     private FontWeight fontWeight;
     private boolean italic;
-    private double x;
-    private double y;
+    //private double x;
+    //private double y;
     private double width;
     private double height;
-    private boolean selected;
+    //private boolean selected;
     
     private static final double HANDLE_SIZE = 8; // 控制点大小
     private static final double HANDLE_OFFSET = HANDLE_SIZE / 2;

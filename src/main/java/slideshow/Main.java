@@ -42,12 +42,16 @@ import slideshow.model.PromptTemplate;
 import slideshow.util.IntelligentLayoutEngine;
 import slideshow.util.MultilingualSupport;
 import slideshow.AIEnhancedAgent;
+import slideshow.util.SlideStructureAnalyzer;
+import slideshow.util.SlideStructureAnalyzer.StructureAnalysis;
+import slideshow.util.LogicGraphRenderer;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -687,6 +691,15 @@ public class Main extends Application {
         MenuItem autoTextSizeItem = new MenuItem("自动文本调整");
         layoutMenu.getItems().addAll(optimizeLayoutItem, responsiveLayoutItem, autoTextSizeItem);
         
+        // 结构分析菜单
+        Menu structureMenu = new Menu("结构分析");
+        MenuItem analyzeStructureItem = new MenuItem("分析幻灯片结构");
+        MenuItem generateOutlineItem = new MenuItem("生成智能大纲");
+        MenuItem analyzeKeyPointsItem = new MenuItem("重点内容分析");
+        MenuItem generateLogicGraphItem = new MenuItem("生成逻辑关系图");
+        MenuItem completeReportItem = new MenuItem("完整分析报告");
+        structureMenu.getItems().addAll(analyzeStructureItem, generateOutlineItem, analyzeKeyPointsItem, generateLogicGraphItem, completeReportItem);
+
         // 多语言菜单
         Menu languageMenu = new Menu("多语言");
         MenuItem translateContentItem = new MenuItem("一键翻译当前幻灯片");
@@ -695,7 +708,7 @@ public class Main extends Application {
         MenuItem switchLanguageItem = new MenuItem("切换语言");
         languageMenu.getItems().addAll(translateContentItem, translateAllItem, generateMultilingualItem, switchLanguageItem);
 
-        menuBar.getMenus().addAll(fileMenu, editMenu, playMenu, layoutMenu, languageMenu);
+        menuBar.getMenus().addAll(fileMenu, editMenu, playMenu, layoutMenu, structureMenu, languageMenu);
 
         // Add event handling
         newItem.setOnAction(e -> createNewPresentation());
@@ -709,6 +722,13 @@ public class Main extends Application {
         optimizeLayoutItem.setOnAction(e -> optimizeCurrentSlideLayout());
         responsiveLayoutItem.setOnAction(e -> responsiveAdjustCurrentSlide());
         autoTextSizeItem.setOnAction(e -> autoAdjustTextSize());
+        
+        // 结构分析功能事件处理
+        analyzeStructureItem.setOnAction(e -> analyzeSlideStructure());
+        generateOutlineItem.setOnAction(e -> generateSmartOutline());
+        analyzeKeyPointsItem.setOnAction(e -> analyzeKeyPoints());
+        generateLogicGraphItem.setOnAction(e -> generateLogicGraph());
+        completeReportItem.setOnAction(e -> generateCompleteReport());
         
         // 多语言功能事件处理
         translateContentItem.setOnAction(e -> translateCurrentContent());
@@ -2399,4 +2419,397 @@ public class Main extends Application {
 
     // 使用示例：
     // translateAndRenderPPTCommands(originalCommands, MultilingualSupport.SupportedLanguage.JAPANESE);
+
+    // ==================== 结构分析功能 ====================
+
+    /**
+     * 分析幻灯片结构
+     */
+    private void analyzeSlideStructure() {
+        if (slides.isEmpty()) {
+            showError("分析失败", "没有可分析的幻灯片");
+            return;
+        }
+
+        // 显示进度提示
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("分析中");
+        progressAlert.setHeaderText("正在分析幻灯片结构...");
+        progressAlert.setContentText("请稍候");
+        progressAlert.setResizable(false);
+        progressAlert.show();
+
+        // 在新线程中执行分析
+        new Thread(() -> {
+            try {
+                StructureAnalysis analysis = SlideStructureAnalyzer.analyzeStructure(slides);
+                
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showStructureAnalysisResult(analysis);
+                });
+
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("分析失败", "分析幻灯片结构时发生错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 显示结构分析结果
+     */
+    private void showStructureAnalysisResult(StructureAnalysis analysis) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("幻灯片结构分析结果");
+        dialog.setHeaderText("分析完成");
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
+        
+        // 创建内容显示区域
+        VBox content = new VBox(10);
+        
+        Label summaryLabel = new Label(String.format("幻灯片数量: %d, 元素总数: %d", 
+            analysis.getTotalSlides(), analysis.getTotalElements()));
+        summaryLabel.setStyle("-fx-font-weight: bold;");
+        
+        TextArea resultArea = new TextArea(analysis.toString());
+        resultArea.setPrefRowCount(20);
+        resultArea.setEditable(false);
+        resultArea.setPromptText("分析结果...");
+        
+        content.getChildren().addAll(summaryLabel, new Label("详细分析结果:"), resultArea);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        dialog.showAndWait();
+    }
+
+    /**
+     * 生成智能大纲
+     */
+    private void generateSmartOutline() {
+        if (slides.isEmpty()) {
+            showError("生成失败", "没有可生成大纲的幻灯片");
+            return;
+        }
+
+        // 显示进度提示
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("生成中");
+        progressAlert.setHeaderText("正在生成智能大纲...");
+        progressAlert.setContentText("请稍候");
+        progressAlert.setResizable(false);
+        progressAlert.show();
+
+        // 在新线程中执行生成
+        new Thread(() -> {
+            try {
+                String outline = SlideStructureAnalyzer.generateAnalysisReport(
+                    SlideStructureAnalyzer.analyzeStructure(slides)
+                );
+                
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showSmartOutlineResult(outline);
+                });
+
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("生成失败", "生成智能大纲时发生错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 显示智能大纲结果
+     */
+    private void showSmartOutlineResult(String outline) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("智能大纲生成结果");
+        dialog.setHeaderText("大纲生成完成");
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
+        
+        // 创建内容显示区域
+        VBox content = new VBox(10);
+        
+        TextArea outlineArea = new TextArea(outline);
+        outlineArea.setPrefRowCount(25);
+        outlineArea.setEditable(false);
+        outlineArea.setPromptText("智能大纲...");
+        
+        content.getChildren().addAll(new Label("生成的智能大纲:"), outlineArea);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        dialog.showAndWait();
+    }
+
+    /**
+     * 重点内容分析
+     */
+    private void analyzeKeyPoints() {
+        if (slides.isEmpty()) {
+            showError("分析失败", "没有可分析重点的幻灯片");
+            return;
+        }
+
+        // 显示进度提示
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("分析中");
+        progressAlert.setHeaderText("正在分析重点内容...");
+        progressAlert.setContentText("请稍候");
+        progressAlert.setResizable(false);
+        progressAlert.show();
+
+        // 在新线程中执行分析
+        new Thread(() -> {
+            try {
+                StructureAnalysis analysis = SlideStructureAnalyzer.analyzeStructure(slides);
+                StringBuilder keyPointsText = new StringBuilder();
+                keyPointsText.append("=== 重点内容分析 ===\n\n");
+                
+                keyPointsText.append("【核心重点】\n");
+                for (int i = 0; i < Math.min(analysis.getKeyPoints().size(), 10); i++) {
+                    keyPointsText.append(i + 1).append(". ").append(analysis.getKeyPoints().get(i)).append("\n");
+                }
+                
+                keyPointsText.append("\n【关键词统计】\n");
+                analysis.getKeywordFrequency().entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .limit(8)
+                    .forEach(entry -> keyPointsText.append(entry.getKey()).append(": ").append(entry.getValue()).append("次\n"));
+                
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showKeyPointsResult(keyPointsText.toString());
+                });
+
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("分析失败", "分析重点内容时发生错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 显示重点内容分析结果
+     */
+    private void showKeyPointsResult(String keyPointsText) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("重点内容分析结果");
+        dialog.setHeaderText("分析完成");
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
+        
+        // 创建内容显示区域
+        VBox content = new VBox(10);
+        
+        TextArea resultArea = new TextArea(keyPointsText);
+        resultArea.setPrefRowCount(20);
+        resultArea.setEditable(false);
+        resultArea.setPromptText("重点内容分析...");
+        
+        content.getChildren().addAll(new Label("重点内容分析:"), resultArea);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        dialog.showAndWait();
+    }
+
+    /**
+     * 生成逻辑关系图
+     */
+    private void generateLogicGraph() {
+        if (slides.isEmpty()) {
+            showError("生成失败", "没有可生成关系图的幻灯片");
+            return;
+        }
+
+        // 显示进度提示
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("生成中");
+        progressAlert.setHeaderText("正在生成逻辑关系图...");
+        progressAlert.setContentText("请稍候");
+        progressAlert.setResizable(false);
+        progressAlert.show();
+
+        // 在新线程中执行生成
+        new Thread(() -> {
+            try {
+                StructureAnalysis analysis = SlideStructureAnalyzer.analyzeStructure(slides);
+                String graphData = SlideStructureAnalyzer.generateLogicGraphData(analysis);
+                
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showLogicGraphResult(graphData);
+                });
+
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("生成失败", "生成逻辑关系图时发生错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 显示逻辑关系图结果
+     */
+    private void showLogicGraphResult(String graphData) {
+        // 创建选项对话框
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("逻辑关系图");
+        alert.setHeaderText("选择显示方式");
+        alert.setContentText("请选择如何显示逻辑关系图：");
+        
+        ButtonType showVisualButton = new ButtonType("可视化显示");
+        ButtonType showDataButton = new ButtonType("显示数据");
+        ButtonType cancelButton = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        
+        alert.getButtonTypes().setAll(showVisualButton, showDataButton, cancelButton);
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        
+        if (result.isPresent()) {
+            if (result.get() == showVisualButton) {
+                // 显示可视化图形
+                showVisualLogicGraph(graphData);
+            } else if (result.get() == showDataButton) {
+                // 显示原始数据
+                showLogicGraphData(graphData);
+            }
+        }
+    }
+    
+    /**
+     * 显示可视化逻辑关系图
+     */
+    private void showVisualLogicGraph(String graphData) {
+        try {
+            // 创建新窗口显示可视化图形
+            LogicGraphRenderer.showLogicGraph(graphData);
+        } catch (Exception e) {
+            showError("可视化失败", "无法显示可视化图形: " + e.getMessage());
+            // 如果可视化失败，回退到显示数据
+            showLogicGraphData(graphData);
+        }
+    }
+    
+    /**
+     * 显示逻辑关系图数据
+     */
+    private void showLogicGraphData(String graphData) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("逻辑关系图数据");
+        dialog.setHeaderText("生成完成");
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        ButtonType visualizeButton = new ButtonType("可视化显示");
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType, visualizeButton);
+        
+        // 创建内容显示区域
+        VBox content = new VBox(10);
+        
+        Label infoLabel = new Label("逻辑关系图数据已生成，可用于可视化展示");
+        infoLabel.setStyle("-fx-font-weight: bold;");
+        
+        TextArea graphArea = new TextArea(graphData);
+        graphArea.setPrefRowCount(15);
+        graphArea.setEditable(false);
+        graphArea.setPromptText("逻辑关系图数据...");
+        
+        content.getChildren().addAll(infoLabel, new Label("图数据:"), graphArea);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        // 添加可视化按钮事件
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == visualizeButton) {
+                showVisualLogicGraph(graphData);
+            }
+            return null;
+        });
+        
+        dialog.showAndWait();
+    }
+
+    /**
+     * 生成完整分析报告
+     */
+    private void generateCompleteReport() {
+        if (slides.isEmpty()) {
+            showError("生成失败", "没有可生成报告的幻灯片");
+            return;
+        }
+
+        // 显示进度提示
+        Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+        progressAlert.setTitle("生成中");
+        progressAlert.setHeaderText("正在生成完整分析报告...");
+        progressAlert.setContentText("请稍候");
+        progressAlert.setResizable(false);
+        progressAlert.show();
+
+        // 在新线程中执行生成
+        new Thread(() -> {
+            try {
+                StructureAnalysis analysis = SlideStructureAnalyzer.analyzeStructure(slides);
+                String completeReport = SlideStructureAnalyzer.generateAnalysisReport(analysis);
+                
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showCompleteReportResult(completeReport);
+                });
+
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    progressAlert.close();
+                    showError("生成失败", "生成完整分析报告时发生错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * 显示完整分析报告结果
+     */
+    private void showCompleteReportResult(String completeReport) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("完整分析报告");
+        dialog.setHeaderText("报告生成完成");
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
+        
+        // 创建内容显示区域
+        VBox content = new VBox(10);
+        
+        TextArea reportArea = new TextArea(completeReport);
+        reportArea.setPrefRowCount(30);
+        reportArea.setEditable(false);
+        reportArea.setPromptText("完整分析报告...");
+        
+        content.getChildren().addAll(new Label("完整分析报告:"), reportArea);
+        content.setPadding(new Insets(10));
+        
+        dialog.getDialogPane().setContent(content);
+        
+        dialog.showAndWait();
+    }
 }
