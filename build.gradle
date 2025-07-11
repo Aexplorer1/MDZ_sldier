@@ -68,7 +68,10 @@ run {
                 '--add-exports', 'javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
                 '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
                 '-Dfile.encoding=UTF-8',
-                '--add-opens=javafx.graphics/javafx.scene.paint=ALL-UNNAMED'
+                '--add-opens=javafx.graphics/javafx.scene.paint=ALL-UNNAMED',
+//                '--add-opens=javafx.graphics/javafx.scene.image=ALL-UNNAMED',
+//                '--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED',
+//                '--add-opens=javafx.base/com.sun.javafx.binding=ALL-UNNAMED'
         ]
     }
 }

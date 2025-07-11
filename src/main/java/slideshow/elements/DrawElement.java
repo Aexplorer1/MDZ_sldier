@@ -157,4 +157,33 @@ public class DrawElement extends SlideElement {
         gc.fillRect(x, y, HANDLE_SIZE, HANDLE_SIZE);
         gc.strokeRect(x, y, HANDLE_SIZE, HANDLE_SIZE);
     }
+
+    public ShapeType getShapeType() {
+        return shapeType;
+    }
+
+    public Color getStrokeColor() {
+        return strokeColor;
+    }
+
+    public double getStrokeWidth() {
+        return strokeWidth;
+    }
+
+    public double getStartX() {
+        return startX;
+    }
+
+    public double getStartY() {
+        return startY;
+    }
+
+    public double getEndX() {
+        return endX;
+    }
+
+    public double getEndY() {
+        return endY;
+    }
+
 } 
