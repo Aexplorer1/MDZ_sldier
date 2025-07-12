@@ -26,6 +26,11 @@ import javafx.scene.layout.HBox;
 import javafx.geometry.Pos;
 import javafx.concurrent.Task;
 import javafx.scene.control.ProgressIndicator;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ContentDisplay;
 
 import slideshow.util.Constants;
 import slideshow.model.Slide;
@@ -87,8 +92,26 @@ public class Main extends Application {
         logger.info("Application starting...");
         BorderPane root = new BorderPane();
 
+        // ========== 幻灯片切换控件初始化 ==========
+        previousSlideButton = new Button("上一页");
+        nextSlideButton = new Button("下一页");
+        slideCountLabel = new Label("1/1");
+        // previousSlideButton.setPrefWidth(80); // 移除宽度设置，交由CSS控制
+        // nextSlideButton.setPrefWidth(80);
+        slideCountLabel.setStyle("-fx-font-size:14;-fx-padding:6 0;-fx-text-fill:#666;");
+        previousSlideButton.getStyleClass().add("button");
+        nextSlideButton.getStyleClass().add("button");
+        previousSlideButton.setOnAction(e -> previousSlide());
+        nextSlideButton.setOnAction(e -> nextSlide());
+        VBox navBox = new VBox(8, previousSlideButton, slideCountLabel, nextSlideButton);
+        navBox.setAlignment(Pos.CENTER);
+        navBox.setPadding(new Insets(40, 0, 0, 0));
+
         // Create canvas
-        canvas = new Canvas(Constants.DEFAULT_SLIDE_WIDTH, Constants.DEFAULT_SLIDE_HEIGHT);
+        // 调整画布大小为更大尺寸
+        double newCanvasWidth = 1600;
+        double newCanvasHeight = 1000;
+        canvas = new Canvas(newCanvasWidth, newCanvasHeight);
         graphicsContext = canvas.getGraphicsContext2D();
 
         // Add mouse event handling
@@ -97,21 +120,181 @@ public class Main extends Application {
         canvas.setOnMouseReleased(this::handleMouseReleased);
         canvas.setOnMouseMoved(this::handleMouseMoved);
 
-        // Create menu bar and tool bar
-        MenuBar menuBar = createMenuBar();
+        // ========== 顶部主标题 ==========
+        Label mainTitle = new Label("MDZ_Slider");
+        mainTitle.setStyle("-fx-font-size:22;-fx-font-weight:bold;-fx-padding:12 0 12 24;-fx-text-fill:#222;font-family:'PingFang SC','Microsoft YaHei','Arial';");
+        VBox topBox = new VBox();
+        topBox.setStyle("-fx-background-color:#a3d3b2;-fx-border-width:0 0 1 0;-fx-border-color:#7fcfa0;");
+        topBox.getChildren().add(mainTitle);
+        // ========== 恢复顶部操作栏 ==========
         ToolBar toolBar = createToolBar();
-
-        // Create top container
-        VBox topContainer = new VBox();
-        topContainer.getChildren().addAll(menuBar, toolBar);
-        root.setTop(topContainer);
-
-        // Set canvas container
+        toolBar.setStyle("-fx-background-color:#a3d3b2;-fx-border-radius:16;-fx-background-radius:16;-fx-padding:10 20;-fx-spacing:12;-fx-border-width:0 0 1 0;-fx-border-color:#7fcfa0;");
+        topBox.getChildren().add(toolBar);
+        root.setTop(topBox);
+        // ========== 画布区域 ==========
         BorderPane canvasHolder = new BorderPane(canvas);
+        canvasHolder.setStyle("-fx-background-color:#e6f4ea;-fx-border-radius:24;-fx-background-radius:24;");
         canvasHolder.getStyleClass().add("canvas-holder");
         root.setCenter(canvasHolder);
 
+        // ========== 新增：左侧苹果风格绿色侧边栏 ==========
+        VBox sidebar = new VBox(18);
+        sidebar.setPadding(new Insets(24, 8, 24, 8));
+        sidebar.setStyle("-fx-background-color:#a3d3b2;-fx-border-width:0 1 0 0;-fx-border-color:#7fcfa0;-fx-border-radius:16;-fx-background-radius:16;");
+        sidebar.setPrefWidth(150); // 增加侧栏宽度，防止按钮被截断
+        // File 菜单
+        Button fileBtn = new Button("文件操作");
+        Label fileIcon = new Label("\uD83D\uDCC1");
+        fileIcon.setStyle("-fx-font-size: 16px;"); // 缩小图标
+        fileBtn.setGraphic(fileIcon);
+        fileBtn.setContentDisplay(ContentDisplay.LEFT);
+        fileBtn.setGraphicTextGap(10);
+        fileBtn.getStyleClass().add("menu-button");
+        fileBtn.setMaxWidth(Double.MAX_VALUE);
+        fileBtn.setOnAction(e -> {
+            MenuItem newItem = new MenuItem("新建");
+            MenuItem openItem = new MenuItem("打开...");
+            MenuItem saveItem = new MenuItem("保存");
+            MenuItem saveAsItem = new MenuItem("另存为...");
+            MenuItem exitItem = new MenuItem("退出");
+            newItem.setOnAction(ev -> createNewPresentation());
+            openItem.setOnAction(ev -> openPresentation());
+            saveItem.setOnAction(ev -> savePresentation());
+            saveAsItem.setOnAction(ev -> saveAsPresentation());
+            exitItem.setOnAction(ev -> Platform.exit());
+            ContextMenu menu = new ContextMenu(
+                newItem,
+                openItem,
+                saveItem,
+                saveAsItem,
+                new SeparatorMenuItem(),
+                exitItem
+            );
+            menu.show(fileBtn, javafx.geometry.Side.RIGHT, 0, 0);
+        });
+        // Edit 菜单
+        Button editBtn = new Button("编辑");
+        Label editIcon = new Label("\u270E");
+        editIcon.setStyle("-fx-font-size: 16px;");
+        editBtn.setGraphic(editIcon);
+        editBtn.setContentDisplay(ContentDisplay.LEFT);
+        editBtn.setGraphicTextGap(10);
+        editBtn.getStyleClass().add("menu-button");
+        editBtn.setMaxWidth(Double.MAX_VALUE);
+        editBtn.setOnAction(e -> {
+            MenuItem undoItem = new MenuItem("撤销");
+            MenuItem redoItem = new MenuItem("重做");
+            MenuItem cutItem = new MenuItem("剪切");
+            MenuItem copyItem = new MenuItem("复制");
+            MenuItem pasteItem = new MenuItem("粘贴");
+            // TODO: 绑定撤销/重做/剪切/复制/粘贴功能
+            ContextMenu menu = new ContextMenu(
+                undoItem,
+                redoItem,
+                new SeparatorMenuItem(),
+                cutItem,
+                copyItem,
+                pasteItem
+            );
+            menu.show(editBtn, javafx.geometry.Side.RIGHT, 0, 0);
+        });
+        // 智能排版
+        Button layoutBtn = new Button("智能排版");
+        Label layoutIcon = new Label("\uD83D\uDCC4");
+        layoutIcon.setStyle("-fx-font-size: 16px;");
+        layoutBtn.setGraphic(layoutIcon);
+        layoutBtn.setContentDisplay(ContentDisplay.LEFT);
+        layoutBtn.setGraphicTextGap(10);
+        layoutBtn.getStyleClass().add("menu-button");
+        layoutBtn.setMaxWidth(Double.MAX_VALUE);
+        layoutBtn.setOnAction(e -> {
+            MenuItem optimizeItem = new MenuItem("优化布局");
+            MenuItem responsiveItem = new MenuItem("响应式调整");
+            MenuItem autoTextItem = new MenuItem("自动文本调整");
+            optimizeItem.setOnAction(ev -> optimizeCurrentSlideLayout());
+            responsiveItem.setOnAction(ev -> responsiveAdjustCurrentSlide());
+            autoTextItem.setOnAction(ev -> autoAdjustTextSize());
+            ContextMenu menu = new ContextMenu(
+                optimizeItem,
+                responsiveItem,
+                autoTextItem
+            );
+            menu.show(layoutBtn, javafx.geometry.Side.RIGHT, 0, 0);
+        });
+        // 结构分析
+        Button structureBtn = new Button("结构分析");
+        Label structureIcon = new Label("\uD83D\uDCC8");
+        structureIcon.setStyle("-fx-font-size: 16px;");
+        structureBtn.setGraphic(structureIcon);
+        structureBtn.setContentDisplay(ContentDisplay.LEFT);
+        structureBtn.setGraphicTextGap(10);
+        structureBtn.getStyleClass().add("menu-button");
+        structureBtn.setMaxWidth(Double.MAX_VALUE);
+        structureBtn.setOnAction(e -> {
+            MenuItem analyzeItem = new MenuItem("分析幻灯片结构");
+            MenuItem outlineItem = new MenuItem("生成智能大纲");
+            MenuItem keypointsItem = new MenuItem("重点内容分析");
+            MenuItem logicGraphItem = new MenuItem("生成逻辑关系图");
+            MenuItem reportItem = new MenuItem("完整分析报告");
+            analyzeItem.setOnAction(ev -> analyzeSlideStructure());
+            outlineItem.setOnAction(ev -> generateSmartOutline());
+            keypointsItem.setOnAction(ev -> analyzeKeyPoints());
+            logicGraphItem.setOnAction(ev -> generateLogicGraph());
+            reportItem.setOnAction(ev -> generateCompleteReport());
+            ContextMenu menu = new ContextMenu(
+                analyzeItem,
+                outlineItem,
+                keypointsItem,
+                logicGraphItem,
+                reportItem
+            );
+            menu.show(structureBtn, javafx.geometry.Side.RIGHT, 0, 0);
+        });
+        // 多语言
+        Button languageBtn = new Button("多语言");
+        Label languageIcon = new Label("\uD83C\uDF10");
+        languageIcon.setStyle("-fx-font-size: 16px;");
+        languageBtn.setGraphic(languageIcon);
+        languageBtn.setContentDisplay(ContentDisplay.LEFT);
+        languageBtn.setGraphicTextGap(10);
+        languageBtn.getStyleClass().add("menu-button");
+        languageBtn.setMaxWidth(Double.MAX_VALUE);
+        languageBtn.setOnAction(e -> {
+            MenuItem translateOneItem = new MenuItem("一键翻译当前幻灯片");
+            MenuItem translateAllItem = new MenuItem("批量翻译所有幻灯片");
+            MenuItem genMultiItem = new MenuItem("生成多语言PPT");
+            MenuItem switchLangItem = new MenuItem("切换语言");
+            translateOneItem.setOnAction(ev -> translateCurrentContent());
+            translateAllItem.setOnAction(ev -> translateAllContent());
+            genMultiItem.setOnAction(ev -> generateMultilingualPPT());
+            switchLangItem.setOnAction(ev -> showLanguageSelectionDialog());
+            ContextMenu menu = new ContextMenu(
+                translateOneItem,
+                translateAllItem,
+                genMultiItem,
+                switchLangItem
+            );
+            menu.show(languageBtn, javafx.geometry.Side.RIGHT, 0, 0);
+        });
+        // 分组美化
+        Separator sep1 = new Separator();
+        sep1.setPrefWidth(80);
+        Separator sep2 = new Separator();
+        sep2.setPrefWidth(80);
+        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, layoutBtn, structureBtn, sep2, languageBtn);
+        // ========== 幻灯片切换控件加到底部 ==========
+        // String unifiedBtnStyle = "-fx-background-color:#fff;-fx-text-fill:#222;-fx-font-size:15;-fx-font-weight:bold;-fx-background-radius:10;-fx-border-color:#7fcfa0;-fx-border-width:1;font-family:'PingFang SC','Microsoft YaHei','Arial';";
+        // previousSlideButton.setStyle(unifiedBtnStyle);
+        // nextSlideButton.setStyle(unifiedBtnStyle);
+        // slideCountLabel.setStyle("-fx-font-size:15;-fx-padding:6 0;-fx-text-fill:#222;-fx-font-weight:bold;font-family:'PingFang SC','Microsoft YaHei','Arial';");
+        // sidebar.getChildren().add(navBox); // 删除侧栏底部的上一页/下一页按钮
+        root.setLeft(sidebar);
+
         Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);
+
+        // 增大窗口初始大小以适配更大画布
+        primaryStage.setWidth(newCanvasWidth + 300); // 侧栏+边距
+        primaryStage.setHeight(newCanvasHeight + 150); // 顶部+边距
 
         // Load CSS styles
         try {
@@ -481,6 +664,23 @@ public class Main extends Application {
         templateManageBtn.getStyleClass().add("button");
         templateManageBtn.setOnAction(e -> openTemplateManager());
 
+        // 1. 新增思考链可视化区域
+        ListView<AIChainStep> aiChainListView = new ListView<>();
+        ObservableList<AIChainStep> aiChainSteps = FXCollections.observableArrayList();
+        aiChainListView.setItems(aiChainSteps);
+        aiChainListView.setPrefHeight(120);
+        aiChainListView.setCellFactory(list -> new ListCell<AIChainStep>() {
+            @Override
+            protected void updateItem(AIChainStep step, boolean empty) {
+                super.updateItem(step, empty);
+                if (empty || step == null) {
+                    setText(null);
+                } else {
+                    setText(step.getTitle() + " [" + step.getStatus() + "]\n" + step.getDetail());
+                }
+            }
+        });
+
         return new ToolBar(
                 newSlideBtn,
                 new Separator(),
@@ -504,7 +704,8 @@ public class Main extends Application {
                 keywordAnalysisBtn,
                 aiQABtn,
                 new Separator(),
-                templateManageBtn);
+                templateManageBtn,
+                aiChainListView);
     }
 
     private void createNewSlide() {
@@ -1047,11 +1248,31 @@ public class Main extends Application {
         
         buttonBox.getChildren().addAll(generateBtn, confirmBtn, closeBtn);
         
+        // ========== 20250712新增：AI思考链可视化相关 ==========
+        ListView<AIChainStep> aiChainListView = new ListView<>();
+        ObservableList<AIChainStep> aiChainSteps = FXCollections.observableArrayList();
+        aiChainListView.setItems(aiChainSteps);
+        aiChainListView.setPrefHeight(120);
+        aiChainListView.setCellFactory(list -> new ListCell<AIChainStep>() {
+            @Override
+            protected void updateItem(AIChainStep step, boolean empty) {
+                super.updateItem(step, empty);
+                if (empty || step == null) {
+                    setText(null);
+                } else {
+                    setText(step.getTitle() + " [" + step.getStatus() + "]\n" + step.getDetail());
+                }
+            }
+        });
+        // ========== 新增结束 ==========
+
         // 添加所有组件到主容器
         root.getChildren().addAll(
             titleLabel,
             new Label("选择模板："), templateCombo, templateInfoLabel,
             new Label("PPT需求："), inputArea,
+            // 新增：AI思考链可视化区域
+            new Label("AI思考链（可视化）："), aiChainListView,
             new Label("AI建议与反馈（只读）："), adviceArea,
             new Label("PPT命令与大纲（可编辑）："), suggestionArea,
             buttonBox
@@ -1078,10 +1299,15 @@ public class Main extends Application {
             adviceArea.setText("AI正在思考并生成建议，请稍候...");
             suggestionArea.setText("");
 
-            // 创建AI思考提示
-            final long startTime = System.currentTimeMillis();
+            // ========== 新增：AI思考链步骤初始化 ==========
+            aiChainSteps.clear();
+            aiChainSteps.add(new AIChainStep("1. 构建提示词", "正在根据用户输入和模板构建AI提示词...", AIChainStep.StepStatus.RUNNING));
+            aiChainListView.refresh();
+            // ========== 新增结束 ==========
 
             // 创建时间更新器
+            final long startTime = System.currentTimeMillis();
+
             final javafx.animation.Timeline timeTimeline = new javafx.animation.Timeline(
                     new javafx.animation.KeyFrame(javafx.util.Duration.millis(500), e -> {
                         long elapsed = (System.currentTimeMillis() - startTime) / 1000;
@@ -1130,11 +1356,25 @@ public class Main extends Application {
                     aiPrompt = buildDefaultPrompt(userPrompt);
                 }
 
+                // ========== 新增：AI思考链步骤 ==========
+                Platform.runLater(() -> {
+                    aiChainSteps.get(0).setStatus(AIChainStep.StepStatus.DONE);
+                    aiChainSteps.add(new AIChainStep("2. 调用AI模型", "正在请求AI生成建议...", AIChainStep.StepStatus.RUNNING));
+                    aiChainListView.refresh();
+                });
+                // ========== 新增结束 ==========
+
                 try {
                     String aiResult = aiModel.chat(aiPrompt);
                     Platform.runLater(() -> {
                         // 停止时间更新器
                         timeTimeline.stop();
+
+                        // ========== 新增：AI思考链步骤 ==========
+                        aiChainSteps.get(1).setStatus(AIChainStep.StepStatus.DONE);
+                        aiChainSteps.add(new AIChainStep("3. 解析AI响应", "正在解析AI返回内容...", AIChainStep.StepStatus.RUNNING));
+                        aiChainListView.refresh();
+                        // ========== 新增结束 ==========
 
                         // 智能解析AI响应
                         String advice = "";
@@ -1207,6 +1447,10 @@ public class Main extends Application {
                         suggestionArea.setText(pptCmd);
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
+                        // ========== 新增：AI思考链步骤 ==========
+                        aiChainSteps.get(2).setStatus(AIChainStep.StepStatus.DONE);
+                        aiChainListView.refresh();
+                        // ========== 新增结束 ==========
                     });
                 } catch (Exception e) {
                     Platform.runLater(() -> {
@@ -1217,6 +1461,11 @@ public class Main extends Application {
                         suggestionArea.setText("");
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
+                        // ========== 新增：AI思考链步骤 ==========
+                        if (aiChainSteps.size() > 0) aiChainSteps.get(aiChainSteps.size() - 1).setStatus(AIChainStep.StepStatus.DONE);
+                        aiChainSteps.add(new AIChainStep("异常", "AI生成失败：" + e.getMessage(), AIChainStep.StepStatus.DONE));
+                        aiChainListView.refresh();
+                        // ========== 新增结束 ==========
                     });
                 }
             }).start();
@@ -2811,5 +3060,24 @@ public class Main extends Application {
         dialog.getDialogPane().setContent(content);
         
         dialog.showAndWait();
+    }
+
+    // AI思考链可视化步骤
+    public static class AIChainStep {
+        private String title;
+        private String detail;
+        private StepStatus status;
+        public enum StepStatus { WAITING, RUNNING, DONE }
+        public AIChainStep(String title, String detail, StepStatus status) {
+            this.title = title;
+            this.detail = detail;
+            this.status = status;
+        }
+        // getter/setter略
+        public String getTitle() { return title; }
+        public String getDetail() { return detail; }
+        public StepStatus getStatus() { return status; }
+        public void setStatus(StepStatus status) { this.status = status; }
+        public void setDetail(String detail) { this.detail = detail; }
     }
 }
