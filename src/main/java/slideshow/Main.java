@@ -1745,7 +1745,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);
+        Application.launch(args);
     }
     
     // ==================== 新增功能方法实现 ====================

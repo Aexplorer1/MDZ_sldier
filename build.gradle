@@ -1,6 +1,6 @@
 plugins {
-    id 'java'
     id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
 }
 
 repositories {
@@ -39,11 +39,14 @@ dependencies {
     // Gson 依赖
     implementation 'com.google.code.gson:gson:2.10.1'
 
-    // JavaFX 依赖（手动添加本地 JAR 文件）
-    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.base.jar')
-    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.controls.jar')
-    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.graphics.jar')
-    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.fxml.jar')
+    // JavaFX 依赖（OpenJFX 官方推荐方式，Windows 平台）
+    implementation "org.openjfx:javafx-base:21.0.1"
+    implementation "org.openjfx:javafx-controls:21.0.1"
+    implementation "org.openjfx:javafx-graphics:21.0.1"
+    implementation "org.openjfx:javafx-fxml:21.0.1"
+    implementation "org.openjfx:javafx-media:21.0.1"
+    implementation "org.openjfx:javafx-swing:21.0.1"
+    implementation "org.openjfx:javafx-web:21.0.1"
 }
 
 application {
@@ -53,7 +56,6 @@ application {
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
-    // 移除 modularity.inferModulePath，因为不再使用模块系统
 }
 
 test {
@@ -95,8 +97,6 @@ task runEncodingTest(type: JavaExec) {
 
 compileJava {
     options.encoding = 'UTF-8'
-    // 移除模块化相关的 compilerArgs，因为不再使用模块系统
-    // options.compilerArgs += [...]
 }
 
 compileTestJava {
@@ -109,4 +109,13 @@ tasks.withType(JavaCompile) {
 
 tasks.withType(Javadoc) {
     options.encoding = 'UTF-8'
+}
+
+javafx {
+    version = "21.0.1"
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.base', 'javafx.graphics' ]
+}
+
+run {
+    environment "DEEPSEEK_API_KEY", "sk-a62c9faf266a4c74b63ecbe57c11ca1d"
 }
