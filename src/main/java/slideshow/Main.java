@@ -54,6 +54,7 @@ import slideshow.util.SlideStructureAnalyzer;
 import slideshow.util.SlideStructureAnalyzer.StructureAnalysis;
 import slideshow.util.SpeechManager;
 import slideshow.util.LogicGraphRenderer;
+import slideshow.PromptGeneratorDialog;
 
 import java.io.File;
 import java.io.IOException;
@@ -320,6 +321,9 @@ public class Main extends Application {
             MenuItem keywordAnalysisItem = new MenuItem("关键词分析");
             MenuItem aiQAItem = new MenuItem("AI问答");
             MenuItem templateManageItem = new MenuItem("模板管理");
+            // 新增：智能生成提示词
+            MenuItem promptGenItem = new MenuItem("智能生成提示词");
+            promptGenItem.setOnAction(ev -> showPromptGeneratorDialog());
             aiGenItem.setOnAction(ev -> showAIChatDialog());
             speechGenItem.setOnAction(ev -> generateSpeechFromSlides());
             speechStructureItem.setOnAction(ev -> showSpeechStructureDialog());
@@ -327,13 +331,14 @@ public class Main extends Application {
             aiQAItem.setOnAction(ev -> showAIDialog());
             templateManageItem.setOnAction(ev -> openTemplateManager());
             ContextMenu menu = new ContextMenu(
-                    aiGenItem,
-                    speechGenItem,
-                    speechStructureItem,
-                    keywordAnalysisItem,
-                    aiQAItem,
-                    new SeparatorMenuItem(),
-                    templateManageItem);
+                aiGenItem,
+                speechGenItem,
+                speechStructureItem,
+                keywordAnalysisItem,
+                aiQAItem,
+                promptGenItem,
+                new SeparatorMenuItem(),
+                templateManageItem);
             menu.show(aiBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
         // 分组美化
@@ -3891,5 +3896,11 @@ public class Main extends Application {
                 (int) (color.getRed() * 255),
                 (int) (color.getGreen() * 255),
                 (int) (color.getBlue() * 255));
+    }
+
+    // 新增方法：弹出智能生成提示词窗口
+    private void showPromptGeneratorDialog() {
+        PromptGeneratorDialog dialog = new PromptGeneratorDialog(aiAgent);
+        dialog.show();
     }
 }
