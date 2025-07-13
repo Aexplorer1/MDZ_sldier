@@ -119,6 +119,7 @@ public class Main extends Application {
         canvas.setOnMouseDragged(this::handleMouseDragged);
         canvas.setOnMouseReleased(this::handleMouseReleased);
         canvas.setOnMouseMoved(this::handleMouseMoved);
+        canvas.setOnMouseClicked(this::handleMouseClicked);
 
         // ========== 顶部主标题 ==========
         Label mainTitle = new Label("MDZ_Slider");
@@ -662,17 +663,7 @@ public class Main extends Application {
             }
         });
 
-        // Sync styles when selected element changes
-        canvas.setOnMouseClicked(e -> {
-            if (selectedElement instanceof TextElement) {
-                TextElement textElement = (TextElement) selectedElement;
-                colorPicker.setValue(textElement.getColor());
-                fontSizeCombo.setValue((int) textElement.getFontSize());
-                String style = textElement.getFontWeight() == FontWeight.BOLD ? "Bold"
-                        : textElement.isItalic() ? "Italic" : "Regular";
-                fontStyleCombo.setValue(style);
-            }
-        });
+        // Sync styles when selected element changes - 这个功能已经合并到handleMouseClicked中
 
         // Initialize class member variables instead of creating new local variables
         previousSlideButton = new Button("Previous Slide");
@@ -752,7 +743,7 @@ public class Main extends Application {
         // 创建支持多行输入的对话框
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("添加文本");
-        dialog.setHeaderText("请输入文本内容（支持换行）：");
+        dialog.setHeaderText("请输入文本内容：");
         dialog.setResizable(true);
 
         // 设置按钮
@@ -895,6 +886,11 @@ public class Main extends Application {
                 editSelectedText();
             });
             contextMenu.getItems().add(editItem);
+            
+            // 添加提示信息
+            MenuItem hintItem = new MenuItem("💡 提示：双击文本或右键选择编辑");
+            hintItem.setDisable(true);
+            contextMenu.getItems().add(hintItem);
         }
         
         contextMenu.show(canvas, x, y);
@@ -3453,5 +3449,42 @@ public class Main extends Application {
         public void setDetail(String detail) {
             this.detail = detail;
         }
+    }
+
+    private void handleMouseClicked(MouseEvent event) {
+        // 处理双击事件
+        if (event.getClickCount() == 2) {
+            if (currentSlide != null) {
+                SlideElement clickedElement = currentSlide.findElementAt(event.getX(), event.getY());
+                if (clickedElement instanceof TextElement) {
+                    // 双击文本元素，进入编辑模式
+                    selectedElement = clickedElement;
+                    selectedElement.setSelected(true);
+                    refreshCanvas();
+                    // 使用与右键编辑相同的对话框
+                    editSelectedText();
+                }
+            }
+        } else if (event.getClickCount() == 1) {
+            // 单击时同步样式到工具栏
+            if (selectedElement instanceof TextElement) {
+                TextElement textElement = (TextElement) selectedElement;
+                // 这里需要访问工具栏的控件，暂时注释掉，后续可以通过其他方式实现
+                // colorPicker.setValue(textElement.getColor());
+                // fontSizeCombo.setValue((int) textElement.getFontSize());
+                // String style = textElement.getFontWeight() == FontWeight.BOLD ? "Bold"
+                //         : textElement.isItalic() ? "Italic" : "Regular";
+                // fontStyleCombo.setValue(style);
+            }
+        }
+    }
+
+    // 内联编辑功能已移除，现在统一使用标准对话框
+    
+    private String colorToHex(Color color) {
+        return String.format("#%02X%02X%02X",
+                (int) (color.getRed() * 255),
+                (int) (color.getGreen() * 255),
+                (int) (color.getBlue() * 255));
     }
 }
