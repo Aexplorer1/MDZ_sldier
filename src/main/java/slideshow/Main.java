@@ -2506,14 +2506,15 @@ public class Main extends Application {
     /**
      * 打开模板管理窗口
      */
-    private void openTemplateManager() {
+    public static void openTemplateManager() {
         try {
             slideshow.presentation.TemplateManagerWindow templateWindow = new slideshow.presentation.TemplateManagerWindow();
             templateWindow.show();
-            logger.info("Template manager window opened successfully");
+            // logger.info("Template manager window opened successfully");
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Failed to open template manager window", e);
-            showError("错误", "无法打开模板管理窗口: " + e.getMessage());
+            // logger.log(Level.SEVERE, "Failed to open template manager window", e);
+            // showError("错误", "无法打开模板管理窗口: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

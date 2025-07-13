@@ -89,7 +89,7 @@ public class TemplateManagerWindow {
         toolbar.setAlignment(Pos.CENTER_LEFT);
         toolbar.setStyle("-fx-background-color: #f0f0f0;");
 
-        // ËÑË÷¿ò
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         searchField = new TextField();
         searchField.setPromptText("Search templates...");
         searchField.setPrefWidth(200);
@@ -97,7 +97,7 @@ public class TemplateManagerWindow {
             searchTemplates(newValue);
         });
 
-        // ·ÖÀà¹ýÂËÆ÷
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         categoryFilter = new ComboBox<>();
         categoryFilter.getItems().addAll(TemplateCategory.values());
         categoryFilter.getItems().add(0, null);
@@ -105,7 +105,7 @@ public class TemplateManagerWindow {
         categoryFilter.setPromptText("Select Category");
         categoryFilter.setOnAction(e -> filterByCategory());
 
-        // °´Å¥
+        // ï¿½ï¿½Å¥
         Button newButton = new Button("New Template");
         newButton.setOnAction(e -> createNewTemplate());
 
@@ -133,7 +133,7 @@ public class TemplateManagerWindow {
         leftPanel.setPrefWidth(300);
         leftPanel.setStyle("-fx-background-color: #f8f8f8;");
 
-        // Ä£°åÁÐ±í
+        // Ä£ï¿½ï¿½ï¿½Ð±ï¿½
         Label listLabel = new Label("Template List");
         listLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
 
@@ -157,11 +157,11 @@ public class TemplateManagerWindow {
         VBox rightPanel = new VBox(15);
         rightPanel.setPadding(new Insets(10));
 
-        // Ä£°åÏêÇéÇøÓò
+        // Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         VBox detailsPanel = createDetailsPanel();
         VBox.setVgrow(detailsPanel, Priority.ALWAYS);
 
-        // ²Ù×÷°´Å¥
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¥
         HBox buttonPanel = createButtonPanel();
 
         rightPanel.getChildren().addAll(detailsPanel, buttonPanel);
@@ -174,29 +174,29 @@ public class TemplateManagerWindow {
         detailsPanel.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1;");
         detailsPanel.setPadding(new Insets(15));
 
-        // Ä£°åÃû³Æ
+        // Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Label nameLabel = new Label("Template Name:");
         templateNameField = new TextField();
         templateNameField.setPromptText("Enter template name");
 
-        // Ä£°åÃèÊö
+        // Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Label descLabel = new Label("Template Description:");
         templateDescriptionArea = new TextArea();
         templateDescriptionArea.setPromptText("Enter template description");
         templateDescriptionArea.setPrefRowCount(3);
 
-        // Ä£°å·ÖÀà
+        // Ä£ï¿½ï¿½ï¿½ï¿½ï¿½
         Label categoryLabel = new Label("Template Category:");
         templateCategoryCombo = new ComboBox<>();
         templateCategoryCombo.getItems().addAll(TemplateCategory.values());
 
-        // Ä£°åÄÚÈÝ
+        // Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Label contentLabel = new Label("Template Content:");
         templateContentArea = new TextArea();
         templateContentArea.setPromptText("Enter template content, use {0}, {1} as placeholders");
         templateContentArea.setPrefRowCount(10);
 
-        // ±êÇ©
+        // ï¿½ï¿½Ç©
         Label tagLabel = new Label("Tags:");
         tagField = new TextField();
         tagField.setPromptText("Enter tags, separated by commas");
@@ -290,7 +290,7 @@ public class TemplateManagerWindow {
             templateCategoryCombo.setValue(template.getCategory());
             templateContentArea.setText(template.getContent());
 
-            // ÉèÖÃ±êÇ©
+            // ï¿½ï¿½ï¿½Ã±ï¿½Ç©
             String tags = String.join(", ", template.getTags());
             tagField.setText(tags);
         }
@@ -322,19 +322,19 @@ public class TemplateManagerWindow {
             return;
         }
 
-        // ´¦Àí±êÇ©
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç©
         String[] tags = tagField.getText().split(",");
 
-        // ¼ì²éÊÇ·ñÊÇ±à¼­ÏÖÓÐÄ£°å
+        // ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ç±à¼­ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½
         PromptTemplate selectedTemplate = templateListView.getSelectionModel().getSelectedItem();
 
         boolean success;
         if (selectedTemplate != null) {
-            // ¸üÐÂÏÖÓÐÄ£°å
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½
             success = templateManager.updateTemplate(
                     selectedTemplate.getId(), name, description, content, category);
 
-            // ¸üÐÂ±êÇ©
+            // ï¿½ï¿½ï¿½Â±ï¿½Ç©
             if (success) {
                 for (String tag : tags) {
                     String trimmedTag = tag.trim();
@@ -344,10 +344,10 @@ public class TemplateManagerWindow {
                 }
             }
         } else {
-            // ´´½¨ÐÂÄ£°å
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½
             success = templateManager.createTemplate(name, description, content, category);
 
-            // Ìí¼Ó±êÇ©
+            // ï¿½ï¿½ï¿½Ó±ï¿½Ç©
             if (success) {
                 Optional<PromptTemplate> newTemplate = templateManager.getTemplateByName(name);
                 if (newTemplate.isPresent()) {
@@ -416,14 +416,14 @@ public class TemplateManagerWindow {
             return;
         }
 
-        // ´´½¨¸±±¾
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         PromptTemplate duplicate = new PromptTemplate(
                 selectedTemplate.getName() + " (Copy)",
                 selectedTemplate.getDescription(),
                 selectedTemplate.getContent(),
                 selectedTemplate.getCategory());
 
-        // ¸´ÖÆ±êÇ©
+        // ï¿½ï¿½ï¿½Æ±ï¿½Ç©
         for (String tag : selectedTemplate.getTags()) {
             duplicate.addTag(tag);
         }
@@ -458,27 +458,27 @@ public class TemplateManagerWindow {
             return;
         }
 
-        // ´´½¨ÆÀ·Ö¶Ô»°¿ò
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¶Ô»ï¿½ï¿½ï¿½
         Dialog<Double> dialog = new Dialog<>();
         dialog.setTitle("Rate Template");
         dialog.setHeaderText("Rate template: " + selectedTemplate.getName());
         dialog.setContentText("Please select a rating (1-5 stars):");
 
-        // ÉèÖÃ°´Å¥
+        // ï¿½ï¿½ï¿½Ã°ï¿½Å¥
         ButtonType rateButtonType = new ButtonType("Rate", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(rateButtonType, ButtonType.CANCEL);
 
-        // ´´½¨ÆÀ·ÖÑ¡ÔñÆ÷
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½
         ComboBox<Double> ratingCombo = new ComboBox<>();
         ratingCombo.getItems().addAll(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0);
         ratingCombo.setValue(5.0);
         ratingCombo.setEditable(false);
 
-        // ´´½¨ÐÇ¼¶ÏÔÊ¾
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ç¼ï¿½ï¿½ï¿½Ê¾
         Label starLabel = new Label("*****");
         starLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: gold; -fx-font-weight: bold;");
 
-        // ÐÇ¼¶±ä»¯¼àÌý
+        // ï¿½Ç¼ï¿½ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½
         ratingCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 int stars = (int) Math.round(newVal);
@@ -498,7 +498,7 @@ public class TemplateManagerWindow {
         content.getChildren().addAll(new Label("Rating:"), ratingCombo, starLabel);
         dialog.getDialogPane().setContent(content);
 
-        // ÉèÖÃ½á¹û×ª»»Æ÷
+        // ï¿½ï¿½ï¿½Ã½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == rateButtonType) {
                 return ratingCombo.getValue();
@@ -506,7 +506,7 @@ public class TemplateManagerWindow {
             return null;
         });
 
-        // ÏÔÊ¾¶Ô»°¿ò²¢´¦Àí½á¹û
+        // ï¿½ï¿½Ê¾ï¿½Ô»ï¿½ï¿½ò²¢´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Optional<Double> result = dialog.showAndWait();
         result.ifPresent(rating -> {
             boolean success = templateManager.rateTemplate(selectedTemplate.getId(), rating);
@@ -568,7 +568,7 @@ public class TemplateManagerWindow {
         File file = fileChooser.showSaveDialog(stage);
         if (file != null) {
             try {
-                // Ö±½ÓÊ¹ÓÃJsonTemplateStorageµÄ¹¦ÄÜ
+                // Ö±ï¿½ï¿½Ê¹ï¿½ï¿½JsonTemplateStorageï¿½Ä¹ï¿½ï¿½ï¿½
                 List<PromptTemplate> allTemplates = templateManager.getAllTemplates();
                 if (allTemplates.isEmpty()) {
                     showAlert("Warning", "No templates to export", Alert.AlertType.WARNING);
@@ -620,8 +620,21 @@ public class TemplateManagerWindow {
         });
     }
 
+    public void pasteContentToNewTemplate(String content) {
+        createNewTemplate();
+        if (content != null) {
+            templateContentArea.setText(content);
+        }
+    }
+
     public void show() {
         stage.show();
+        // æ£€æŸ¥æ˜¯å¦æœ‰å¾…ç²˜è´´å†…å®¹
+        String pending = slideshow.PromptGeneratorDialog.getPendingTemplateContent();
+        if (pending != null && !pending.trim().isEmpty()) {
+            pasteContentToNewTemplate(pending);
+            slideshow.PromptGeneratorDialog.clearPendingTemplateContent();
+        }
     }
 
     /**
@@ -652,7 +665,7 @@ public class TemplateManagerWindow {
                 statsLabel.setFont(Font.font("System", 9));
                 statsLabel.setStyle("-fx-text-fill: #999;");
 
-                // Ìí¼ÓÊÕ²Ø×´Ì¬ÏÔÊ¾
+                // ï¿½ï¿½ï¿½ï¿½ï¿½Õ²ï¿½×´Ì¬ï¿½ï¿½Ê¾
                 HBox statusBox = new HBox(5);
                 if (item.getMetadata().isFavorite()) {
                     Label favoriteLabel = new Label("[FAV]");
@@ -660,7 +673,7 @@ public class TemplateManagerWindow {
                     statusBox.getChildren().add(favoriteLabel);
                 }
 
-                // Ìí¼ÓÆÀ·ÖÐÇ¼¶ÏÔÊ¾
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¼ï¿½ï¿½ï¿½Ê¾
                 if (item.getMetadata().getRatingCount() > 0) {
                     double rating = item.getMetadata().getAverageRating();
                     int stars = (int) Math.round(rating);
