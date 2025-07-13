@@ -151,6 +151,45 @@ public class SpeakerViewWindow {
         // 演讲稿标题
         Label speechTitle = new Label("演讲稿内容");
         speechTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+
+        // 新增：选择演讲稿按钮
+        javafx.scene.control.Button selectSpeechBtn = new javafx.scene.control.Button("选择演讲稿");
+        selectSpeechBtn.setStyle("-fx-font-size: 13px; -fx-background-color: #e0e0e0; -fx-border-radius: 3px;");
+        selectSpeechBtn.setOnAction(e -> {
+            javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+            fileChooser.setTitle("选择演讲稿文件");
+            fileChooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("演讲稿文件 (*.txt)", "*.txt"));
+            java.io.File speechDir = new java.io.File("speeches");
+            if (speechDir.exists() && speechDir.isDirectory()) {
+                fileChooser.setInitialDirectory(speechDir);
+            }
+            java.io.File file = fileChooser.showOpenDialog(stage);
+            if (file != null) {
+                String content = slideshow.util.SpeechManager.loadSpeechFromFile(file.getAbsolutePath());
+                if (content != null && !content.isEmpty()) {
+                    // 提取纯演讲稿内容（去除头部信息）
+                    String[] lines = content.split("\n");
+                    StringBuilder contentBuilder = new StringBuilder();
+                    boolean contentStarted = false;
+                    for (String line : lines) {
+                        if (line.startsWith("=")) {
+                            contentStarted = true;
+                            continue;
+                        }
+                        if (contentStarted) {
+                            contentBuilder.append(line).append("\n");
+                        }
+                    }
+                    speechContent = contentBuilder.toString().trim();
+                    speechLines = speechContent.split("\n");
+                    updateSpeechContent();
+                } else {
+                    speechContent = "演讲稿文件内容为空";
+                    speechLines = new String[]{speechContent};
+                    updateSpeechContent();
+                }
+            }
+        });
         
         // 演讲稿文本区域
         speechArea = new TextArea();
@@ -165,7 +204,11 @@ public class SpeakerViewWindow {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         
-        rightBox.getChildren().addAll(speechTitle, scrollPane);
+        // 新增：按钮和标题横向排列
+        HBox topBox = new HBox(10, speechTitle, selectSpeechBtn);
+        topBox.setAlignment(Pos.CENTER_LEFT);
+        
+        rightBox.getChildren().addAll(topBox, scrollPane);
         
         return rightBox;
     }

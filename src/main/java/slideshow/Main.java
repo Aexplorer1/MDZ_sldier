@@ -1949,7 +1949,30 @@ public class Main extends Application {
                 showError("保存失败", "演讲稿内容为空，无法保存");
                 return;
             }
-            saveSpeechToFile(speech);
+            // 弹出输入框让用户输入文件名
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("保存演讲稿");
+            dialog.setHeaderText("请输入演讲稿文件名（不含扩展名）");
+            String defaultName = "演讲稿";
+            if (!slides.isEmpty()) {
+                List<String> textContent = slides.get(0).getTextContent();
+                if (textContent != null && !textContent.isEmpty()) {
+                    defaultName = textContent.get(0).substring(0, Math.min(20, textContent.get(0).length()));
+                }
+            }
+            dialog.getEditor().setText(defaultName);
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent() && !result.get().trim().isEmpty()) {
+                String fileName = result.get().trim();
+                String filePath = slideshow.util.SpeechManager.saveSpeechToFile(speech, fileName);
+                if (filePath != null) {
+                    showInfo("保存成功", "演讲稿已保存到文件:\n" + filePath);
+                } else {
+                    showError("保存失败", "无法保存演讲稿到文件");
+                }
+            } else {
+                showError("保存失败", "文件名不能为空，已取消保存");
+            }
         });
 
         // 关闭按钮逻辑
