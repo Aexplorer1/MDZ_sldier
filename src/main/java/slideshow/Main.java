@@ -155,7 +155,7 @@ public class Main extends Application {
         // File 菜单
         Button fileBtn = new Button("文件操作");
         Label fileIcon = new Label("\uD83D\uDCC1");
-        fileIcon.setStyle("-fx-font-size: 16px;"); // 缩小图标
+        fileIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #218838;"); // 深绿色
         fileBtn.setGraphic(fileIcon);
         fileBtn.setContentDisplay(ContentDisplay.LEFT);
         fileBtn.setGraphicTextGap(10);
@@ -184,7 +184,7 @@ public class Main extends Application {
         // Edit 菜单
         Button editBtn = new Button("编辑");
         Label editIcon = new Label("\u270E");
-        editIcon.setStyle("-fx-font-size: 16px;");
+        editIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #218838;"); // 深绿色
         editBtn.setGraphic(editIcon);
         editBtn.setContentDisplay(ContentDisplay.LEFT);
         editBtn.setGraphicTextGap(10);
@@ -209,7 +209,7 @@ public class Main extends Application {
         // 智能排版
         Button layoutBtn = new Button("智能排版");
         Label layoutIcon = new Label("\uD83D\uDCC4");
-        layoutIcon.setStyle("-fx-font-size: 16px;");
+        layoutIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #218838;"); // 深绿色
         layoutBtn.setGraphic(layoutIcon);
         layoutBtn.setContentDisplay(ContentDisplay.LEFT);
         layoutBtn.setGraphicTextGap(10);
@@ -231,7 +231,7 @@ public class Main extends Application {
         // 结构分析
         Button structureBtn = new Button("结构分析");
         Label structureIcon = new Label("\uD83D\uDCC8");
-        structureIcon.setStyle("-fx-font-size: 16px;");
+        structureIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #218838;"); // 深绿色
         structureBtn.setGraphic(structureIcon);
         structureBtn.setContentDisplay(ContentDisplay.LEFT);
         structureBtn.setGraphicTextGap(10);
@@ -259,7 +259,7 @@ public class Main extends Application {
         // 多语言
         Button languageBtn = new Button("多语言");
         Label languageIcon = new Label("\uD83C\uDF10");
-        languageIcon.setStyle("-fx-font-size: 16px;");
+        languageIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #218838;"); // 深绿色
         languageBtn.setGraphic(languageIcon);
         languageBtn.setContentDisplay(ContentDisplay.LEFT);
         languageBtn.setGraphicTextGap(10);
@@ -284,7 +284,7 @@ public class Main extends Application {
         // 放映功能
         Button presentationBtn = new Button("放映");
         Label presentationIcon = new Label("\uD83C\uDFA5");
-        presentationIcon.setStyle("-fx-font-size: 16px;");
+        presentationIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #218838;"); // 深绿色
         presentationBtn.setGraphic(presentationIcon);
         presentationBtn.setContentDisplay(ContentDisplay.LEFT);
         presentationBtn.setGraphicTextGap(10);
@@ -307,7 +307,7 @@ public class Main extends Application {
         // AI功能
         Button aiBtn = new Button("AI功能");
         Label aiIcon = new Label("\uD83E\uDD16");
-        aiIcon.setStyle("-fx-font-size: 16px;");
+        aiIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #218838;"); // 深绿色
         aiBtn.setGraphic(aiIcon);
         aiBtn.setContentDisplay(ContentDisplay.LEFT);
         aiBtn.setGraphicTextGap(10);
