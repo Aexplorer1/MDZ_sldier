@@ -32,6 +32,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.layout.StackPane;
+import javafx.scene.control.ButtonBar;
 
 import slideshow.util.Constants;
 import slideshow.model.Slide;
@@ -748,23 +749,51 @@ public class Main extends Application {
     }
 
     private void addText() {
-        TextInputDialog dialog = new TextInputDialog("New Text");
-        dialog.setTitle("Add Text");
-        dialog.setHeaderText("Enter text content:");
-        dialog.setContentText("Text:");
+        // 创建支持多行输入的对话框
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("添加文本");
+        dialog.setHeaderText("请输入文本内容（支持换行）：");
+        dialog.setResizable(true);
 
-        dialog.showAndWait().ifPresent(text -> {
-            TextElement textElement = new TextElement(
-                    canvas.getWidth() / 2,
-                    canvas.getHeight() / 2,
-                    text,
-                    20, // Default font size
-                    Color.BLACK, // Default color
-                    FontWeight.NORMAL, // Default weight
-                    false // Default non-italic
-            );
-            currentSlide.addElement(textElement);
-            refreshCanvas();
+        // 设置按钮
+        ButtonType addButtonType = new ButtonType("添加", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, cancelButtonType);
+
+        // 创建多行文本输入区域
+        TextArea textArea = new TextArea();
+        textArea.setPromptText("在此输入文本内容...\n支持换行，按Enter键换行");
+        textArea.setPrefRowCount(5);
+        textArea.setPrefColumnCount(40);
+        textArea.setWrapText(true);
+
+        // 设置对话框内容
+        dialog.getDialogPane().setContent(textArea);
+
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == addButtonType) {
+                return textArea.getText();
+            }
+            return null;
+        });
+
+        // 显示对话框并处理结果
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(text -> {
+            if (!text.trim().isEmpty()) {
+                TextElement textElement = new TextElement(
+                        canvas.getWidth() / 2,
+                        canvas.getHeight() / 2,
+                        text,
+                        20, // Default font size
+                        Color.BLACK, // Default color
+                        FontWeight.NORMAL, // Default weight
+                        false // Default non-italic
+                );
+                currentSlide.addElement(textElement);
+                refreshCanvas();
+            }
         });
     }
 
@@ -854,15 +883,73 @@ public class Main extends Application {
 
     private void showContextMenu(SlideElement element, double x, double y) {
         ContextMenu contextMenu = new ContextMenu();
-        MenuItem deleteItem = new MenuItem("Delete");
+        MenuItem deleteItem = new MenuItem("删除");
         deleteItem.setOnAction(e -> deleteElement(element));
         contextMenu.getItems().add(deleteItem);
+        
+        // 如果是文本元素，添加编辑选项
+        if (element instanceof TextElement) {
+            MenuItem editItem = new MenuItem("编辑文本");
+            editItem.setOnAction(e -> {
+                selectedElement = element;
+                editSelectedText();
+            });
+            contextMenu.getItems().add(editItem);
+        }
+        
         contextMenu.show(canvas, x, y);
     }
 
     private void handleKeyPressed(KeyEvent event) {
         if (event.getCode() == KeyCode.BACK_SPACE && selectedElement != null) {
             deleteElement(selectedElement);
+        } else if (event.getCode() == KeyCode.ENTER && selectedElement instanceof TextElement) {
+            // 当选中文本元素时，按Enter键可以编辑文本
+            editSelectedText();
+        }
+    }
+
+    private void editSelectedText() {
+        if (selectedElement instanceof TextElement) {
+            TextElement textElement = (TextElement) selectedElement;
+            
+            // 创建编辑对话框
+            Dialog<String> dialog = new Dialog<>();
+            dialog.setTitle("编辑文本");
+            dialog.setHeaderText("编辑文本内容（支持换行）：");
+            dialog.setResizable(true);
+
+            // 设置按钮
+            ButtonType saveButtonType = new ButtonType("保存", ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+            dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, cancelButtonType);
+
+            // 创建多行文本输入区域
+            TextArea textArea = new TextArea(textElement.getText());
+            textArea.setPromptText("在此编辑文本内容...\n支持换行，按Enter键换行");
+            textArea.setPrefRowCount(5);
+            textArea.setPrefColumnCount(40);
+            textArea.setWrapText(true);
+
+            // 设置对话框内容
+            dialog.getDialogPane().setContent(textArea);
+
+            // 设置结果转换器
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == saveButtonType) {
+                    return textArea.getText();
+                }
+                return null;
+            });
+
+            // 显示对话框并处理结果
+            Optional<String> result = dialog.showAndWait();
+            result.ifPresent(text -> {
+                if (!text.trim().isEmpty()) {
+                    textElement.setText(text);
+                    refreshCanvas();
+                }
+            });
         }
     }
 

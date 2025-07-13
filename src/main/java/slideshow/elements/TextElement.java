@@ -23,12 +23,27 @@ public class TextElement extends SlideElement {
     private static final double HANDLE_OFFSET = HANDLE_SIZE / 2;
     
     private void calculateTextBounds() {
-        Text textNode = new Text(text);
+        // 分割文本为多行
+        String[] lines = text.split("\n");
+        double maxWidth = 0;
+        double totalHeight = 0;
+        
+        Text textNode = new Text();
         textNode.setFont(Font.font("Arial", fontWeight, 
                         italic ? FontPosture.ITALIC : FontPosture.REGULAR, 
                         fontSize));
-        width = textNode.getLayoutBounds().getWidth();
-        height = textNode.getLayoutBounds().getHeight();
+        
+        for (String line : lines) {
+            textNode.setText(line);
+            double lineWidth = textNode.getLayoutBounds().getWidth();
+            double lineHeight = textNode.getLayoutBounds().getHeight();
+            
+            maxWidth = Math.max(maxWidth, lineWidth);
+            totalHeight += lineHeight;
+        }
+        
+        width = maxWidth;
+        height = totalHeight;
     }
     
     public TextElement(double x, double y, String text, 
@@ -66,8 +81,19 @@ public class TextElement extends SlideElement {
             drawResizeHandles(gc);
         }
         
-        // 绘制文本
-        gc.fillText(text, x, y);
+        // 绘制多行文本
+        String[] lines = text.split("\n");
+        double currentY = y;
+        
+        for (String line : lines) {
+            gc.fillText(line, x, currentY);
+            // 计算下一行的Y位置
+            Text textNode = new Text(line);
+            textNode.setFont(Font.font("Arial", fontWeight, 
+                    italic ? FontPosture.ITALIC : FontPosture.REGULAR, 
+                    fontSize));
+            currentY += textNode.getLayoutBounds().getHeight();
+        }
         
         gc.restore();
     }
