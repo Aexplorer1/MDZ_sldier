@@ -279,6 +279,26 @@ public class Main extends Application {
                     switchLangItem);
             menu.show(languageBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
+        // 放映功能
+        Button presentationBtn = new Button("放映");
+        Label presentationIcon = new Label("\uD83C\uDFA5");
+        presentationIcon.setStyle("-fx-font-size: 16px;");
+        presentationBtn.setGraphic(presentationIcon);
+        presentationBtn.setContentDisplay(ContentDisplay.LEFT);
+        presentationBtn.setGraphicTextGap(10);
+        presentationBtn.getStyleClass().add("menu-button");
+        presentationBtn.setMaxWidth(Double.MAX_VALUE);
+        presentationBtn.setOnAction(e -> {
+            MenuItem startPresentationItem = new MenuItem("开始放映");
+            MenuItem presentationSettingsItem = new MenuItem("放映设置");
+            startPresentationItem.setOnAction(ev -> startPresentation());
+            presentationSettingsItem.setOnAction(ev -> showPresentationSettings());
+            ContextMenu menu = new ContextMenu(
+                    startPresentationItem,
+                    presentationSettingsItem);
+            menu.show(presentationBtn, javafx.geometry.Side.RIGHT, 0, 0);
+        });
+        
         // AI功能
         Button aiBtn = new Button("AI功能");
         Label aiIcon = new Label("\uD83E\uDD16");
@@ -318,7 +338,9 @@ public class Main extends Application {
         sep2.setPrefWidth(80);
         Separator sep3 = new Separator();
         sep3.setPrefWidth(80);
-        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, layoutBtn, structureBtn, sep2, languageBtn, aiBtn, sep3);
+        Separator sep4 = new Separator();
+        sep4.setPrefWidth(80);
+        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, presentationBtn, sep2, layoutBtn, structureBtn, sep3, languageBtn, aiBtn, sep4);
         root.setLeft(sidebar);
 
         Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);
@@ -710,6 +732,11 @@ public class Main extends Application {
         lineWidthComboBox.getItems().addAll(1.0, 2.0, 3.0, 4.0, 5.0);
         lineWidthComboBox.setValue(2.0);
 
+        // 添加放映按钮
+        Button presentationBtn = new Button("放映");
+        presentationBtn.getStyleClass().add("button");
+        presentationBtn.setOnAction(e -> startPresentation());
+        
         // 简化工具栏，只保留基本功能，移除AI功能按钮
         return new ToolBar(
                 newSlideBtn,
@@ -727,7 +754,9 @@ public class Main extends Application {
                 new Separator(),
                 rectBtn, circleBtn, lineBtn, arrowBtn,
                 drawColorPicker,
-                lineWidthComboBox);
+                lineWidthComboBox,
+                new Separator(),
+                presentationBtn);
     }
 
     private void createNewSlide() {
@@ -1100,8 +1129,56 @@ public class Main extends Application {
     }
 
     private void startPresentation() {
+        if (slides.isEmpty()) {
+            showError("放映失败", "当前没有幻灯片内容，无法开始放映");
+            return;
+        }
         PresentationWindow presentation = new PresentationWindow(slides);
         presentation.start();
+    }
+    
+    private void showPresentationSettings() {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("放映设置");
+        dialog.setHeaderText("放映功能说明");
+        
+        ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
+        
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(10));
+        
+        Label titleLabel = new Label("放映功能说明");
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        
+        TextArea infoArea = new TextArea(
+            "放映功能说明：\n\n" +
+            "1. 开始放映：\n" +
+            "   - 点击'开始放映'按钮\n" +
+            "   - 放映窗口将全屏显示\n" +
+            "   - 支持键盘控制\n\n" +
+            "2. 键盘控制：\n" +
+            "   - 右箭头键或空格键：下一张幻灯片\n" +
+            "   - 左箭头键：上一张幻灯片\n" +
+            "   - ESC键：退出放映\n\n" +
+            "3. 放映特性：\n" +
+            "   - 全屏显示模式\n" +
+            "   - 自动适应屏幕尺寸\n" +
+            "   - 保持幻灯片原有样式\n\n" +
+            "4. 注意事项：\n" +
+            "   - 确保有幻灯片内容再开始放映\n" +
+            "   - 放映时请确保显示器支持全屏模式\n" +
+            "   - 按ESC键可随时退出放映"
+        );
+        infoArea.setPrefRowCount(20);
+        infoArea.setPrefColumnCount(50);
+        infoArea.setWrapText(true);
+        infoArea.setEditable(false);
+        
+        content.getChildren().addAll(titleLabel, infoArea);
+        dialog.getDialogPane().setContent(content);
+        
+        dialog.showAndWait();
     }
 
     private void savePresentation() {
