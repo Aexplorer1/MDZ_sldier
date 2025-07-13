@@ -115,17 +115,33 @@ public class SlideParser {
             } else if (line.startsWith("Subtitle:")) {
                 String text = line.substring(9).trim();
                 if (!text.isEmpty()) {
-                    TextElement subElem = new TextElement(slideWidth / 2, y, text, 20, Color.DARKGRAY,
-                            FontWeight.NORMAL, false);
+                    // 修改：副标题为黑色加粗
+                    TextElement subElem = new TextElement(slideWidth / 2, y, text, 20, Color.BLACK,
+                            FontWeight.BOLD, false);
                     subElem.setPosition(slideWidth / 2 - subElem.getWidth() / 2, y + subElem.getHeight());
                     slide.addElement(subElem);
                     y += subElem.getHeight() + lineSpacing;
                     elementCount++;
                     System.out.println("SlideParser: 添加副标题: " + text);
                 }
+            } else if (line.startsWith("Text:") || line.startsWith("Text：")) {
+                // 专门处理Text:字段，去除前缀
+                String text = line.substring(line.indexOf(':') + 1).trim();
+                if (!text.isEmpty()) {
+                    TextElement textElem = new TextElement(slideWidth / 2, y, text, 18, Color.BLACK, FontWeight.NORMAL, false);
+                    textElem.setPosition(slideWidth / 2 - textElem.getWidth() / 2, y + textElem.getHeight());
+                    slide.addElement(textElem);
+                    y += textElem.getHeight() + lineSpacing;
+                    elementCount++;
+                    System.out.println("SlideParser: 添加正文: " + text);
+                }
             } else if (line.startsWith("Bullet:")) {
                 String text = line.substring(7).trim();
                 if (!text.isEmpty()) {
+                    // 修改：Bullet前加“·”
+                    if (!text.startsWith("·")) {
+                        text = "· " + text;
+                    }
                     TextElement bulletElem = new TextElement(slideWidth / 2, y, text, 18, Color.BLACK,
                             FontWeight.NORMAL, false);
                     bulletElem.setPosition(slideWidth / 2 - bulletElem.getWidth() / 2, y + bulletElem.getHeight());

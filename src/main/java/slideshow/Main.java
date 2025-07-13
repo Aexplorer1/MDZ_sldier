@@ -1530,7 +1530,7 @@ public class Main extends Application {
                     setText(null);
                 } else {
                     if ("no-template".equals(item.getId())) {
-                        setText("不使用模板");
+                        setText("程序默认提示词");
                     } else {
                         setText(item.getName() + " (" + item.getCategory().getDisplayName() + ")");
                     }
@@ -1546,14 +1546,14 @@ public class Main extends Application {
         templateCombo.getItems().addAll(allTemplates);
 
         // 添加一个"不使用模板"选项
-        PromptTemplate noTemplate = new PromptTemplate("不使用模板", "直接使用默认提示词", "",
+        PromptTemplate noTemplate = new PromptTemplate("程序默认提示词", "直接使用默认提示词", "",
                 slideshow.model.TemplateCategory.CUSTOM);
         noTemplate.setId("no-template");
         templateCombo.getItems().add(0, noTemplate);
         templateCombo.setValue(noTemplate);
 
         // 显示当前选择的模板信息
-        Label templateInfoLabel = new Label("当前模板: 不使用模板");
+        Label templateInfoLabel = new Label("当前模板: 程序默认提示词");
         templateInfoLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 12;");
 
         // 模板选择监听器
@@ -1561,7 +1561,7 @@ public class Main extends Application {
             PromptTemplate selected = templateCombo.getValue();
             if (selected != null) {
                 if ("no-template".equals(selected.getId())) {
-                    templateInfoLabel.setText("当前模板: 不使用模板 (使用默认提示词)");
+                    templateInfoLabel.setText("当前模板: 程序默认提示词");
                 } else {
                     String info = "当前模板: " + selected.getName() +
                             " (" + selected.getCategory().getDisplayName() + ")";
@@ -1723,14 +1723,18 @@ public class Main extends Application {
                                 "\nTitle: [页面标题]" +
                                 "\nSubtitle: [页面副标题]" +
                                 "\nBullet: [项目符号内容]" +
+                                "\nText: [小标题下具体自然段文本,PPT的正文内容]" +
                                 "\nDraw: [绘图描述]" +
                                 "\nPage 2:" +
                                 "\nTitle: [页面标题]" +
                                 "\nSubtitle: [页面副标题]" +
                                 "\nBullet: [项目符号内容]" +
+                                "\nText: [小标题下具体自然段文本，PPT的正文内容]" +
                                 "\nDraw: [绘图描述]" +
                                 "\n（继续更多页面...）" +
-                                "\n\n请确保使用'---PPT命令---'分隔符，并严格按照Page X:格式分页。" +
+                                "\n\n1.请确保使用'---PPT命令---'分隔符，并严格按照Page X:格式分页。" +
+                                "\n2.对Text下大的段落酌情设置标准长度进行分行。当用户提出的要求中标注了具体生成语言时(如英语)，请使用英语输出。否则默认为中文。" +
+                                "\n3.Text为自然段，请在内容尽量丰富的情况下，酌情设置标准长度进行分行。内容可以不局限于一句，但请注意不要出现过大段落。" +
                                 "\n用户输入：" + userPrompt;
 
                         // 记录模板使用次数
@@ -2033,9 +2037,15 @@ public class Main extends Application {
                 "1. 先用自然语言给出你的建议、思考或直接回答用户问题（如'今天星期三'），如果用户需求与PPT无关请直接回复建议或答案。\n" +
                 "2. 如果用户需求与PPT制作有关，再用严格的PPT命令格式输出大纲，格式要求如下：\n" +
                 "---PPT命令---\n" +
-                "Page 1:\nTitle: ...\nSubtitle: ...\nBullet: ...\nDraw: ...\nPage 2: ...\n（每个命令单独一行，所有命令都在---PPT命令---下方，若无PPT需求则此部分可为空）\n"
-                +
-                "请严格用'---PPT命令---'分隔建议和命令部分。\n用户输入：" + userPrompt;
+                "Page 1:\nTitle: ...\nSubtitle: ...\nBullet: ...\nText: ...\nDraw: ...\nPage 2: ...\n（每个命令单独一行，所有命令都在---PPT命令---下方，若无PPT需求则此部分可为空）\n" +
+                "请严格用'---PPT命令---'分隔建议和命令部分。\n" +
+                "重要要求：\n" +
+                "- Text字段下请对本页标题或分点内容进行详细扩展说明，生成多句自然段长文本，不要只写一句话。\n" +
+                "- Text内容应包含背景、解释、案例、分析等丰富信息，便于观众理解。\n" +
+                "- Bullet仅为要点，Text为正文扩展说明。\n" +
+                "- 如有多条Bullet，可在Text中分别对每条进行详细阐述。\n" +
+                "- 内容可适当分行，但每页Text应尽量充实。\n" +
+                "用户输入：" + userPrompt;
     }
 
     /**
@@ -2050,23 +2060,38 @@ public class Main extends Application {
         String[] lines = content.split("\n");
         int pageNumber = 1;
         boolean hasContent = false;
+        boolean inPage = false;
+        boolean textWritten = false;
 
         for (String line : lines) {
             line = line.trim();
             if (line.isEmpty())
                 continue;
 
-            // 如果内容看起来像PPT结构，尝试转换为标准格式
-            if (line.contains("标题") || line.contains("Title") || line.contains("主题")) {
+            // 检测新页面开始
+            if (line.matches("^Page\\s*\\d+[:：]?.*")) {
                 if (hasContent) {
                     result.append("\n");
                 }
-                result.append("Page ").append(pageNumber).append(":\n");
-                result.append("Title: ").append(line.replaceAll(".*[标题|Title|主题][：:]*\\s*", "")).append("\n");
-                pageNumber++;
+                result.append(line.contains(":") ? line : (line + ":")).append("\n");
+                inPage = true;
+                textWritten = false;
                 hasContent = true;
+                continue;
+            }
+
+            // 标题、副标题
+            if (line.contains("标题") || line.contains("Title") || line.contains("主题")) {
+                result.append("Title: ").append(line.replaceAll(".*[标题|Title|主题][：:]*\\s*", "")).append("\n");
             } else if (line.contains("副标题") || line.contains("Subtitle")) {
                 result.append("Subtitle: ").append(line.replaceAll(".*[副标题|Subtitle][：:]*\\s*", "")).append("\n");
+            } else if ((line.startsWith("Text:") || line.startsWith("Text：")) && inPage && !textWritten) {
+                // 专门处理Text:开头的行，去掉前缀
+                String text = line.substring(line.indexOf(':') + 1).trim();
+                if (!text.isEmpty()) {
+                    result.append("Text: ").append(text).append("\n");
+                    textWritten = true;
+                }
             } else if (line.contains("要点") || line.contains("Bullet") || line.contains("•") || line.contains("-")) {
                 String bulletContent = line.replaceAll(".*[要点|Bullet|•|-][：:]*\\s*", "");
                 if (!bulletContent.isEmpty()) {
@@ -2080,8 +2105,13 @@ public class Main extends Application {
                 }
             } else if (line.contains("图片") || line.contains("Image") || line.contains("图表")) {
                 result.append("Draw: ").append(line.replaceAll(".*[图片|Image|图表][：:]*\\s*", "")).append("\n");
+            } else if (inPage && !textWritten && (line.length() > 10 && line.length() < 300)
+                        && !(line.startsWith("Text:") || line.startsWith("Text："))) {
+                // 优先将较长的普通文本归为Text:，每页只输出一次，且不是Text:开头
+                result.append("Text: ").append(line).append("\n");
+                textWritten = true;
             } else if (!line.startsWith("Page") && !line.startsWith("---")) {
-                // 其他内容作为普通文本
+                // 其他内容作为Bullet
                 result.append("Bullet: ").append(line).append("\n");
             }
         }
@@ -2091,7 +2121,7 @@ public class Main extends Application {
             result.append("Page 1:\n");
             result.append("Title: ").append(content.substring(0, Math.min(50, content.length()))).append("\n");
             result.append("Subtitle: 内容概述\n");
-            result.append("Bullet: ").append(content).append("\n");
+            result.append("Text: ").append(content).append("\n");
         }
 
         return result.toString().trim();
@@ -2638,7 +2668,7 @@ public class Main extends Application {
                                     targetLanguage);
                             if (translatedText.equals(originalText)) {
                                 String prompt = String.format(
-                                        "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                        "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Text、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
                                         targetLanguage.getDisplayName(), originalText);
                                 try {
                                     translatedText = aiModel.chat(prompt).trim();
@@ -3078,7 +3108,7 @@ public class Main extends Application {
                         if (translatedText.equals(originalText)) {
                             // 极致收紧AI提示词，明确禁止输出结构字段
                             String prompt = String.format(
-                                    "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                    "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Text、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
                                     targetLanguage.getDisplayName(), originalText);
                             try {
                                 translatedText = aiModel.chat(prompt).trim();
@@ -3145,7 +3175,7 @@ public class Main extends Application {
                                         targetLanguage);
                                 if (translatedText.equals(originalText)) {
                                     String prompt = String.format(
-                                            "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                            "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Text、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
                                             targetLanguage.getDisplayName(), originalText);
                                     try {
                                         translatedText = aiModel.chat(prompt).trim();
@@ -3290,7 +3320,7 @@ public class Main extends Application {
             MultilingualSupport.SupportedLanguage targetLanguage) {
         // 优化AI提示词，要求仅翻译冒号后的内容，保留格式字段和排版，不要添加任何解释
         String prompt = String.format(
-                "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版，不要添加任何解释、说明或多余内容。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Text、Page X:等），保持原有排版，不要添加任何解释、说明或多余内容。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
                 targetLanguage.getDisplayName(), pptCommandText);
         try {
             String translated = aiModel.chat(prompt).trim();
@@ -3318,9 +3348,9 @@ public class Main extends Application {
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             // 如果是结构字段行（包括Title:、Subtitle:、Bullet:、Draw:、Page X:等）
-            if (line.matches("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*(.*)")) {
+            if (line.matches("^(Title|Subtitle|Bullet|Draw|Page|Text ?\\d*|Page X|Note|Comment|说明|注释):\\s*(.*)")) {
                 String content = line
-                        .replaceFirst("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*", "");
+                        .replaceFirst("^(Title|Subtitle|Bullet|Draw|Page|Text ?\\d*|Page X|Note|Comment|说明|注释):\\s*", "");
                 if (!content.isEmpty()) {
                     sb.append(content).append('\n');
                 } else {
@@ -3328,7 +3358,7 @@ public class Main extends Application {
                     while (i + 1 < lines.length) {
                         String nextLine = lines[i + 1].trim();
                         if (nextLine
-                                .matches("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*.*")
+                                .matches("^(Title|Subtitle|Bullet|Draw|Page|Text ?\\d*|Page X|Note|Comment|说明|注释):\\s*.*")
                                 || nextLine.isEmpty()) {
                             i++;
                         } else {
@@ -3352,7 +3382,7 @@ public class Main extends Application {
     private void translateAndRenderPPTCommands(String pptCommandText,
             MultilingualSupport.SupportedLanguage targetLanguage) {
         String prompt = String.format(
-                "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Text、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
                 targetLanguage.getDisplayName(), pptCommandText);
         Task<String> translationTask = new Task<>() {
             @Override
