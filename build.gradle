@@ -1,10 +1,12 @@
 plugins {
-    id 'java'
     id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
 }
 
 repositories {
     mavenCentral()
+    // 添加阿里云Maven镜像以加速依赖下载
+    maven { url 'https://maven.aliyun.com/repository/public' }
     // 添加其他可能包含该库的仓库
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
@@ -39,11 +41,8 @@ dependencies {
     // Gson 依赖
     implementation 'com.google.code.gson:gson:2.10.1'
 
-    // JavaFX 依赖（手动添加本地 JAR 文件）
-    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.base.jar')
-    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.controls.jar')
-    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.graphics.jar')
-    implementation files('lib/javafx-sdk-21.0.1/lib/javafx.fxml.jar')
+    // 邮件发送依赖 
+    implementation 'com.sun.mail:javax.mail:1.6.2'
 }
 
 application {
@@ -78,7 +77,6 @@ task createStartScripts(type: CreateStartScripts) {
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
-    // 移除 modularity.inferModulePath，因为不再使用模块系统
 }
 
 test {
@@ -86,42 +84,13 @@ test {
 }
 
 run {
-    doFirst {
-        jvmArgs = [
-                '--module-path', 'lib/javafx-sdk-21.0.1/lib',
-                '--add-modules', 'javafx.controls,javafx.fxml,javafx.base,javafx.graphics,java.logging',
-                '--add-exports', 'javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
-                '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
-                '-Dfile.encoding=UTF-8',
-                '-Duser.language=zh',
-                '-Duser.country=CN',
-                '-Dsun.jnu.encoding=UTF-8',
-                '--add-opens=javafx.graphics/javafx.scene.paint=ALL-UNNAMED'
-        ]
-    }
+    environment "DEEPSEEK_API_KEY", "sk-a62c9faf266a4c74b63ecbe57c11ca1d"
 }
 
-task runEncodingTest(type: JavaExec) {
-    mainClass = 'slideshow.EncodingTest'
-    classpath = sourceSets.main.runtimeClasspath
-    doFirst {
-        jvmArgs = [
-                '--module-path', 'lib/javafx-sdk-21.0.1/lib',
-                '--add-modules', 'javafx.controls,javafx.fxml,javafx.base,javafx.graphics,java.logging',
-                '--add-exports', 'javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
-                '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',
-                '-Dfile.encoding=UTF-8',
-                '-Duser.language=zh',
-                '-Duser.country=CN',
-                '-Dsun.jnu.encoding=UTF-8'
-        ]
-    }
-}
+
 
 compileJava {
     options.encoding = 'UTF-8'
-    // 移除模块化相关的 compilerArgs，因为不再使用模块系统
-    // options.compilerArgs += [...]
 }
 
 compileTestJava {
@@ -134,4 +103,9 @@ tasks.withType(JavaCompile) {
 
 tasks.withType(Javadoc) {
     options.encoding = 'UTF-8'
+}
+
+javafx {
+    version = "21.0.1"
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.base', 'javafx.graphics' ]
 }

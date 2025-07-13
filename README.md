@@ -1,3 +1,36 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+}
+
+group 'slideshow'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'dev.langchain4j:langchain4j-openai:0.16.2'
+}
+
+javafx {
+    version = "21.0.1"
+    options = ['--add-modules', 'javafx.controls,javafx.fxml']
+}
+
+application {
+    mainClass = 'slideshow.Main'
+}
+
+run {
+    jvmArgs = [
+        '--module-path', "$System.env.JAVAFX_HOME/lib",
+        '--add-modules', 'javafx.controls,javafx.fxml'
+    ]
+}
 # MDZ_Slider 幻灯片制作工具
 
 
