@@ -55,6 +55,7 @@ import slideshow.util.SlideStructureAnalyzer.StructureAnalysis;
 import slideshow.util.SpeechManager;
 import slideshow.util.LogicGraphRenderer;
 import slideshow.PromptGeneratorDialog;
+import slideshow.FeedbackDialog;
 
 import java.io.File;
 import java.io.IOException;
@@ -341,6 +342,16 @@ public class Main extends Application {
                 templateManageItem);
             menu.show(aiBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
+        // 用户反馈按钮
+        Button feedbackBtn = new Button("用户反馈");
+        Label feedbackIcon = new Label("\uD83D\uDCE9");
+        feedbackIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: #218838;");
+        feedbackBtn.setGraphic(feedbackIcon);
+        feedbackBtn.setContentDisplay(ContentDisplay.LEFT);
+        feedbackBtn.setGraphicTextGap(10);
+        feedbackBtn.getStyleClass().add("menu-button");
+        feedbackBtn.setMaxWidth(Double.MAX_VALUE);
+        feedbackBtn.setOnAction(e -> new FeedbackDialog().show());
         // 分组美化
         Separator sep1 = new Separator();
         sep1.setPrefWidth(80);
@@ -350,7 +361,7 @@ public class Main extends Application {
         sep3.setPrefWidth(80);
         Separator sep4 = new Separator();
         sep4.setPrefWidth(80);
-        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, presentationBtn, sep2, layoutBtn, structureBtn, sep3, languageBtn, aiBtn, sep4);
+        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, presentationBtn, sep2, layoutBtn, structureBtn, sep3, languageBtn, aiBtn, feedbackBtn, sep4);
         root.setLeft(sidebar);
 
         Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);

@@ -5,6 +5,8 @@ plugins {
 
 repositories {
     mavenCentral()
+    // 添加阿里云Maven镜像以加速依赖下载
+    maven { url 'https://maven.aliyun.com/repository/public' }
     // 添加其他可能包含该库的仓库
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
@@ -38,6 +40,9 @@ dependencies {
 
     // Gson 依赖
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    // 邮件发送依赖 
+    implementation 'com.sun.mail:javax.mail:1.6.2'
 }
 
 application {
