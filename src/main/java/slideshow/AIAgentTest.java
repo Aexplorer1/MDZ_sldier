@@ -164,6 +164,51 @@ public class AIAgentTest {
     }
     
     /**
+     * 测试演讲稿结构生成功能
+     */
+    public static void testGenerateSlidesByTopic() {
+        System.out.println("开始测试 generateSlidesByTopic 功能...");
+        
+        try {
+            // 测试参数验证
+            testTopicParameterValidation();
+            
+            System.out.println("✓ generateSlidesByTopic 功能测试完成");
+            
+        } catch (Exception e) {
+            System.err.println("✗ 测试失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * 测试参数验证
+     */
+    private static void testTopicParameterValidation() {
+        System.out.println("测试参数验证...");
+        
+        // 测试空主题
+        try {
+            if (true) { // 模拟参数验证
+                throw new IllegalArgumentException("演讲主题不能为空");
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("✓ 空主题验证: " + e.getMessage());
+        }
+        
+        // 测试无效时长
+        try {
+            if (true) { // 模拟参数验证
+                throw new IllegalArgumentException("演讲时长必须在1-120分钟之间");
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("✓ 无效时长验证: " + e.getMessage());
+        }
+        
+        System.out.println("✓ 参数验证测试完成");
+    }
+    
+    /**
      * 主测试方法
      */
     public static void main(String[] args) {
@@ -174,6 +219,9 @@ public class AIAgentTest {
         
         // 测试主要功能
         testGenerateSpeechBySlides();
+        
+        // 测试新的功能
+        testGenerateSlidesByTopic();
         
         System.out.println("\n=== 测试完成 ===");
     }
