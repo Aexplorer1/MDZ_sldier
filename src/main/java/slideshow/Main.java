@@ -43,6 +43,7 @@ import slideshow.util.UIStrings;
 import slideshow.util.SlideSerializer;
 import slideshow.util.SlideParser;
 import slideshow.presentation.PresentationWindow;
+import slideshow.presentation.SpeakerViewWindow;
 import slideshow.elements.DrawElement;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import slideshow.model.PromptTemplate;
@@ -51,6 +52,7 @@ import slideshow.util.MultilingualSupport;
 import slideshow.AIEnhancedAgent;
 import slideshow.util.SlideStructureAnalyzer;
 import slideshow.util.SlideStructureAnalyzer.StructureAnalysis;
+import slideshow.util.SpeechManager;
 import slideshow.util.LogicGraphRenderer;
 
 import java.io.File;
@@ -290,11 +292,14 @@ public class Main extends Application {
         presentationBtn.setMaxWidth(Double.MAX_VALUE);
         presentationBtn.setOnAction(e -> {
             MenuItem startPresentationItem = new MenuItem("开始放映");
+            MenuItem speakerViewItem = new MenuItem("演讲者视图");
             MenuItem presentationSettingsItem = new MenuItem("放映设置");
             startPresentationItem.setOnAction(ev -> startPresentation());
+            speakerViewItem.setOnAction(ev -> startSpeakerView());
             presentationSettingsItem.setOnAction(ev -> showPresentationSettings());
             ContextMenu menu = new ContextMenu(
                     startPresentationItem,
+                    speakerViewItem,
                     presentationSettingsItem);
             menu.show(presentationBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
@@ -735,7 +740,14 @@ public class Main extends Application {
         // 添加放映按钮
         Button presentationBtn = new Button("放映");
         presentationBtn.getStyleClass().add("button");
-        presentationBtn.setOnAction(e -> startPresentation());
+        presentationBtn.setOnAction(e -> {
+            MenuItem startPresentationItem = new MenuItem("开始放映");
+            MenuItem speakerViewItem = new MenuItem("演讲者视图");
+            startPresentationItem.setOnAction(ev -> startPresentation());
+            speakerViewItem.setOnAction(ev -> startSpeakerView());
+            ContextMenu menu = new ContextMenu(startPresentationItem, speakerViewItem);
+            menu.show(presentationBtn, javafx.geometry.Side.BOTTOM, 0, 0);
+        });
         
         // 简化工具栏，只保留基本功能，移除AI功能按钮
         return new ToolBar(
@@ -1137,6 +1149,39 @@ public class Main extends Application {
         presentation.start();
     }
     
+    private void startSpeakerView() {
+        if (slides.isEmpty()) {
+            showError("演讲者视图失败", "当前没有幻灯片内容，无法启动演讲者视图");
+            return;
+        }
+        
+        // 检查是否有演讲稿文件
+        if (!SpeechManager.hasSpeechFile()) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("演讲者视图");
+            alert.setHeaderText("未找到演讲稿文件");
+            alert.setContentText("演讲者视图需要演讲稿文件才能显示演讲稿内容。\n是否先生成演讲稿？");
+            
+            ButtonType generateButton = new ButtonType("生成演讲稿");
+            ButtonType continueButton = new ButtonType("继续启动");
+            ButtonType cancelButton = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+            alert.getButtonTypes().setAll(generateButton, continueButton, cancelButton);
+            
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent()) {
+                if (result.get() == generateButton) {
+                    generateSpeechFromSlides();
+                    return;
+                } else if (result.get() == cancelButton) {
+                    return;
+                }
+            }
+        }
+        
+        SpeakerViewWindow speakerView = new SpeakerViewWindow(slides);
+        speakerView.start();
+    }
+    
     private void showPresentationSettings() {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("放映设置");
@@ -1301,7 +1346,8 @@ public class Main extends Application {
 
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         ButtonType copyButtonType = new ButtonType("复制到剪贴板", ButtonBar.ButtonData.OTHER);
-        resultDialog.getButtonTypes().setAll(closeButtonType, copyButtonType);
+        ButtonType saveButtonType = new ButtonType("保存到文件", ButtonBar.ButtonData.OTHER);
+        resultDialog.getButtonTypes().setAll(closeButtonType, copyButtonType, saveButtonType);
 
         TextArea speechArea = new TextArea(speech);
         speechArea.setPrefRowCount(15);
@@ -1313,13 +1359,140 @@ public class Main extends Application {
 
         // 显示对话框并处理结果
         Optional<ButtonType> result = resultDialog.showAndWait();
-        if (result.isPresent() && result.get() == copyButtonType) {
-            final Clipboard clipboard = Clipboard.getSystemClipboard();
-            final ClipboardContent content = new ClipboardContent();
-            content.putString(speech);
-            clipboard.setContent(content);
-            showInfo("复制成功", "演讲稿已复制到剪贴板");
+        if (result.isPresent()) {
+            if (result.get() == copyButtonType) {
+                final Clipboard clipboard = Clipboard.getSystemClipboard();
+                final ClipboardContent content = new ClipboardContent();
+                content.putString(speech);
+                clipboard.setContent(content);
+                showInfo("复制成功", "演讲稿已复制到剪贴板");
+            } else if (result.get() == saveButtonType) {
+                saveSpeechToFile(speech);
+            }
         }
+    }
+    
+    /**
+     * 保存演讲稿到文件
+     * 
+     * @param speech 演讲稿内容
+     */
+    private void saveSpeechToFile(String speech) {
+        String presentationName = "演示文稿";
+        if (!slides.isEmpty()) {
+            // 尝试从第一张幻灯片获取标题作为演示文稿名称
+            List<String> textContent = slides.get(0).getTextContent();
+            if (textContent != null && !textContent.isEmpty()) {
+                presentationName = textContent.get(0).substring(0, Math.min(20, textContent.get(0).length()));
+            }
+        }
+        
+        String filePath = SpeechManager.saveSpeechToFile(speech, presentationName);
+        if (filePath != null) {
+            showInfo("保存成功", "演讲稿已保存到文件:\n" + filePath);
+        } else {
+            showError("保存失败", "无法保存演讲稿到文件");
+        }
+    }
+    
+    /**
+     * 自动生成并保存演讲稿（带界面显示）
+     */
+    private void generateAndSaveSpeechWithDisplay(TextArea speechDisplayArea) {
+        if (slides.isEmpty()) {
+            showError("生成失败", "当前没有幻灯片内容，无法生成演讲稿");
+            return;
+        }
+        
+        // 在演讲稿区域显示生成状态
+        if (speechDisplayArea != null) {
+            speechDisplayArea.setDisable(false);
+            speechDisplayArea.setText("正在生成演讲稿...");
+        }
+        
+        // 创建时间更新器
+        final long startTime = System.currentTimeMillis();
+        final javafx.animation.Timeline timeTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(1000), e -> {
+                    long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+                    long minutes = elapsed / 60;
+                    long seconds = elapsed % 60;
+                    String timeStr = String.format("%02d:%02d", minutes, seconds);
+                    
+                    if (speechDisplayArea != null) {
+                        speechDisplayArea.setText("正在生成演讲稿... (" + timeStr + ")");
+                    }
+                }));
+        timeTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+        timeTimeline.play();
+
+        // 在新线程中执行AI调用
+        new Thread(() -> {
+            try {
+                String speech = aiAgent.generateSpeechBySlides(slides);
+                
+                // 自动保存演讲稿
+                String presentationName = "演示文稿";
+                if (!slides.isEmpty()) {
+                    List<String> textContent = slides.get(0).getTextContent();
+                    if (textContent != null && !textContent.isEmpty()) {
+                        presentationName = textContent.get(0).substring(0, Math.min(20, textContent.get(0).length()));
+                    }
+                }
+                
+                String filePath = SpeechManager.saveSpeechToFile(speech, presentationName);
+
+                Platform.runLater(() -> {
+                    // 停止时间更新器
+                    timeTimeline.stop();
+                    
+                    // 显示演讲稿在界面上
+                    if (speechDisplayArea != null) {
+                        speechDisplayArea.setText(speech);
+                        speechDisplayArea.setDisable(false);
+                    }
+                    
+                    if (filePath != null) {
+                        showInfo("生成成功", "演讲稿已生成并保存到文件:\n" + filePath);
+                    } else {
+                        showError("保存失败", "演讲稿生成成功，但保存到文件失败");
+                    }
+                });
+
+            } catch (AIAgent.AIException e) {
+                Platform.runLater(() -> {
+                    timeTimeline.stop();
+                    if (speechDisplayArea != null) {
+                        speechDisplayArea.setText("生成演讲稿失败: " + e.getMessage());
+                    }
+                    showError("AI调用失败", "生成演讲稿时发生错误: " + e.getMessage());
+                });
+            } catch (IllegalArgumentException e) {
+                Platform.runLater(() -> {
+                    timeTimeline.stop();
+                    if (speechDisplayArea != null) {
+                        speechDisplayArea.setText("参数错误: " + e.getMessage());
+                    }
+                    showError("参数错误", "参数验证失败: " + e.getMessage());
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    timeTimeline.stop();
+                    if (speechDisplayArea != null) {
+                        speechDisplayArea.setText("生成演讲稿时发生未知错误: " + e.getMessage());
+                    }
+                    showError("未知错误", "生成演讲稿时发生未知错误: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+    
+    /**
+     * 自动生成并保存演讲稿
+     */
+    private void generateAndSaveSpeechAutomatically() {
+        // 调用带显示的方法，传入null表示不需要显示在界面上
+        generateAndSaveSpeechWithDisplay(null);
     }
 
     private void showAIChatDialog() {
@@ -1422,25 +1595,45 @@ public class Main extends Application {
 
         TextArea suggestionArea = new TextArea();
         suggestionArea.setPromptText("AI生成的PPT命令将在这里展示，可手动修改后再生成PPT");
-        suggestionArea.setPrefRowCount(10);
+        suggestionArea.setPrefRowCount(8);
         suggestionArea.setWrapText(true);
         suggestionArea.setEditable(true);
         suggestionArea.setDisable(true);
+        
+        // 添加演讲稿显示区域
+        TextArea speechArea = new TextArea();
+        speechArea.setPromptText("生成的演讲稿将在这里显示，可编辑");
+        speechArea.setPrefRowCount(8);
+        speechArea.setWrapText(true);
+        speechArea.setEditable(true); // 允许编辑
+        speechArea.setDisable(true);
 
+        // 创建选项区域（暂时保留，但为空）
+        HBox optionsBox = new HBox(20);
+        optionsBox.setAlignment(Pos.CENTER_LEFT);
+        
         // 创建按钮容器
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
 
         Button generateBtn = new Button("生成建议");
         Button confirmBtn = new Button("生成PPT并保持窗口");
+        Button generateSpeechBtn = new Button("生成演讲稿"); // 新增
+        Button saveSpeechBtn = new Button("保存演讲稿"); // 修改
         Button closeBtn = new Button("关闭");
 
         // 设置按钮样式
         generateBtn.getStyleClass().add("button");
         confirmBtn.getStyleClass().add("button");
+        generateSpeechBtn.getStyleClass().add("button");
+        saveSpeechBtn.getStyleClass().add("button");
         closeBtn.getStyleClass().add("button");
+        
+        // 初始时禁用生成/保存演讲稿按钮
+        generateSpeechBtn.setDisable(true);
+        saveSpeechBtn.setDisable(true);
 
-        buttonBox.getChildren().addAll(generateBtn, confirmBtn, closeBtn);
+        buttonBox.getChildren().addAll(generateBtn, confirmBtn, generateSpeechBtn, saveSpeechBtn, closeBtn);
 
         // ========== 20250712新增：AI思考链可视化相关 ==========
         ListView<AIChainStep> aiChainListView = new ListView<>();
@@ -1469,6 +1662,8 @@ public class Main extends Application {
                 new Label("AI思考链（可视化）："), aiChainListView,
                 new Label("AI建议与反馈（只读）："), adviceArea,
                 new Label("PPT命令与大纲（可编辑）："), suggestionArea,
+                new Label("演讲稿内容（可编辑）："), speechArea,
+                optionsBox,
                 buttonBox);
 
         // 创建Scene并设置到Stage
@@ -1643,6 +1838,17 @@ public class Main extends Application {
                         suggestionArea.setText(pptCmd);
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
+                        
+                        // 启用生成PPT和生成演讲稿按钮（有PPT命令时）
+                        boolean pptReady = !pptCmd.isEmpty();
+                        confirmBtn.setDisable(!pptReady);
+                        generateSpeechBtn.setDisable(!pptReady);
+                        // 生成后演讲稿区域可编辑但内容为空
+                        speechArea.setText("");
+                        speechArea.setDisable(false);
+                        speechArea.setEditable(true);
+                        saveSpeechBtn.setDisable(true);
+                        
                         // ========== 新增：AI思考链步骤 ==========
                         aiChainSteps.get(2).setStatus(AIChainStep.StepStatus.DONE);
                         aiChainListView.refresh();
@@ -1684,18 +1890,87 @@ public class Main extends Application {
             // 生成PPT但不关闭窗口
             Platform.runLater(() -> {
                 parseAndCreateSlides(suggestion);
+                
                 // 在窗口内显示成功信息
                 adviceArea.setText("✓ PPT已成功生成！您可以继续查看和编辑AI建议，或关闭窗口。");
+                
+                // 生成PPT后也允许生成演讲稿
+                generateSpeechBtn.setDisable(false);
             });
+        });
+        
+        // 生成演讲稿按钮逻辑（只生成并显示，不保存）
+        generateSpeechBtn.setOnAction(event -> {
+            if (slides.isEmpty()) {
+                showError("生成失败", "当前没有幻灯片内容，无法生成演讲稿");
+                return;
+            }
+            speechArea.setDisable(false);
+            speechArea.setEditable(false);
+            speechArea.setText("正在生成演讲稿...");
+            saveSpeechBtn.setDisable(true);
+            // 创建时间更新器
+            final long startTime = System.currentTimeMillis();
+            final javafx.animation.Timeline timeTimeline = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(javafx.util.Duration.millis(1000), e -> {
+                        long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+                        long minutes = elapsed / 60;
+                        long seconds = elapsed % 60;
+                        String timeStr = String.format("%02d:%02d", minutes, seconds);
+                        speechArea.setText("正在生成演讲稿... (" + timeStr + ")");
+                    }));
+            timeTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+            timeTimeline.play();
+            new Thread(() -> {
+                try {
+                    String speech = aiAgent.generateSpeechBySlides(slides);
+                    Platform.runLater(() -> {
+                        timeTimeline.stop();
+                        speechArea.setText(speech);
+                        speechArea.setEditable(true);
+                        speechArea.requestFocus();
+                        saveSpeechBtn.setDisable(false);
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> {
+                        timeTimeline.stop();
+                        speechArea.setText("生成演讲稿失败: " + e.getMessage());
+                        speechArea.setEditable(false);
+                        saveSpeechBtn.setDisable(true);
+                    });
+                }
+            }).start();
+        });
+
+        // 保存演讲稿按钮逻辑（保存当前内容）
+        saveSpeechBtn.setOnAction(event -> {
+            String speech = speechArea.getText();
+            if (speech == null || speech.trim().isEmpty()) {
+                showError("保存失败", "演讲稿内容为空，无法保存");
+                return;
+            }
+            saveSpeechToFile(speech);
         });
 
         // 关闭按钮逻辑
         closeBtn.setOnAction(event -> aiStage.close());
 
-        // 初始时禁用"生成PPT"按钮
+        // 初始时禁用"生成PPT"、"生成/保存演讲稿"按钮
         confirmBtn.setDisable(true);
+        generateSpeechBtn.setDisable(true);
+        saveSpeechBtn.setDisable(true);
         suggestionArea.textProperty().addListener((obs, oldVal, newVal) -> {
-            confirmBtn.setDisable(newVal.trim().isEmpty() || adviceArea.getText().startsWith("AI正在思考"));
+            boolean hasContent = !newVal.trim().isEmpty() && !adviceArea.getText().startsWith("AI正在思考");
+            confirmBtn.setDisable(!hasContent);
+            generateSpeechBtn.setDisable(!hasContent);
+            // 只有生成了演讲稿内容后才能保存
+            if (speechArea.getText().trim().isEmpty()) {
+                saveSpeechBtn.setDisable(true);
+            }
+        });
+        speechArea.textProperty().addListener((obs, oldVal, newVal) -> {
+            // 只要演讲稿区域有内容且非只读，允许保存
+            saveSpeechBtn.setDisable(newVal.trim().isEmpty() || !speechArea.isEditable());
         });
 
         // 显示窗口
