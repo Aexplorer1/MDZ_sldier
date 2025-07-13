@@ -93,6 +93,18 @@ public class Main extends Application {
     private OpenAiChatModel aiModel;
     private AIAgent aiAgent;
 
+    // 主题色变量
+    private String mainBgColor = "#a3d3b2";
+    private String borderColor = "#7fcfa0";
+    private String canvasBgColor = "#e6f4ea";
+    private boolean isDarkTheme = false;
+
+    // 主题相关控件声明
+    private VBox topBox;
+    private ToolBar toolBar;
+    private VBox sidebar;
+    private BorderPane canvasHolder;
+
     @Override
     public void start(Stage primaryStage) {
         logger.info("Application starting...");
@@ -112,7 +124,6 @@ public class Main extends Application {
         navBox.setPadding(new Insets(40, 0, 0, 0));
 
         // Create canvas
-        // 调整画布大小为更大尺寸
         double newCanvasWidth = 1600;
         double newCanvasHeight = 1000;
         canvas = new Canvas(newCanvasWidth, newCanvasHeight);
@@ -129,18 +140,19 @@ public class Main extends Application {
         Label mainTitle = new Label("MDZ_Slider");
         mainTitle.setStyle(
                 "-fx-font-size:22;-fx-font-weight:bold;-fx-padding:12 0 12 24;-fx-text-fill:#222;font-family:'PingFang SC','Microsoft YaHei','Arial';");
-        VBox topBox = new VBox();
-        topBox.setStyle("-fx-background-color:#a3d3b2;-fx-border-width:0 0 1 0;-fx-border-color:#7fcfa0;");
+        topBox = new VBox();
+        // 主题色 setStyle
+        topBox.setStyle("-fx-background-color:" + mainBgColor + ";-fx-border-width:0 0 1 0;-fx-border-color:" + borderColor + ";");
         topBox.getChildren().add(mainTitle);
         // ========== 恢复顶部操作栏 ==========
-        ToolBar toolBar = createToolBar();
+        toolBar = createToolBar();
         toolBar.setStyle(
-                "-fx-background-color:#a3d3b2;-fx-border-radius:16;-fx-background-radius:16;-fx-padding:8 15;-fx-spacing:8;-fx-border-width:0 0 1 0;-fx-border-color:#7fcfa0;");
+                "-fx-background-color:" + mainBgColor + ";-fx-border-radius:16;-fx-background-radius:16;-fx-padding:8 15;-fx-spacing:8;-fx-border-width:0 0 1 0;-fx-border-color:" + borderColor + ";");
         topBox.getChildren().add(toolBar);
         root.setTop(topBox);
         // ========== 画布区域 ==========
-        BorderPane canvasHolder = new BorderPane(canvas);
-        canvasHolder.setStyle("-fx-background-color:#e6f4ea;-fx-border-radius:24;-fx-background-radius:24;");
+        canvasHolder = new BorderPane(canvas);
+        canvasHolder.setStyle("-fx-background-color:" + canvasBgColor + ";-fx-border-radius:24;-fx-background-radius:24;");
         canvasHolder.getStyleClass().add("canvas-holder");
         root.setCenter(canvasHolder);
 
@@ -149,10 +161,10 @@ public class Main extends Application {
         canvasHolder.heightProperty().addListener((obs, oldVal, newVal) -> refreshCanvas());
 
         // ========== 新增：左侧苹果风格绿色侧边栏 ==========
-        VBox sidebar = new VBox(18);
+        sidebar = new VBox(18);
         sidebar.setPadding(new Insets(24, 8, 24, 8));
         sidebar.setStyle(
-                "-fx-background-color:#a3d3b2;-fx-border-width:0 1 0 0;-fx-border-color:#7fcfa0;-fx-border-radius:16;-fx-background-radius:16;");
+                "-fx-background-color:" + mainBgColor + ";-fx-border-width:0 1 0 0;-fx-border-color:" + borderColor + ";-fx-border-radius:16;-fx-background-radius:16;");
         sidebar.setPrefWidth(160); // 调整侧栏宽度，确保按钮完全显示
         // File 菜单
         Button fileBtn = new Button("文件操作");
@@ -361,7 +373,31 @@ public class Main extends Application {
         sep3.setPrefWidth(80);
         Separator sep4 = new Separator();
         sep4.setPrefWidth(80);
-        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, presentationBtn, sep2, layoutBtn, structureBtn, sep3, languageBtn, aiBtn, feedbackBtn, sep4);
+        // ========== 新增：切换主题按钮 ==========
+        Button themeSwitchBtn = new Button("切换主题");
+        themeSwitchBtn.setMaxWidth(Double.MAX_VALUE);
+        themeSwitchBtn.setOnAction(e -> {
+            MenuItem lightItem = new MenuItem("浅色主题");
+            MenuItem darkItem = new MenuItem("黑夜主题");
+            lightItem.setOnAction(ev -> {
+                mainBgColor = "#a3d3b2";
+                borderColor = "#7fcfa0";
+                canvasBgColor = "#e6f4ea";
+                isDarkTheme = false;
+                applyTheme();
+            });
+            darkItem.setOnAction(ev -> {
+                mainBgColor = "#23272e";
+                borderColor = "#444";
+                canvasBgColor = "#181a20";
+                isDarkTheme = true;
+                applyTheme();
+            });
+            ContextMenu menu = new ContextMenu(lightItem, darkItem);
+            menu.show(themeSwitchBtn, javafx.geometry.Side.RIGHT, 0, 0);
+        });
+        // ========== 侧边栏控件顺序调整，底部加切换主题按钮 ==========
+        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, presentationBtn, sep2, layoutBtn, structureBtn, sep3, languageBtn, aiBtn, feedbackBtn, sep4, themeSwitchBtn);
         root.setLeft(sidebar);
 
         Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);
@@ -428,6 +464,9 @@ public class Main extends Application {
 
         // testAIMessage();
         logger.info("Application startup completed");
+
+        // 初始化主题
+        applyTheme();
     }
 
     // private void testAIMessage() {
@@ -3914,5 +3953,17 @@ public class Main extends Application {
     private void showPromptGeneratorDialog() {
         PromptGeneratorDialog dialog = new PromptGeneratorDialog(aiAgent);
         dialog.show();
+    }
+
+    // 新增：统一刷新主题色方法
+    private void applyTheme() {
+        // 顶部栏
+        if (topBox != null) topBox.setStyle("-fx-background-color:" + mainBgColor + ";-fx-border-width:0 0 1 0;-fx-border-color:" + borderColor + ";");
+        // 工具栏
+        if (toolBar != null) toolBar.setStyle("-fx-background-color:" + mainBgColor + ";-fx-border-radius:16;-fx-background-radius:16;-fx-padding:8 15;-fx-spacing:8;-fx-border-width:0 0 1 0;-fx-border-color:" + borderColor + ";");
+        // 侧边栏
+        if (sidebar != null) sidebar.setStyle("-fx-background-color:" + mainBgColor + ";-fx-border-width:0 1 0 0;-fx-border-color:" + borderColor + ";-fx-border-radius:16;-fx-background-radius:16;");
+        // 画布
+        if (canvasHolder != null) canvasHolder.setStyle("-fx-background-color:" + canvasBgColor + ";-fx-border-radius:24;-fx-background-radius:24;");
     }
 }

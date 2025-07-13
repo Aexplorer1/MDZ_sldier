@@ -5,52 +5,52 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * ´æ´¢Î»ÖÃ²âÊÔÀà
- * ÓÃÓÚÏÔÊ¾Ä£°åÎÄ¼şµÄ´æ´¢Î»ÖÃ
+ * å­˜å‚¨ä½ç½®æµ‹è¯•ç±»
+ * ç”¨äºæ˜¾ç¤ºæ¨¡æ¿æ–‡ä»¶çš„å­˜å‚¨ä½ç½®
  */
 public class StorageLocationTest {
 
     public static void main(String[] args) {
-        System.out.println("=== Ä£°å´æ´¢Î»ÖÃĞÅÏ¢ ===");
+        System.out.println("=== æ¨¡æ¿å­˜å‚¨ä½ç½®ä¿¡æ¯ ===");
 
-        // ÏÔÊ¾µ±Ç°¹¤×÷Ä¿Â¼
+        // æ˜¾ç¤ºå½“å‰å·¥ä½œç›®å½•
         String currentDir = System.getProperty("user.dir");
-        System.out.println("µ±Ç°¹¤×÷Ä¿Â¼: " + currentDir);
+        System.out.println("å½“å‰å·¥ä½œç›®å½•: " + currentDir);
 
-        // ÏÔÊ¾Ä¬ÈÏ´æ´¢ÎÄ¼şÂ·¾¶
+        // æ˜¾ç¤ºé»˜è®¤å­˜å‚¨æ–‡ä»¶è·¯å¾„
         String defaultStorageFile = "templates.json";
         Path storagePath = Paths.get(currentDir, defaultStorageFile);
-        System.out.println("Ä¬ÈÏ´æ´¢ÎÄ¼şÂ·¾¶: " + storagePath.toAbsolutePath());
+        System.out.println("é»˜è®¤å­˜å‚¨æ–‡ä»¶è·¯å¾„: " + storagePath.toAbsolutePath());
 
-        // ¼ì²éÎÄ¼şÊÇ·ñ´æÔÚ
+        // æ£€æŸ¥æ–‡ä»¶æ˜¯å¦å­˜åœ¨
         File storageFile = storagePath.toFile();
-        System.out.println("´æ´¢ÎÄ¼şÊÇ·ñ´æÔÚ: " + storageFile.exists());
+        System.out.println("å­˜å‚¨æ–‡ä»¶æ˜¯å¦å­˜åœ¨: " + storageFile.exists());
 
         if (storageFile.exists()) {
-            System.out.println("ÎÄ¼ş´óĞ¡: " + storageFile.length() + " ×Ö½Ú");
-            System.out.println("×îºóĞŞ¸ÄÊ±¼ä: " + new java.util.Date(storageFile.lastModified()));
+            System.out.println("æ–‡ä»¶å¤§å°: " + storageFile.length() + " å­—èŠ‚");
+            System.out.println("æœ€åä¿®æ”¹æ—¶é—´: " + new java.util.Date(storageFile.lastModified()));
         }
 
-        // ÏÔÊ¾±¸·İÄ¿Â¼
+        // æ˜¾ç¤ºå¤‡ä»½ç›®å½•
         String backupDir = "backups";
         Path backupPath = Paths.get(currentDir, backupDir);
-        System.out.println("±¸·İÄ¿Â¼Â·¾¶: " + backupPath.toAbsolutePath());
-        System.out.println("±¸·İÄ¿Â¼ÊÇ·ñ´æÔÚ: " + backupPath.toFile().exists());
+        System.out.println("å¤‡ä»½ç›®å½•è·¯å¾„: " + backupPath.toAbsolutePath());
+        System.out.println("å¤‡ä»½ç›®å½•æ˜¯å¦å­˜åœ¨: " + backupPath.toFile().exists());
 
-        // ÁĞ³öÏîÄ¿¸ùÄ¿Â¼ÏÂµÄËùÓĞÎÄ¼ş
-        System.out.println("\n=== ÏîÄ¿¸ùÄ¿Â¼ÎÄ¼şÁĞ±í ===");
+        // åˆ—å‡ºé¡¹ç›®æ ¹ç›®å½•ä¸‹çš„æ‰€æœ‰æ–‡ä»¶
+        System.out.println("\n=== é¡¹ç›®æ ¹ç›®å½•æ–‡ä»¶åˆ—è¡¨ ===");
         File projectDir = new File(currentDir);
         File[] files = projectDir.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.isFile()) {
-                    System.out.println("ÎÄ¼ş: " + file.getName() + " (" + file.length() + " ×Ö½Ú)");
+                    System.out.println("æ–‡ä»¶: " + file.getName() + " (" + file.length() + " å­—èŠ‚)");
                 } else if (file.isDirectory()) {
-                    System.out.println("Ä¿Â¼: " + file.getName());
+                    System.out.println("ç›®å½•: " + file.getName());
                 }
             }
         }
 
-        System.out.println("\n=== ²âÊÔÍê³É ===");
+        System.out.println("\n=== æµ‹è¯•å®Œæˆ ===");
     }
 }
