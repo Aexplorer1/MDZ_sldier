@@ -31,6 +31,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ContentDisplay;
+import javafx.scene.layout.StackPane;
 
 import slideshow.util.Constants;
 import slideshow.model.Slide;
@@ -96,8 +97,6 @@ public class Main extends Application {
         previousSlideButton = new Button("上一页");
         nextSlideButton = new Button("下一页");
         slideCountLabel = new Label("1/1");
-        // previousSlideButton.setPrefWidth(80); // 移除宽度设置，交由CSS控制
-        // nextSlideButton.setPrefWidth(80);
         slideCountLabel.setStyle("-fx-font-size:14;-fx-padding:6 0;-fx-text-fill:#666;");
         previousSlideButton.getStyleClass().add("button");
         nextSlideButton.getStyleClass().add("button");
@@ -122,13 +121,15 @@ public class Main extends Application {
 
         // ========== 顶部主标题 ==========
         Label mainTitle = new Label("MDZ_Slider");
-        mainTitle.setStyle("-fx-font-size:22;-fx-font-weight:bold;-fx-padding:12 0 12 24;-fx-text-fill:#222;font-family:'PingFang SC','Microsoft YaHei','Arial';");
+        mainTitle.setStyle(
+                "-fx-font-size:22;-fx-font-weight:bold;-fx-padding:12 0 12 24;-fx-text-fill:#222;font-family:'PingFang SC','Microsoft YaHei','Arial';");
         VBox topBox = new VBox();
         topBox.setStyle("-fx-background-color:#a3d3b2;-fx-border-width:0 0 1 0;-fx-border-color:#7fcfa0;");
         topBox.getChildren().add(mainTitle);
         // ========== 恢复顶部操作栏 ==========
         ToolBar toolBar = createToolBar();
-        toolBar.setStyle("-fx-background-color:#a3d3b2;-fx-border-radius:16;-fx-background-radius:16;-fx-padding:10 20;-fx-spacing:12;-fx-border-width:0 0 1 0;-fx-border-color:#7fcfa0;");
+        toolBar.setStyle(
+                "-fx-background-color:#a3d3b2;-fx-border-radius:16;-fx-background-radius:16;-fx-padding:8 15;-fx-spacing:8;-fx-border-width:0 0 1 0;-fx-border-color:#7fcfa0;");
         topBox.getChildren().add(toolBar);
         root.setTop(topBox);
         // ========== 画布区域 ==========
@@ -137,11 +138,16 @@ public class Main extends Application {
         canvasHolder.getStyleClass().add("canvas-holder");
         root.setCenter(canvasHolder);
 
+        // 监听canvasPane大小变化，动态重绘并等比缩放内容
+        canvasHolder.widthProperty().addListener((obs, oldVal, newVal) -> refreshCanvas());
+        canvasHolder.heightProperty().addListener((obs, oldVal, newVal) -> refreshCanvas());
+
         // ========== 新增：左侧苹果风格绿色侧边栏 ==========
         VBox sidebar = new VBox(18);
         sidebar.setPadding(new Insets(24, 8, 24, 8));
-        sidebar.setStyle("-fx-background-color:#a3d3b2;-fx-border-width:0 1 0 0;-fx-border-color:#7fcfa0;-fx-border-radius:16;-fx-background-radius:16;");
-        sidebar.setPrefWidth(150); // 增加侧栏宽度，防止按钮被截断
+        sidebar.setStyle(
+                "-fx-background-color:#a3d3b2;-fx-border-width:0 1 0 0;-fx-border-color:#7fcfa0;-fx-border-radius:16;-fx-background-radius:16;");
+        sidebar.setPrefWidth(160); // 调整侧栏宽度，确保按钮完全显示
         // File 菜单
         Button fileBtn = new Button("文件操作");
         Label fileIcon = new Label("\uD83D\uDCC1");
@@ -163,13 +169,12 @@ public class Main extends Application {
             saveAsItem.setOnAction(ev -> saveAsPresentation());
             exitItem.setOnAction(ev -> Platform.exit());
             ContextMenu menu = new ContextMenu(
-                newItem,
-                openItem,
-                saveItem,
-                saveAsItem,
-                new SeparatorMenuItem(),
-                exitItem
-            );
+                    newItem,
+                    openItem,
+                    saveItem,
+                    saveAsItem,
+                    new SeparatorMenuItem(),
+                    exitItem);
             menu.show(fileBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
         // Edit 菜单
@@ -189,13 +194,12 @@ public class Main extends Application {
             MenuItem pasteItem = new MenuItem("粘贴");
             // TODO: 绑定撤销/重做/剪切/复制/粘贴功能
             ContextMenu menu = new ContextMenu(
-                undoItem,
-                redoItem,
-                new SeparatorMenuItem(),
-                cutItem,
-                copyItem,
-                pasteItem
-            );
+                    undoItem,
+                    redoItem,
+                    new SeparatorMenuItem(),
+                    cutItem,
+                    copyItem,
+                    pasteItem);
             menu.show(editBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
         // 智能排版
@@ -215,10 +219,9 @@ public class Main extends Application {
             responsiveItem.setOnAction(ev -> responsiveAdjustCurrentSlide());
             autoTextItem.setOnAction(ev -> autoAdjustTextSize());
             ContextMenu menu = new ContextMenu(
-                optimizeItem,
-                responsiveItem,
-                autoTextItem
-            );
+                    optimizeItem,
+                    responsiveItem,
+                    autoTextItem);
             menu.show(layoutBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
         // 结构分析
@@ -242,12 +245,11 @@ public class Main extends Application {
             logicGraphItem.setOnAction(ev -> generateLogicGraph());
             reportItem.setOnAction(ev -> generateCompleteReport());
             ContextMenu menu = new ContextMenu(
-                analyzeItem,
-                outlineItem,
-                keypointsItem,
-                logicGraphItem,
-                reportItem
-            );
+                    analyzeItem,
+                    outlineItem,
+                    keypointsItem,
+                    logicGraphItem,
+                    reportItem);
             menu.show(structureBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
         // 多语言
@@ -269,32 +271,59 @@ public class Main extends Application {
             genMultiItem.setOnAction(ev -> generateMultilingualPPT());
             switchLangItem.setOnAction(ev -> showLanguageSelectionDialog());
             ContextMenu menu = new ContextMenu(
-                translateOneItem,
-                translateAllItem,
-                genMultiItem,
-                switchLangItem
-            );
+                    translateOneItem,
+                    translateAllItem,
+                    genMultiItem,
+                    switchLangItem);
             menu.show(languageBtn, javafx.geometry.Side.RIGHT, 0, 0);
+        });
+        // AI功能
+        Button aiBtn = new Button("AI功能");
+        Label aiIcon = new Label("\uD83E\uDD16");
+        aiIcon.setStyle("-fx-font-size: 16px;");
+        aiBtn.setGraphic(aiIcon);
+        aiBtn.setContentDisplay(ContentDisplay.LEFT);
+        aiBtn.setGraphicTextGap(10);
+        aiBtn.getStyleClass().add("menu-button");
+        aiBtn.setMaxWidth(Double.MAX_VALUE);
+        aiBtn.setOnAction(e -> {
+            MenuItem aiGenItem = new MenuItem("AI智能生成PPT");
+            MenuItem speechGenItem = new MenuItem("生成演讲稿");
+            MenuItem speechStructureItem = new MenuItem("演讲稿结构");
+            MenuItem keywordAnalysisItem = new MenuItem("关键词分析");
+            MenuItem aiQAItem = new MenuItem("AI问答");
+            MenuItem templateManageItem = new MenuItem("模板管理");
+            aiGenItem.setOnAction(ev -> showAIChatDialog());
+            speechGenItem.setOnAction(ev -> generateSpeechFromSlides());
+            speechStructureItem.setOnAction(ev -> showSpeechStructureDialog());
+            keywordAnalysisItem.setOnAction(ev -> performKeywordAnalysis());
+            aiQAItem.setOnAction(ev -> showAIDialog());
+            templateManageItem.setOnAction(ev -> openTemplateManager());
+            ContextMenu menu = new ContextMenu(
+                    aiGenItem,
+                    speechGenItem,
+                    speechStructureItem,
+                    keywordAnalysisItem,
+                    aiQAItem,
+                    new SeparatorMenuItem(),
+                    templateManageItem);
+            menu.show(aiBtn, javafx.geometry.Side.RIGHT, 0, 0);
         });
         // 分组美化
         Separator sep1 = new Separator();
         sep1.setPrefWidth(80);
         Separator sep2 = new Separator();
         sep2.setPrefWidth(80);
-        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, layoutBtn, structureBtn, sep2, languageBtn);
-        // ========== 幻灯片切换控件加到底部 ==========
-        // String unifiedBtnStyle = "-fx-background-color:#fff;-fx-text-fill:#222;-fx-font-size:15;-fx-font-weight:bold;-fx-background-radius:10;-fx-border-color:#7fcfa0;-fx-border-width:1;font-family:'PingFang SC','Microsoft YaHei','Arial';";
-        // previousSlideButton.setStyle(unifiedBtnStyle);
-        // nextSlideButton.setStyle(unifiedBtnStyle);
-        // slideCountLabel.setStyle("-fx-font-size:15;-fx-padding:6 0;-fx-text-fill:#222;-fx-font-weight:bold;font-family:'PingFang SC','Microsoft YaHei','Arial';");
-        // sidebar.getChildren().add(navBox); // 删除侧栏底部的上一页/下一页按钮
+        Separator sep3 = new Separator();
+        sep3.setPrefWidth(80);
+        sidebar.getChildren().setAll(fileBtn, editBtn, sep1, layoutBtn, structureBtn, sep2, languageBtn, aiBtn, sep3);
         root.setLeft(sidebar);
 
         Scene scene = new Scene(root, Constants.DEFAULT_WINDOW_WIDTH, Constants.DEFAULT_WINDOW_HEIGHT);
 
-        // 增大窗口初始大小以适配更大画布
-        primaryStage.setWidth(newCanvasWidth + 300); // 侧栏+边距
-        primaryStage.setHeight(newCanvasHeight + 150); // 顶部+边距
+        // 设置合理的窗口初始大小，确保所有按钮都能显示但不会铺满屏幕
+        primaryStage.setWidth(1400); // 调整为更合理的宽度
+        primaryStage.setHeight(900); // 调整为更合理的高度
 
         // Load CSS styles
         try {
@@ -307,6 +336,16 @@ public class Main extends Application {
 
         primaryStage.setTitle("MDZ_Slider");
         primaryStage.setScene(scene);
+
+        // 确保主窗口可以正常控制
+        primaryStage.setResizable(true);
+        primaryStage.setFullScreen(false);
+        primaryStage.setMaximized(false); // 不强制最大化
+        
+        // 设置窗口最小尺寸，确保功能正常使用
+        primaryStage.setMinWidth(1200);
+        primaryStage.setMinHeight(800);
+
         primaryStage.show();
 
         // Create initial slide
@@ -521,14 +560,56 @@ public class Main extends Application {
         return Cursor.DEFAULT;
     }
 
+    private void adjustCanvasSize() {
+        if (canvas != null && canvas.getParent() != null) {
+            // 获取容器可用空间
+            double containerWidth = ((BorderPane) canvas.getParent()).getWidth() - 40; // 减去内边距
+            double containerHeight = ((BorderPane) canvas.getParent()).getHeight() - 40;
+            
+            // 计算保持16:9比例的最大尺寸
+            double maxWidth = containerWidth;
+            double maxHeight = containerHeight;
+            
+            // 保持16:9比例
+            double aspectRatio = 16.0 / 9.0;
+            
+            if (maxWidth / maxHeight > aspectRatio) {
+                // 高度限制
+                maxWidth = maxHeight * aspectRatio;
+            } else {
+                // 宽度限制
+                maxHeight = maxWidth / aspectRatio;
+            }
+            
+            // 设置最小尺寸
+            double minWidth = 800;
+            double minHeight = 450;
+            
+            // 确保不小于最小尺寸
+            if (maxWidth < minWidth) {
+                maxWidth = minWidth;
+                maxHeight = maxWidth / aspectRatio;
+            }
+            if (maxHeight < minHeight) {
+                maxHeight = minHeight;
+                maxWidth = maxHeight * aspectRatio;
+            }
+            
+            // 调整画布尺寸
+            canvas.setWidth(maxWidth);
+            canvas.setHeight(maxHeight);
+            
+            // 重新获取GraphicsContext
+            graphicsContext = canvas.getGraphicsContext2D();
+        }
+    }
+
     private void refreshCanvas() {
         // Clear canvas
         graphicsContext.setFill(Color.WHITE);
         graphicsContext.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-
         // Redraw all elements
         if (currentSlide != null) {
-            System.out.println("Refreshing canvas");
             currentSlide.draw(graphicsContext);
         }
     }
@@ -637,50 +718,7 @@ public class Main extends Application {
         lineWidthComboBox.getItems().addAll(1.0, 2.0, 3.0, 4.0, 5.0);
         lineWidthComboBox.setValue(2.0);
 
-        Button aiGenBtn = new Button("AI智能生成PPT");
-        aiGenBtn.getStyleClass().add("button");
-        aiGenBtn.setOnAction(e -> showAIChatDialog());
-
-        Button speechGenBtn = new Button("生成演讲稿");
-        speechGenBtn.getStyleClass().add("button");
-        speechGenBtn.setOnAction(e -> generateSpeechFromSlides());
-
-        Button speechStructureBtn = new Button("演讲稿结构");
-        speechStructureBtn.getStyleClass().add("button");
-        speechStructureBtn.setOnAction(e -> showSpeechStructureDialog());
-
-        // Add keyword analysis button
-        Button keywordAnalysisBtn = new Button("关键词分析");
-        keywordAnalysisBtn.getStyleClass().add("button");
-        keywordAnalysisBtn.setOnAction(e -> performKeywordAnalysis());
-
-        // Add AI Q&A button
-        Button aiQABtn = new Button("AI问答");
-        aiQABtn.getStyleClass().add("button");
-        aiQABtn.setOnAction(e -> showAIDialog());
-
-        // Add template management button
-        Button templateManageBtn = new Button("Template Manager");
-        templateManageBtn.getStyleClass().add("button");
-        templateManageBtn.setOnAction(e -> openTemplateManager());
-
-        // 1. 新增思考链可视化区域
-        ListView<AIChainStep> aiChainListView = new ListView<>();
-        ObservableList<AIChainStep> aiChainSteps = FXCollections.observableArrayList();
-        aiChainListView.setItems(aiChainSteps);
-        aiChainListView.setPrefHeight(120);
-        aiChainListView.setCellFactory(list -> new ListCell<AIChainStep>() {
-            @Override
-            protected void updateItem(AIChainStep step, boolean empty) {
-                super.updateItem(step, empty);
-                if (empty || step == null) {
-                    setText(null);
-                } else {
-                    setText(step.getTitle() + " [" + step.getStatus() + "]\n" + step.getDetail());
-                }
-            }
-        });
-
+        // 简化工具栏，只保留基本功能，移除AI功能按钮
         return new ToolBar(
                 newSlideBtn,
                 new Separator(),
@@ -694,18 +732,10 @@ public class Main extends Application {
                 colorPicker,
                 fontSizeCombo,
                 fontStyleCombo,
+                new Separator(),
                 rectBtn, circleBtn, lineBtn, arrowBtn,
                 drawColorPicker,
-                lineWidthComboBox,
-                new Separator(),
-                aiGenBtn,
-                speechGenBtn,
-                speechStructureBtn,
-                keywordAnalysisBtn,
-                aiQABtn,
-                new Separator(),
-                templateManageBtn,
-                aiChainListView);
+                lineWidthComboBox);
     }
 
     private void createNewSlide() {
@@ -884,14 +914,14 @@ public class Main extends Application {
         MenuItem settingsItem = new MenuItem("Presentation Settings");
 
         playMenu.getItems().addAll(startItem, settingsItem);
-        
+
         // 智能排版菜单
         Menu layoutMenu = new Menu("智能排版");
         MenuItem optimizeLayoutItem = new MenuItem("优化布局");
         MenuItem responsiveLayoutItem = new MenuItem("响应式调整");
         MenuItem autoTextSizeItem = new MenuItem("自动文本调整");
         layoutMenu.getItems().addAll(optimizeLayoutItem, responsiveLayoutItem, autoTextSizeItem);
-        
+
         // 结构分析菜单
         Menu structureMenu = new Menu("结构分析");
         MenuItem analyzeStructureItem = new MenuItem("分析幻灯片结构");
@@ -899,7 +929,8 @@ public class Main extends Application {
         MenuItem analyzeKeyPointsItem = new MenuItem("重点内容分析");
         MenuItem generateLogicGraphItem = new MenuItem("生成逻辑关系图");
         MenuItem completeReportItem = new MenuItem("完整分析报告");
-        structureMenu.getItems().addAll(analyzeStructureItem, generateOutlineItem, analyzeKeyPointsItem, generateLogicGraphItem, completeReportItem);
+        structureMenu.getItems().addAll(analyzeStructureItem, generateOutlineItem, analyzeKeyPointsItem,
+                generateLogicGraphItem, completeReportItem);
 
         // 多语言菜单
         Menu languageMenu = new Menu("多语言");
@@ -907,7 +938,8 @@ public class Main extends Application {
         MenuItem translateAllItem = new MenuItem("批量翻译所有幻灯片");
         MenuItem generateMultilingualItem = new MenuItem("生成多语言PPT");
         MenuItem switchLanguageItem = new MenuItem("切换语言");
-        languageMenu.getItems().addAll(translateContentItem, translateAllItem, generateMultilingualItem, switchLanguageItem);
+        languageMenu.getItems().addAll(translateContentItem, translateAllItem, generateMultilingualItem,
+                switchLanguageItem);
 
         menuBar.getMenus().addAll(fileMenu, editMenu, playMenu, layoutMenu, structureMenu, languageMenu);
 
@@ -918,19 +950,19 @@ public class Main extends Application {
         saveAsItem.setOnAction(e -> saveAsPresentation());
         exitItem.setOnAction(e -> Platform.exit());
         startItem.setOnAction(e -> startPresentation());
-        
+
         // 智能排版功能事件处理
         optimizeLayoutItem.setOnAction(e -> optimizeCurrentSlideLayout());
         responsiveLayoutItem.setOnAction(e -> responsiveAdjustCurrentSlide());
         autoTextSizeItem.setOnAction(e -> autoAdjustTextSize());
-        
+
         // 结构分析功能事件处理
         analyzeStructureItem.setOnAction(e -> analyzeSlideStructure());
         generateOutlineItem.setOnAction(e -> generateSmartOutline());
         analyzeKeyPointsItem.setOnAction(e -> analyzeKeyPoints());
         generateLogicGraphItem.setOnAction(e -> generateLogicGraph());
         completeReportItem.setOnAction(e -> generateCompleteReport());
-        
+
         // 多语言功能事件处理
         translateContentItem.setOnAction(e -> translateCurrentContent());
         translateAllItem.setOnAction(e -> translateAllContent());
@@ -1136,19 +1168,21 @@ public class Main extends Application {
         aiStage.setTitle("AI智能生成PPT");
         aiStage.setMinWidth(800);
         aiStage.setMinHeight(600);
-        
+
         // 设置窗口图标（如果有的话）
-        // aiStage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
-        
+        // aiStage.getIcons().add(new
+        // Image(getClass().getResourceAsStream("/icon.png")));
+
         // 创建主容器
         VBox root = new VBox(10);
         root.setPadding(new Insets(10));
-        
+
         // 创建标题
-        Label titleLabel = new Label("选择模板并输入需求，点击*生成建议*后可查看AI建议、PPT命令和演讲稿，编辑命令后点击*生成PPT并保持窗口*生成幻灯片");
+        Label titleLabel = new Label(
+                "选择模板并输入需求，点击*生成建议*后可查看AI建议、PPT命令和演讲稿，编辑命令后点击*生成PPT并保持窗口*生成幻灯片");
         titleLabel.setWrapText(true);
         titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
+
         // 添加模板选择功能
         ComboBox<PromptTemplate> templateCombo = new ComboBox<>();
         templateCombo.setPromptText("选择提示词模板（可选）");
@@ -1236,18 +1270,18 @@ public class Main extends Application {
         // 创建按钮容器
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
-        
+
         Button generateBtn = new Button("生成建议");
         Button confirmBtn = new Button("生成PPT并保持窗口");
         Button closeBtn = new Button("关闭");
-        
+
         // 设置按钮样式
         generateBtn.getStyleClass().add("button");
         confirmBtn.getStyleClass().add("button");
         closeBtn.getStyleClass().add("button");
-        
+
         buttonBox.getChildren().addAll(generateBtn, confirmBtn, closeBtn);
-        
+
         // ========== 20250712新增：AI思考链可视化相关 ==========
         ListView<AIChainStep> aiChainListView = new ListView<>();
         ObservableList<AIChainStep> aiChainSteps = FXCollections.observableArrayList();
@@ -1268,20 +1302,19 @@ public class Main extends Application {
 
         // 添加所有组件到主容器
         root.getChildren().addAll(
-            titleLabel,
-            new Label("选择模板："), templateCombo, templateInfoLabel,
-            new Label("PPT需求："), inputArea,
-            // 新增：AI思考链可视化区域
-            new Label("AI思考链（可视化）："), aiChainListView,
-            new Label("AI建议与反馈（只读）："), adviceArea,
-            new Label("PPT命令与大纲（可编辑）："), suggestionArea,
-            buttonBox
-        );
+                titleLabel,
+                new Label("选择模板："), templateCombo, templateInfoLabel,
+                new Label("PPT需求："), inputArea,
+                // 新增：AI思考链可视化区域
+                new Label("AI思考链（可视化）："), aiChainListView,
+                new Label("AI建议与反馈（只读）："), adviceArea,
+                new Label("PPT命令与大纲（可编辑）："), suggestionArea,
+                buttonBox);
 
         // 创建Scene并设置到Stage
         Scene scene = new Scene(root);
         aiStage.setScene(scene);
-        
+
         // 生成建议按钮逻辑
         generateBtn.setOnAction(event -> {
             String userPrompt = inputArea.getText().trim();
@@ -1301,7 +1334,8 @@ public class Main extends Application {
 
             // ========== 新增：AI思考链步骤初始化 ==========
             aiChainSteps.clear();
-            aiChainSteps.add(new AIChainStep("1. 构建提示词", "正在根据用户输入和模板构建AI提示词...", AIChainStep.StepStatus.RUNNING));
+            aiChainSteps.add(
+                    new AIChainStep("1. 构建提示词", "正在根据用户输入和模板构建AI提示词...", AIChainStep.StepStatus.RUNNING));
             aiChainListView.refresh();
             // ========== 新增结束 ==========
 
@@ -1359,7 +1393,8 @@ public class Main extends Application {
                 // ========== 新增：AI思考链步骤 ==========
                 Platform.runLater(() -> {
                     aiChainSteps.get(0).setStatus(AIChainStep.StepStatus.DONE);
-                    aiChainSteps.add(new AIChainStep("2. 调用AI模型", "正在请求AI生成建议...", AIChainStep.StepStatus.RUNNING));
+                    aiChainSteps
+                            .add(new AIChainStep("2. 调用AI模型", "正在请求AI生成建议...", AIChainStep.StepStatus.RUNNING));
                     aiChainListView.refresh();
                 });
                 // ========== 新增结束 ==========
@@ -1372,7 +1407,8 @@ public class Main extends Application {
 
                         // ========== 新增：AI思考链步骤 ==========
                         aiChainSteps.get(1).setStatus(AIChainStep.StepStatus.DONE);
-                        aiChainSteps.add(new AIChainStep("3. 解析AI响应", "正在解析AI返回内容...", AIChainStep.StepStatus.RUNNING));
+                        aiChainSteps.add(
+                                new AIChainStep("3. 解析AI响应", "正在解析AI返回内容...", AIChainStep.StepStatus.RUNNING));
                         aiChainListView.refresh();
                         // ========== 新增结束 ==========
 
@@ -1462,8 +1498,10 @@ public class Main extends Application {
                         adviceArea.setDisable(false);
                         suggestionArea.setDisable(false);
                         // ========== 新增：AI思考链步骤 ==========
-                        if (aiChainSteps.size() > 0) aiChainSteps.get(aiChainSteps.size() - 1).setStatus(AIChainStep.StepStatus.DONE);
-                        aiChainSteps.add(new AIChainStep("异常", "AI生成失败：" + e.getMessage(), AIChainStep.StepStatus.DONE));
+                        if (aiChainSteps.size() > 0)
+                            aiChainSteps.get(aiChainSteps.size() - 1).setStatus(AIChainStep.StepStatus.DONE);
+                        aiChainSteps
+                                .add(new AIChainStep("异常", "AI生成失败：" + e.getMessage(), AIChainStep.StepStatus.DONE));
                         aiChainListView.refresh();
                         // ========== 新增结束 ==========
                     });
@@ -1783,14 +1821,14 @@ public class Main extends Application {
         // 创建详细的分析结果文本
         StringBuilder resultText = new StringBuilder();
         resultText.append("=== 幻灯片分析报告 ===\n\n");
-        
+
         resultText.append("📊 基本信息:\n");
         resultText.append("• 幻灯片总数: ").append(analysis.getTotalSlides()).append("\n");
         resultText.append("• 总字数: ").append(analysis.getTotalWords()).append("\n\n");
-        
+
         resultText.append("🎯 主要主题:\n");
         resultText.append(analysis.getMainTopic() != null ? analysis.getMainTopic() : "未识别").append("\n\n");
-        
+
         resultText.append("🔑 关键词 (共").append(analysis.getKeywords().size()).append("个):\n");
         for (int i = 0; i < analysis.getKeywords().size(); i++) {
             String keyword = analysis.getKeywords().get(i);
@@ -1802,7 +1840,7 @@ public class Main extends Application {
             resultText.append("\n");
         }
         resultText.append("\n");
-        
+
         if (!analysis.getThemes().isEmpty()) {
             resultText.append("📂 主题分类:\n");
             for (int i = 0; i < analysis.getThemes().size(); i++) {
@@ -1810,10 +1848,10 @@ public class Main extends Application {
             }
             resultText.append("\n");
         }
-        
+
         resultText.append("📝 内容摘要:\n");
         resultText.append(analysis.getSummary() != null ? analysis.getSummary() : "未生成摘要").append("\n\n");
-        
+
         resultText.append("=== 分析完成 ===");
 
         // 使用Alert而不是Dialog，这样更简单且不会有关闭问题
@@ -1935,7 +1973,7 @@ public class Main extends Application {
      * 显示AI回答对话框
      * 
      * @param question 用户问题
-     * @param answer AI回答
+     * @param answer   AI回答
      */
     private void showAIAnswerDialog(String question, String answer) {
         Alert resultDialog = new Alert(Alert.AlertType.INFORMATION);
@@ -1989,9 +2027,9 @@ public class Main extends Application {
     public static void main(String[] args) {
         Application.launch(args);
     }
-    
+
     // ==================== 新增功能方法实现 ====================
-    
+
     /**
      * 优化当前幻灯片布局
      */
@@ -2000,23 +2038,23 @@ public class Main extends Application {
             showError("优化失败", "当前没有选中的幻灯片");
             return;
         }
-        
+
         try {
             // 创建增强的AI代理
             AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
-            
+
             // 应用智能布局优化
-            enhancedAgent.optimizeSlideLayout(currentSlide, canvas.getWidth(), canvas.getHeight(), 
-                                           IntelligentLayoutEngine.LayoutType.CENTERED);
-            
+            enhancedAgent.optimizeSlideLayout(currentSlide, canvas.getWidth(), canvas.getHeight(),
+                    IntelligentLayoutEngine.LayoutType.CENTERED);
+
             refreshCanvas();
             showInfo("布局优化", "当前幻灯片布局已优化");
-            
+
         } catch (Exception e) {
             showError("优化失败", "布局优化时发生错误: " + e.getMessage());
         }
     }
-    
+
     /**
      * 响应式调整当前幻灯片
      */
@@ -2025,26 +2063,26 @@ public class Main extends Application {
             showError("调整失败", "当前没有选中的幻灯片");
             return;
         }
-        
+
         try {
             // 创建增强的AI代理
             AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
-            
+
             // 获取当前画布尺寸
             double newWidth = canvas.getWidth();
             double newHeight = canvas.getHeight();
-            
+
             // 应用响应式调整
             enhancedAgent.responsiveAdjustLayout(currentSlide, newWidth, newHeight);
-            
+
             refreshCanvas();
             showInfo("响应式调整", "幻灯片已根据当前尺寸调整");
-            
+
         } catch (Exception e) {
             showError("调整失败", "响应式调整时发生错误: " + e.getMessage());
         }
     }
-    
+
     /**
      * 自动调整文本大小
      */
@@ -2053,24 +2091,24 @@ public class Main extends Application {
             showError("调整失败", "请先选择一个文本元素");
             return;
         }
-        
+
         try {
             TextElement textElement = (TextElement) selectedElement;
-            
+
             // 创建增强的AI代理
             AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
-            
+
             // 自动调整文本大小
             enhancedAgent.autoAdjustTextSize(textElement, 400.0, 100.0);
-            
+
             refreshCanvas();
             showInfo("文本调整", "文本大小已自动调整");
-            
+
         } catch (Exception e) {
             showError("调整失败", "自动调整文本大小时发生错误: " + e.getMessage());
         }
     }
-    
+
     /**
      * 翻译当前内容
      */
@@ -2138,12 +2176,12 @@ public class Main extends Application {
                     for (TextElement textElement : textElements) {
                         String originalText = textElement.getText();
                         if (originalText != null && !originalText.trim().isEmpty()) {
-                            String translatedText = MultilingualSupport.generateMultilingualContent(originalText, targetLanguage);
+                            String translatedText = MultilingualSupport.generateMultilingualContent(originalText,
+                                    targetLanguage);
                             if (translatedText.equals(originalText)) {
                                 String prompt = String.format(
-                                    "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
-                                    targetLanguage.getDisplayName(), originalText
-                                );
+                                        "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                        targetLanguage.getDisplayName(), originalText);
                                 try {
                                     translatedText = aiModel.chat(prompt).trim();
                                 } catch (Exception ex) {
@@ -2157,7 +2195,8 @@ public class Main extends Application {
                             count++;
                         }
                     }
-                    translationLog.insert(0, String.format("已翻译 %d 个文本元素为: %s\n\n", count, targetLanguage.getDisplayName()));
+                    translationLog.insert(0,
+                            String.format("已翻译 %d 个文本元素为: %s\n\n", count, targetLanguage.getDisplayName()));
                     return translationLog;
                 }
             };
@@ -2166,12 +2205,13 @@ public class Main extends Application {
                 try {
                     AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
                     enhancedAgent.optimizeSlideLayout(currentSlide, canvas.getWidth(), canvas.getHeight(),
-                        IntelligentLayoutEngine.LayoutType.CENTERED);
+                            IntelligentLayoutEngine.LayoutType.CENTERED);
                 } catch (Exception ex) {
                     logger.warning("翻译后自动优化布局失败: " + ex.getMessage());
                 }
                 refreshCanvas();
-                showTranslationResultDialog(translationTask.getValue().toString(), currentSlide.getElements().size(), targetLanguage);
+                showTranslationResultDialog(translationTask.getValue().toString(), currentSlide.getElements().size(),
+                        targetLanguage);
             });
             translationTask.setOnFailed(e -> {
                 progressAlert.close();
@@ -2215,11 +2255,7 @@ public class Main extends Application {
         });
         languageCombo.setButtonCell(languageCombo.getCellFactory().call(null));
         VBox content = new VBox(10);
-        content.getChildren().addAll(
-            new Label("目标语言:"), 
-            languageCombo,
-            new Label("注意: 此操作将翻译所有幻灯片的内容")
-        );
+        content.getChildren().addAll(new Label("目标语言:"), languageCombo);
         content.setPadding(new Insets(10));
         dialog.getDialogPane().setContent(content);
         dialog.setResultConverter(dialogButton -> {
@@ -2247,12 +2283,12 @@ public class Main extends Application {
                                 TextElement textElement = (TextElement) element;
                                 String originalText = textElement.getText();
                                 if (originalText != null && !originalText.trim().isEmpty()) {
-                                    String translatedText = MultilingualSupport.generateMultilingualContent(originalText, targetLanguage);
+                                    String translatedText = MultilingualSupport
+                                            .generateMultilingualContent(originalText, targetLanguage);
                                     if (translatedText.equals(originalText)) {
                                         String prompt = String.format(
-                                            "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
-                                            targetLanguage.getDisplayName(), originalText
-                                        );
+                                                "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                                targetLanguage.getDisplayName(), originalText);
                                         try {
                                             translatedText = aiModel.chat(prompt).trim();
                                         } catch (Exception ex) {
@@ -2261,7 +2297,8 @@ public class Main extends Application {
                                     }
                                     String cleanOriginal = stripPPTStructureFields(originalText);
                                     String cleanTranslated = stripPPTStructureFields(translatedText);
-                                    translationLog.append(String.format("原文: %s\n译文: %s\n", cleanOriginal, cleanTranslated));
+                                    translationLog
+                                            .append(String.format("原文: %s\n译文: %s\n", cleanOriginal, cleanTranslated));
                                     textElement.setText(translatedText);
                                     translatedElements++;
                                     slideTranslated = true;
@@ -2272,7 +2309,8 @@ public class Main extends Application {
                             translatedSlides++;
                         }
                     }
-                    translationLog.insert(0, String.format("已翻译 %d 个幻灯片，共 %d 个文本元素为: %s\n\n", translatedSlides, translatedElements, targetLanguage.getDisplayName()));
+                    translationLog.insert(0, String.format("已翻译 %d 个幻灯片，共 %d 个文本元素为: %s\n\n", translatedSlides,
+                            translatedElements, targetLanguage.getDisplayName()));
                     return translationLog;
                 }
             };
@@ -2282,12 +2320,13 @@ public class Main extends Application {
                     AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
                     for (Slide slide : slides) {
                         enhancedAgent.optimizeSlideLayout(slide, canvas.getWidth(), canvas.getHeight(),
-                            IntelligentLayoutEngine.LayoutType.CENTERED);
+                                IntelligentLayoutEngine.LayoutType.CENTERED);
                     }
                 } catch (Exception ex) {
                     logger.warning("批量翻译后自动优化布局失败: " + ex.getMessage());
                 }
-                if (currentSlide != null) refreshCanvas();
+                if (currentSlide != null)
+                    refreshCanvas();
                 // 统计信息
                 String translationLog = translationTask.getValue().toString();
                 String[] lines = translationLog.split("\n");
@@ -2307,7 +2346,8 @@ public class Main extends Application {
                         }
                     }
                 }
-                showBatchTranslationResultDialog(translationLog, actualTranslatedSlides, actualTranslatedElements, targetLanguage);
+                showBatchTranslationResultDialog(translationLog, actualTranslatedSlides, actualTranslatedElements,
+                        targetLanguage);
             });
             translationTask.setOnFailed(e -> {
                 progressAlert.close();
@@ -2318,7 +2358,7 @@ public class Main extends Application {
             progressAlert.close();
         }
     }
-    
+
     /**
      * 生成多语言PPT
      */
@@ -2328,32 +2368,32 @@ public class Main extends Application {
         dialog.setTitle("生成多语言PPT");
         dialog.setHeaderText("请输入PPT主题");
         dialog.setContentText("主题:");
-        
+
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent() && !result.get().trim().isEmpty()) {
             String topic = result.get().trim();
-            
+
             try {
                 // 创建增强的AI代理
                 AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
-                
+
                 // 生成多语言PPT（默认英文）
                 String pptCommands = enhancedAgent.generateIntelligentMultilingualPPT(
-                    topic, 
-                    MultilingualSupport.SupportedLanguage.ENGLISH,
-                    IntelligentLayoutEngine.LayoutType.CENTERED);
-                
+                        topic,
+                        MultilingualSupport.SupportedLanguage.ENGLISH,
+                        IntelligentLayoutEngine.LayoutType.CENTERED);
+
                 // 解析并创建幻灯片
                 parseAndCreateSlides(pptCommands);
-                
+
                 showInfo("生成成功", "多语言PPT已生成");
-                
+
             } catch (Exception e) {
                 showError("生成失败", "生成多语言PPT时发生错误: " + e.getMessage());
             }
         }
     }
-    
+
     /**
      * 显示语言选择对话框
      */
@@ -2361,11 +2401,11 @@ public class Main extends Application {
         Dialog<MultilingualSupport.SupportedLanguage> dialog = new Dialog<>();
         dialog.setTitle("选择语言");
         dialog.setHeaderText("请选择要切换的语言");
-        
+
         ButtonType confirmButtonType = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(confirmButtonType, cancelButtonType);
-        
+
         // 创建语言选择列表
         ComboBox<MultilingualSupport.SupportedLanguage> languageCombo = new ComboBox<>();
         languageCombo.getItems().addAll(MultilingualSupport.getSupportedLanguages());
@@ -2381,13 +2421,13 @@ public class Main extends Application {
             }
         });
         languageCombo.setButtonCell(languageCombo.getCellFactory().call(null));
-        
+
         VBox content = new VBox(10);
         content.getChildren().addAll(new Label("语言:"), languageCombo);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         // 设置结果转换器
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == confirmButtonType) {
@@ -2395,7 +2435,7 @@ public class Main extends Application {
             }
             return null;
         });
-        
+
         // 显示对话框并处理结果
         Optional<MultilingualSupport.SupportedLanguage> result = dialog.showAndWait();
         result.ifPresent(language -> {
@@ -2407,7 +2447,7 @@ public class Main extends Application {
             }
         });
     }
-    
+
     /**
      * 显示翻译语言选择对话框
      */
@@ -2415,11 +2455,11 @@ public class Main extends Application {
         Dialog<MultilingualSupport.SupportedLanguage> dialog = new Dialog<>();
         dialog.setTitle("选择翻译语言");
         dialog.setHeaderText("请选择要翻译成的语言");
-        
+
         ButtonType confirmButtonType = new ButtonType("翻译", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(confirmButtonType, cancelButtonType);
-        
+
         // 创建语言选择列表
         ComboBox<MultilingualSupport.SupportedLanguage> languageCombo = new ComboBox<>();
         languageCombo.getItems().addAll(MultilingualSupport.getSupportedLanguages());
@@ -2435,13 +2475,13 @@ public class Main extends Application {
             }
         });
         languageCombo.setButtonCell(languageCombo.getCellFactory().call(null));
-        
+
         VBox content = new VBox(10);
         content.getChildren().addAll(new Label("目标语言:"), languageCombo);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         // 设置结果转换器
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == confirmButtonType) {
@@ -2449,7 +2489,7 @@ public class Main extends Application {
             }
             return null;
         });
-        
+
         // 显示对话框并处理结果
         Optional<MultilingualSupport.SupportedLanguage> result = dialog.showAndWait();
         result.ifPresent(language -> {
@@ -2457,7 +2497,7 @@ public class Main extends Application {
             translateCurrentSlideContent(language);
         });
     }
-    
+
     /**
      * 显示批量翻译语言选择对话框
      */
@@ -2465,11 +2505,11 @@ public class Main extends Application {
         Dialog<MultilingualSupport.SupportedLanguage> dialog = new Dialog<>();
         dialog.setTitle("选择批量翻译语言");
         dialog.setHeaderText("请选择要翻译成的语言（将翻译所有幻灯片）");
-        
+
         ButtonType confirmButtonType = new ButtonType("批量翻译", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
         dialog.getDialogPane().getButtonTypes().addAll(confirmButtonType, cancelButtonType);
-        
+
         // 创建语言选择列表
         ComboBox<MultilingualSupport.SupportedLanguage> languageCombo = new ComboBox<>();
         languageCombo.getItems().addAll(MultilingualSupport.getSupportedLanguages());
@@ -2485,17 +2525,16 @@ public class Main extends Application {
             }
         });
         languageCombo.setButtonCell(languageCombo.getCellFactory().call(null));
-        
+
         VBox content = new VBox(10);
         content.getChildren().addAll(
-            new Label("目标语言:"), 
-            languageCombo,
-            new Label("注意: 此操作将翻译所有幻灯片的内容")
-        );
+                new Label("目标语言:"),
+                languageCombo,
+                new Label("注意: 此操作将翻译所有幻灯片的内容"));
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         // 设置结果转换器
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == confirmButtonType) {
@@ -2503,7 +2542,7 @@ public class Main extends Application {
             }
             return null;
         });
-        
+
         // 显示对话框并处理结果
         Optional<MultilingualSupport.SupportedLanguage> result = dialog.showAndWait();
         result.ifPresent(language -> {
@@ -2511,44 +2550,44 @@ public class Main extends Application {
             translateAllSlidesContent(language);
         });
     }
-    
+
     /**
      * 显示翻译结果
      */
-    private void showTranslationResult(String originalContent, String translatedContent, 
-                                     MultilingualSupport.SupportedLanguage language) {
+    private void showTranslationResult(String originalContent, String translatedContent,
+            MultilingualSupport.SupportedLanguage language) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("翻译结果");
         dialog.setHeaderText("翻译为: " + language.getDisplayName());
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
-        
+
         // 创建内容显示区域
         VBox content = new VBox(10);
-        
+
         // 使用stripPPTStructureFields处理，确保只显示内容本身
         String cleanOriginal = stripPPTStructureFields(originalContent);
         String cleanTranslated = stripPPTStructureFields(translatedContent);
-        
+
         Label originalLabel = new Label("原文:");
         TextArea originalArea = new TextArea(cleanOriginal);
         originalArea.setPrefRowCount(3);
         originalArea.setEditable(false);
-        
+
         Label translatedLabel = new Label("译文:");
         TextArea translatedArea = new TextArea(cleanTranslated);
         translatedArea.setPrefRowCount(3);
         translatedArea.setEditable(false);
-        
+
         content.getChildren().addAll(originalLabel, originalArea, translatedLabel, translatedArea);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         dialog.showAndWait();
     }
-    
+
     /**
      * 一键翻译当前幻灯片内容（异步，无等待窗口，AI提示词极致收紧）
      */
@@ -2576,13 +2615,13 @@ public class Main extends Application {
                 for (TextElement textElement : textElements) {
                     String originalText = textElement.getText();
                     if (originalText != null && !originalText.trim().isEmpty()) {
-                        String translatedText = MultilingualSupport.generateMultilingualContent(originalText, targetLanguage);
+                        String translatedText = MultilingualSupport.generateMultilingualContent(originalText,
+                                targetLanguage);
                         if (translatedText.equals(originalText)) {
                             // 极致收紧AI提示词，明确禁止输出结构字段
                             String prompt = String.format(
-                                "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
-                                targetLanguage.getDisplayName(), originalText
-                            );
+                                    "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                    targetLanguage.getDisplayName(), originalText);
                             try {
                                 translatedText = aiModel.chat(prompt).trim();
                             } catch (Exception ex) {
@@ -2597,7 +2636,8 @@ public class Main extends Application {
                         count++;
                     }
                 }
-                translationLog.insert(0, String.format("已翻译 %d 个文本元素为: %s\n\n", count, targetLanguage.getDisplayName()));
+                translationLog.insert(0,
+                        String.format("已翻译 %d 个文本元素为: %s\n\n", count, targetLanguage.getDisplayName()));
                 return translationLog;
             }
         };
@@ -2606,7 +2646,7 @@ public class Main extends Application {
             try {
                 AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
                 enhancedAgent.optimizeSlideLayout(currentSlide, canvas.getWidth(), canvas.getHeight(),
-                    IntelligentLayoutEngine.LayoutType.CENTERED);
+                        IntelligentLayoutEngine.LayoutType.CENTERED);
             } catch (Exception ex) {
                 logger.warning("翻译后自动优化布局失败: " + ex.getMessage());
             }
@@ -2643,12 +2683,12 @@ public class Main extends Application {
                             TextElement textElement = (TextElement) element;
                             String originalText = textElement.getText();
                             if (originalText != null && !originalText.trim().isEmpty()) {
-                                String translatedText = MultilingualSupport.generateMultilingualContent(originalText, targetLanguage);
+                                String translatedText = MultilingualSupport.generateMultilingualContent(originalText,
+                                        targetLanguage);
                                 if (translatedText.equals(originalText)) {
                                     String prompt = String.format(
-                                        "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
-                                        targetLanguage.getDisplayName(), originalText
-                                    );
+                                            "请将下列内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。如果遇到占位符（如[你的姓名/职位]），请原样保留，不要输出任何说明。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                                            targetLanguage.getDisplayName(), originalText);
                                     try {
                                         translatedText = aiModel.chat(prompt).trim();
                                     } catch (Exception ex) {
@@ -2658,7 +2698,8 @@ public class Main extends Application {
                                 // 使用stripPPTStructureFields处理，确保统计和日志只显示内容本身
                                 String cleanOriginal = stripPPTStructureFields(originalText);
                                 String cleanTranslated = stripPPTStructureFields(translatedText);
-                                translationLog.append(String.format("原文: %s\n译文: %s\n", cleanOriginal, cleanTranslated));
+                                translationLog
+                                        .append(String.format("原文: %s\n译文: %s\n", cleanOriginal, cleanTranslated));
                                 textElement.setText(translatedText);
                                 translatedElements++;
                                 slideTranslated = true;
@@ -2669,7 +2710,8 @@ public class Main extends Application {
                         translatedSlides++;
                     }
                 }
-                translationLog.insert(0, String.format("已翻译 %d 个幻灯片，共 %d 个文本元素为: %s\n\n", translatedSlides, translatedElements, targetLanguage.getDisplayName()));
+                translationLog.insert(0, String.format("已翻译 %d 个幻灯片，共 %d 个文本元素为: %s\n\n", translatedSlides,
+                        translatedElements, targetLanguage.getDisplayName()));
                 return translationLog;
             }
         };
@@ -2679,12 +2721,13 @@ public class Main extends Application {
                 AIEnhancedAgent enhancedAgent = new AIEnhancedAgent(aiModel);
                 for (Slide slide : slides) {
                     enhancedAgent.optimizeSlideLayout(slide, canvas.getWidth(), canvas.getHeight(),
-                        IntelligentLayoutEngine.LayoutType.CENTERED);
+                            IntelligentLayoutEngine.LayoutType.CENTERED);
                 }
             } catch (Exception ex) {
                 logger.warning("批量翻译后自动优化布局失败: " + ex.getMessage());
             }
-            if (currentSlide != null) refreshCanvas();
+            if (currentSlide != null)
+                refreshCanvas();
             // 从translationLog中提取实际的翻译统计信息
             String translationLog = translationTask.getValue().toString();
             String[] lines = translationLog.split("\n");
@@ -2705,90 +2748,92 @@ public class Main extends Application {
                     }
                 }
             }
-            showBatchTranslationResultDialog(translationLog, actualTranslatedSlides, actualTranslatedElements, targetLanguage);
+            showBatchTranslationResultDialog(translationLog, actualTranslatedSlides, actualTranslatedElements,
+                    targetLanguage);
         });
         translationTask.setOnFailed(e -> {
             showError("批量翻译失败", "翻译过程中发生错误: " + translationTask.getException().getMessage());
         });
         new Thread(translationTask).start();
     }
-    
+
     /**
      * 显示翻译结果对话框
      */
-    private void showTranslationResultDialog(String translationLog, int translatedCount, 
-                                          MultilingualSupport.SupportedLanguage targetLanguage) {
+    private void showTranslationResultDialog(String translationLog, int translatedCount,
+            MultilingualSupport.SupportedLanguage targetLanguage) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("翻译完成");
         dialog.setHeaderText(String.format("已翻译 %d 个文本元素为: %s", translatedCount, targetLanguage.getDisplayName()));
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
-        
+
         // 创建内容显示区域
         VBox content = new VBox(10);
-        
+
         Label summaryLabel = new Label(String.format("翻译统计: %d 个文本元素", translatedCount));
         summaryLabel.setStyle("-fx-font-weight: bold;");
-        
+
         TextArea logArea = new TextArea(translationLog);
         logArea.setPrefRowCount(10);
         logArea.setEditable(false);
         logArea.setPromptText("翻译详情...");
-        
+
         content.getChildren().addAll(summaryLabel, new Label("翻译详情:"), logArea);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         dialog.showAndWait();
     }
-    
+
     /**
      * 显示批量翻译结果对话框
      */
     private void showBatchTranslationResultDialog(String translationLog, int translatedSlides, int translatedElements,
-                                               MultilingualSupport.SupportedLanguage targetLanguage) {
+            MultilingualSupport.SupportedLanguage targetLanguage) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("批量翻译完成");
-        dialog.setHeaderText(String.format("已翻译 %d 个幻灯片，共 %d 个文本元素为: %s", 
-            translatedSlides, translatedElements, targetLanguage.getDisplayName()));
-        
+        dialog.setHeaderText(String.format("已翻译 %d 个幻灯片，共 %d 个文本元素为: %s",
+                translatedSlides, translatedElements, targetLanguage.getDisplayName()));
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
-        
+
         // 创建内容显示区域
         VBox content = new VBox(10);
-        
-        Label summaryLabel = new Label(String.format("翻译统计: %d 个幻灯片，%d 个文本元素", translatedSlides, translatedElements));
+
+        Label summaryLabel = new Label(
+                String.format("翻译统计: %d 个幻灯片，%d 个文本元素", translatedSlides, translatedElements));
         summaryLabel.setStyle("-fx-font-weight: bold;");
-        
+
         TextArea logArea = new TextArea(translationLog);
         logArea.setPrefRowCount(15);
         logArea.setEditable(false);
         logArea.setPromptText("翻译详情...");
-        
+
         content.getChildren().addAll(summaryLabel, new Label("翻译详情:"), logArea);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         dialog.showAndWait();
     }
-    
+
     /**
      * 批量翻译所有内容
      */
- 
+
     /**
      * 翻译PPT命令文本，仅翻译内容部分，保留格式字段和排版
      */
-    private String translatePPTCommandsWithAI(String pptCommandText, MultilingualSupport.SupportedLanguage targetLanguage) {
+    private String translatePPTCommandsWithAI(String pptCommandText,
+            MultilingualSupport.SupportedLanguage targetLanguage) {
         // 优化AI提示词，要求仅翻译冒号后的内容，保留格式字段和排版，不要添加任何解释
         String prompt = String.format(
-            "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版，不要添加任何解释、说明或多余内容。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
-            targetLanguage.getDisplayName(), pptCommandText
-        );
+                "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版，不要添加任何解释、说明或多余内容。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                targetLanguage.getDisplayName(), pptCommandText);
         try {
             String translated = aiModel.chat(prompt).trim();
             return translated;
@@ -2798,7 +2843,8 @@ public class Main extends Application {
     }
 
     // 使用示例：
-    // String translatedCommands = translatePPTCommandsWithAI(originalCommands, MultilingualSupport.SupportedLanguage.ENGLISH);
+    // String translatedCommands = translatePPTCommandsWithAI(originalCommands,
+    // MultilingualSupport.SupportedLanguage.ENGLISH);
     // parseAndCreateSlides(translatedCommands);
 
     /**
@@ -2808,21 +2854,24 @@ public class Main extends Application {
         if (pptCommandText == null || pptCommandText.trim().isEmpty()) {
             return "";
         }
-        
+
         StringBuilder sb = new StringBuilder();
         String[] lines = pptCommandText.split("\\r?\\n");
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             // 如果是结构字段行（包括Title:、Subtitle:、Bullet:、Draw:、Page X:等）
             if (line.matches("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*(.*)")) {
-                String content = line.replaceFirst("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*", "");
+                String content = line
+                        .replaceFirst("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*", "");
                 if (!content.isEmpty()) {
                     sb.append(content).append('\n');
                 } else {
                     // 跳过连续结构字段行，直到遇到内容行
                     while (i + 1 < lines.length) {
                         String nextLine = lines[i + 1].trim();
-                        if (nextLine.matches("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*.*") || nextLine.isEmpty()) {
+                        if (nextLine
+                                .matches("^(Title|Subtitle|Bullet|Draw|Page ?\\d*|Page X|Note|Comment|说明|注释):\\s*.*")
+                                || nextLine.isEmpty()) {
                             i++;
                         } else {
                             sb.append(nextLine).append('\n');
@@ -2842,11 +2891,11 @@ public class Main extends Application {
     /**
      * 翻译并渲染PPT命令文本（整体翻译后自动渲染，仅保留内容，自动智能排版）
      */
-    private void translateAndRenderPPTCommands(String pptCommandText, MultilingualSupport.SupportedLanguage targetLanguage) {
+    private void translateAndRenderPPTCommands(String pptCommandText,
+            MultilingualSupport.SupportedLanguage targetLanguage) {
         String prompt = String.format(
-            "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
-            targetLanguage.getDisplayName(), pptCommandText
-        );
+                "请将下列PPT命令内容翻译为%s，仅翻译每一行冒号后的内容，保留格式字段（如Title、Subtitle、Bullet、Draw、Page X:等），保持原有排版。只输出翻译结果本身，不要任何注释、说明、Note、括号内容、示例、解释等。重要：不要输出任何结构字段如'Title:'、'Subtitle:'等，只输出内容本身：\n%s",
+                targetLanguage.getDisplayName(), pptCommandText);
         Task<String> translationTask = new Task<>() {
             @Override
             protected String call() {
@@ -2867,11 +2916,10 @@ public class Main extends Application {
             if (!slides.isEmpty()) {
                 for (Slide slide : slides) {
                     IntelligentLayoutEngine.optimizeLayout(
-                        slide,
-                        canvas.getWidth(),
-                        canvas.getHeight(),
-                        IntelligentLayoutEngine.LayoutType.CENTERED
-                    );
+                            slide,
+                            canvas.getWidth(),
+                            canvas.getHeight(),
+                            IntelligentLayoutEngine.LayoutType.CENTERED);
                 }
                 refreshCanvas();
             }
@@ -2886,7 +2934,8 @@ public class Main extends Application {
     }
 
     // 使用示例：
-    // translateAndRenderPPTCommands(originalCommands, MultilingualSupport.SupportedLanguage.JAPANESE);
+    // translateAndRenderPPTCommands(originalCommands,
+    // MultilingualSupport.SupportedLanguage.JAPANESE);
 
     // ==================== 结构分析功能 ====================
 
@@ -2911,7 +2960,7 @@ public class Main extends Application {
         new Thread(() -> {
             try {
                 StructureAnalysis analysis = SlideStructureAnalyzer.analyzeStructure(slides);
-                
+
                 Platform.runLater(() -> {
                     progressAlert.close();
                     showStructureAnalysisResult(analysis);
@@ -2933,27 +2982,27 @@ public class Main extends Application {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("幻灯片结构分析结果");
         dialog.setHeaderText("分析完成");
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
-        
+
         // 创建内容显示区域
         VBox content = new VBox(10);
-        
-        Label summaryLabel = new Label(String.format("幻灯片数量: %d, 元素总数: %d", 
-            analysis.getTotalSlides(), analysis.getTotalElements()));
+
+        Label summaryLabel = new Label(String.format("幻灯片数量: %d, 元素总数: %d",
+                analysis.getTotalSlides(), analysis.getTotalElements()));
         summaryLabel.setStyle("-fx-font-weight: bold;");
-        
+
         TextArea resultArea = new TextArea(analysis.toString());
         resultArea.setPrefRowCount(20);
         resultArea.setEditable(false);
         resultArea.setPromptText("分析结果...");
-        
+
         content.getChildren().addAll(summaryLabel, new Label("详细分析结果:"), resultArea);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         dialog.showAndWait();
     }
 
@@ -2978,9 +3027,8 @@ public class Main extends Application {
         new Thread(() -> {
             try {
                 String outline = SlideStructureAnalyzer.generateAnalysisReport(
-                    SlideStructureAnalyzer.analyzeStructure(slides)
-                );
-                
+                        SlideStructureAnalyzer.analyzeStructure(slides));
+
                 Platform.runLater(() -> {
                     progressAlert.close();
                     showSmartOutlineResult(outline);
@@ -3002,23 +3050,23 @@ public class Main extends Application {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("智能大纲生成结果");
         dialog.setHeaderText("大纲生成完成");
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
-        
+
         // 创建内容显示区域
         VBox content = new VBox(10);
-        
+
         TextArea outlineArea = new TextArea(outline);
         outlineArea.setPrefRowCount(25);
         outlineArea.setEditable(false);
         outlineArea.setPromptText("智能大纲...");
-        
+
         content.getChildren().addAll(new Label("生成的智能大纲:"), outlineArea);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         dialog.showAndWait();
     }
 
@@ -3045,18 +3093,19 @@ public class Main extends Application {
                 StructureAnalysis analysis = SlideStructureAnalyzer.analyzeStructure(slides);
                 StringBuilder keyPointsText = new StringBuilder();
                 keyPointsText.append("=== 重点内容分析 ===\n\n");
-                
+
                 keyPointsText.append("【核心重点】\n");
                 for (int i = 0; i < Math.min(analysis.getKeyPoints().size(), 10); i++) {
                     keyPointsText.append(i + 1).append(". ").append(analysis.getKeyPoints().get(i)).append("\n");
                 }
-                
+
                 keyPointsText.append("\n【关键词统计】\n");
                 analysis.getKeywordFrequency().entrySet().stream()
-                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                    .limit(8)
-                    .forEach(entry -> keyPointsText.append(entry.getKey()).append(": ").append(entry.getValue()).append("次\n"));
-                
+                        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                        .limit(8)
+                        .forEach(entry -> keyPointsText.append(entry.getKey()).append(": ").append(entry.getValue())
+                                .append("次\n"));
+
                 Platform.runLater(() -> {
                     progressAlert.close();
                     showKeyPointsResult(keyPointsText.toString());
@@ -3078,23 +3127,23 @@ public class Main extends Application {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("重点内容分析结果");
         dialog.setHeaderText("分析完成");
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
-        
+
         // 创建内容显示区域
         VBox content = new VBox(10);
-        
+
         TextArea resultArea = new TextArea(keyPointsText);
         resultArea.setPrefRowCount(20);
         resultArea.setEditable(false);
         resultArea.setPromptText("重点内容分析...");
-        
+
         content.getChildren().addAll(new Label("重点内容分析:"), resultArea);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         dialog.showAndWait();
     }
 
@@ -3120,7 +3169,7 @@ public class Main extends Application {
             try {
                 StructureAnalysis analysis = SlideStructureAnalyzer.analyzeStructure(slides);
                 String graphData = SlideStructureAnalyzer.generateLogicGraphData(analysis);
-                
+
                 Platform.runLater(() -> {
                     progressAlert.close();
                     showLogicGraphResult(graphData);
@@ -3144,15 +3193,15 @@ public class Main extends Application {
         alert.setTitle("逻辑关系图");
         alert.setHeaderText("选择显示方式");
         alert.setContentText("请选择如何显示逻辑关系图：");
-        
+
         ButtonType showVisualButton = new ButtonType("可视化显示");
         ButtonType showDataButton = new ButtonType("显示数据");
         ButtonType cancelButton = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
-        
+
         alert.getButtonTypes().setAll(showVisualButton, showDataButton, cancelButton);
-        
+
         Optional<ButtonType> result = alert.showAndWait();
-        
+
         if (result.isPresent()) {
             if (result.get() == showVisualButton) {
                 // 显示可视化图形
@@ -3163,7 +3212,7 @@ public class Main extends Application {
             }
         }
     }
-    
+
     /**
      * 显示可视化逻辑关系图
      */
@@ -3177,7 +3226,7 @@ public class Main extends Application {
             showLogicGraphData(graphData);
         }
     }
-    
+
     /**
      * 显示逻辑关系图数据
      */
@@ -3185,27 +3234,27 @@ public class Main extends Application {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("逻辑关系图数据");
         dialog.setHeaderText("生成完成");
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         ButtonType visualizeButton = new ButtonType("可视化显示");
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType, visualizeButton);
-        
+
         // 创建内容显示区域
         VBox content = new VBox(10);
-        
+
         Label infoLabel = new Label("逻辑关系图数据已生成，可用于可视化展示");
         infoLabel.setStyle("-fx-font-weight: bold;");
-        
+
         TextArea graphArea = new TextArea(graphData);
         graphArea.setPrefRowCount(15);
         graphArea.setEditable(false);
         graphArea.setPromptText("逻辑关系图数据...");
-        
+
         content.getChildren().addAll(infoLabel, new Label("图数据:"), graphArea);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         // 添加可视化按钮事件
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == visualizeButton) {
@@ -3213,7 +3262,7 @@ public class Main extends Application {
             }
             return null;
         });
-        
+
         dialog.showAndWait();
     }
 
@@ -3239,7 +3288,7 @@ public class Main extends Application {
             try {
                 StructureAnalysis analysis = SlideStructureAnalyzer.analyzeStructure(slides);
                 String completeReport = SlideStructureAnalyzer.generateAnalysisReport(analysis);
-                
+
                 Platform.runLater(() -> {
                     progressAlert.close();
                     showCompleteReportResult(completeReport);
@@ -3261,23 +3310,23 @@ public class Main extends Application {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("完整分析报告");
         dialog.setHeaderText("报告生成完成");
-        
+
         ButtonType closeButtonType = new ButtonType("关闭", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(closeButtonType);
-        
+
         // 创建内容显示区域
         VBox content = new VBox(10);
-        
+
         TextArea reportArea = new TextArea(completeReport);
         reportArea.setPrefRowCount(30);
         reportArea.setEditable(false);
         reportArea.setPromptText("完整分析报告...");
-        
+
         content.getChildren().addAll(new Label("完整分析报告:"), reportArea);
         content.setPadding(new Insets(10));
-        
+
         dialog.getDialogPane().setContent(content);
-        
+
         dialog.showAndWait();
     }
 
@@ -3286,17 +3335,36 @@ public class Main extends Application {
         private String title;
         private String detail;
         private StepStatus status;
-        public enum StepStatus { WAITING, RUNNING, DONE }
+
+        public enum StepStatus {
+            WAITING, RUNNING, DONE
+        }
+
         public AIChainStep(String title, String detail, StepStatus status) {
             this.title = title;
             this.detail = detail;
             this.status = status;
         }
+
         // getter/setter略
-        public String getTitle() { return title; }
-        public String getDetail() { return detail; }
-        public StepStatus getStatus() { return status; }
-        public void setStatus(StepStatus status) { this.status = status; }
-        public void setDetail(String detail) { this.detail = detail; }
+        public String getTitle() {
+            return title;
+        }
+
+        public String getDetail() {
+            return detail;
+        }
+
+        public StepStatus getStatus() {
+            return status;
+        }
+
+        public void setStatus(StepStatus status) {
+            this.status = status;
+        }
+
+        public void setDetail(String detail) {
+            this.detail = detail;
+        }
     }
 }
