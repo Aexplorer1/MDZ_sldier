@@ -84,7 +84,7 @@ public class DrawElement extends SlideElement {
         // 绘制主线
         gc.strokeLine(startX, startY, endX, endY);
 
-        // 计算��头
+        // 计算箭头
         double angle = Math.atan2(endY - startY, endX - startX);
         double x1 = endX - arrowLength * Math.cos(angle - Math.PI/6);
         double y1 = endY - arrowLength * Math.sin(angle - Math.PI/6);
@@ -126,13 +126,61 @@ public class DrawElement extends SlideElement {
 
     @Override
     public ResizeHandle getResizeHandle(double px, double py) {
-        // 实现调整大小的控制点检测
+        // 计算八个控制点的坐标
+        double x1 = startX, y1 = startY;
+        double x2 = endX, y2 = endY;
+        double cx = (x1 + x2) / 2;
+        double cy = (y1 + y2) / 2;
+
+        if (isInHandle(px, py, x1, y1)) return ResizeHandle.NW;
+        if (isInHandle(px, py, x2, y1)) return ResizeHandle.NE;
+        if (isInHandle(px, py, x1, y2)) return ResizeHandle.SW;
+        if (isInHandle(px, py, x2, y2)) return ResizeHandle.SE;
+        if (isInHandle(px, py, cx, y1)) return ResizeHandle.N;
+        if (isInHandle(px, py, cx, y2)) return ResizeHandle.S;
+        if (isInHandle(px, py, x1, cy)) return ResizeHandle.W;
+        if (isInHandle(px, py, x2, cy)) return ResizeHandle.E;
         return ResizeHandle.NONE;
+    }
+
+    private boolean isInHandle(double px, double py, double hx, double hy) {
+        return Math.abs(px - hx) <= HANDLE_OFFSET && Math.abs(py - hy) <= HANDLE_OFFSET;
     }
 
     @Override
     public void resize(double deltaX, double deltaY, ResizeHandle handle) {
-        // 实现调整大小的逻辑
+        switch (handle) {
+            case NW:
+                startX += deltaX;
+                startY += deltaY;
+                break;
+            case NE:
+                endX += deltaX;
+                startY += deltaY;
+                break;
+            case SW:
+                startX += deltaX;
+                endY += deltaY;
+                break;
+            case SE:
+                endX += deltaX;
+                endY += deltaY;
+                break;
+            case N:
+                startY += deltaY;
+                break;
+            case S:
+                endY += deltaY;
+                break;
+            case W:
+                startX += deltaX;
+                break;
+            case E:
+                endX += deltaX;
+                break;
+            default:
+                break;
+        }
     }
 
     private void drawSelectionHandles(GraphicsContext gc) {
