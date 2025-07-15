@@ -356,7 +356,7 @@ public class Main extends Application {
             MenuItem speechStructureItem = new MenuItem("演讲稿结构");
             MenuItem keywordAnalysisItem = new MenuItem("关键词分析");
             MenuItem aiQAItem = new MenuItem("AI问答");
-            MenuItem templateManageItem = new MenuItem("模板管理");
+            MenuItem templateManageItem = new MenuItem("本地提示词模板管理");
             // 新增：智能生成提示词
             MenuItem promptGenItem = new MenuItem("智能生成提示词");
             promptGenItem.setOnAction(ev -> showPromptGeneratorDialog());
@@ -815,18 +815,6 @@ public class Main extends Application {
         lineWidthComboBox.getItems().addAll(1.0, 2.0, 3.0, 4.0, 5.0);
         lineWidthComboBox.setValue(2.0);
 
-        // 添加放映按钮
-        Button presentationBtn = new Button("放映");
-        presentationBtn.getStyleClass().add("button");
-        presentationBtn.setOnAction(e -> {
-            MenuItem startPresentationItem = new MenuItem("开始放映");
-            MenuItem speakerViewItem = new MenuItem("演讲者视图");
-            startPresentationItem.setOnAction(ev -> startPresentation());
-            speakerViewItem.setOnAction(ev -> startSpeakerView());
-            ContextMenu menu = new ContextMenu(startPresentationItem, speakerViewItem);
-            menu.show(presentationBtn, javafx.geometry.Side.BOTTOM, 0, 0);
-        });
-        
         // 简化工具栏，只保留基本功能，移除AI功能按钮
         return new ToolBar(
                 newSlideBtn,
@@ -844,9 +832,7 @@ public class Main extends Application {
                 new Separator(),
                 rectBtn, circleBtn, lineBtn, arrowBtn,
                 drawColorPicker,
-                lineWidthComboBox,
-                new Separator(),
-                presentationBtn);
+                lineWidthComboBox);
     }
 
     private void createNewSlide() {
@@ -1634,7 +1620,7 @@ public class Main extends Application {
 
         // 添加一个"不使用模板"选项
         PromptTemplate noTemplate = new PromptTemplate("程序默认提示词", "直接使用默认提示词", "",
-                slideshow.model.TemplateCategory.CUSTOM);
+                slideshow.model.TemplateCategory.OTHER);
         noTemplate.setId("no-template");
         templateCombo.getItems().add(0, noTemplate);
         templateCombo.setValue(noTemplate);

@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 /**
- * ����JSON�ļ���ģ��洢ʵ��
+ * JSON文件模板存储实现
  */
 public class JsonTemplateStorage implements TemplateStorage {
     private static final Logger logger = Logger.getLogger(JsonTemplateStorage.class.getName());
@@ -46,18 +46,18 @@ public class JsonTemplateStorage implements TemplateStorage {
     public boolean saveTemplate(PromptTemplate template) {
         try {
             if (template == null) {
-                logger.warning("���Ա����ģ��");
+                logger.warning("模板不能为空");
                 return false;
             }
 
-            // ����Ƿ��Ѵ���ͬ��ģ��
+            // 检查是否已存在同名模板
             Optional<PromptTemplate> existing = getTemplateByName(template.getName());
             if (existing.isPresent() && !existing.get().getId().equals(template.getId())) {
-                logger.warning("ģ�������Ѵ���: " + template.getName());
+                logger.warning("模板名称已存在: " + template.getName());
                 return false;
             }
 
-            // ���»�����ģ��
+            // 更新或新增模板
             boolean updated = false;
             for (int i = 0; i < templates.size(); i++) {
                 if (templates.get(i).getId().equals(template.getId())) {
@@ -72,11 +72,11 @@ public class JsonTemplateStorage implements TemplateStorage {
             }
 
             saveToFile();
-            logger.info("Template saved successfully: " + template.getName());
+            logger.info("模板保存成功: " + template.getName());
             return true;
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "����ģ��ʧ��", e);
+            logger.log(Level.SEVERE, "保存模板失败", e);
             return false;
         }
     }
@@ -158,12 +158,12 @@ public class JsonTemplateStorage implements TemplateStorage {
             boolean removed = templates.removeIf(template -> template.getId().equals(id));
             if (removed) {
                 saveToFile();
-                logger.info("Template deleted successfully: " + id);
+                logger.info("模板删除成功: " + id);
                 return true;
             }
             return false;
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "ɾ��ģ��ʧ��", e);
+            logger.log(Level.SEVERE, "删除模板失败", e);
             return false;
         }
     }
@@ -217,7 +217,7 @@ public class JsonTemplateStorage implements TemplateStorage {
             logger.info("All templates cleared");
             return true;
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "���ģ��ʧ��", e);
+            logger.log(Level.SEVERE, "清空模板失败", e);
             return false;
         }
     }
@@ -239,7 +239,7 @@ public class JsonTemplateStorage implements TemplateStorage {
             logger.info("Templates backed up successfully: " + backupFile);
             return true;
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "����ģ��ʧ��", e);
+            logger.log(Level.SEVERE, "备份模板失败", e);
             return false;
         }
     }
@@ -249,7 +249,7 @@ public class JsonTemplateStorage implements TemplateStorage {
         try {
             Path backupFile = Paths.get(backupPath);
             if (!Files.exists(backupFile)) {
-                logger.warning("�����ļ�������: " + backupPath);
+                logger.warning("备份文件不存在: " + backupPath);
                 return false;
             }
 
@@ -266,13 +266,13 @@ public class JsonTemplateStorage implements TemplateStorage {
             }
             return false;
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "�ָ�ģ��ʧ��", e);
+            logger.log(Level.SEVERE, "恢复模板失败", e);
             return false;
         }
     }
 
     /**
-     * ���ļ�����ģ��
+     * 从文件加载模板
      */
     private List<PromptTemplate> loadTemplates() {
         try {
@@ -295,13 +295,13 @@ public class JsonTemplateStorage implements TemplateStorage {
                 return createDefaultTemplates();
             }
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "����ģ��ʧ��", e);
+            logger.log(Level.SEVERE, "加载模板失败", e);
             return createDefaultTemplates();
         }
     }
 
     /**
-     * ����ģ�嵽�ļ�
+     * 将模板保存到文件
      */
     private void saveToFile() throws IOException {
         String json = gson.toJson(templates);
@@ -310,208 +310,185 @@ public class JsonTemplateStorage implements TemplateStorage {
     }
 
     /**
-     * ����Ĭ��ģ��
+     * 创建默认模板
      */
     private List<PromptTemplate> createDefaultTemplates() {
         List<PromptTemplate> defaultTemplates = new ArrayList<>();
 
-        // PPT�������ģ��
-        PromptTemplate pptOutlineTemplate = new PromptTemplate(
-                "PPT Outline Generation",
-                "Generate structured PPT outline based on the topic",
-                "You are a PPT assistant. Please generate a complete PPT outline based on the following content.\n"
-                        +
-                        "Requirements:\n" +
-                        "1. Design a logical and clear PPT structure\n" +
-                        "2. Each slide should have appropriate title, subtitle, and bullet points\n" +
-                        "3. Content should be well-organized and easy to understand\n" +
-                        "4. Suitable for presentation duration: {0} minutes\n" +
-                        "5. Output in Chinese\n\n" +
-                        "IMPORTANT: You must output in the following standard PPT format:\n" +
-                        "---PPT����---\n" +
-                        "Page 1:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "Page 2:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "(Continue for more pages...)\n\n" +
-                        "Content: {1}\n\n" +
-                        "Please generate the PPT outline:",
-                TemplateCategory.PPT_OUTLINE);
-        pptOutlineTemplate.setDefault(true);
-        pptOutlineTemplate.addTag("PPT");
-        pptOutlineTemplate.addTag("outline");
-        defaultTemplates.add(pptOutlineTemplate);
-
-        // ����PPT����ģ��
+        // 主题PPT生成模板
         PromptTemplate themeTemplate = new PromptTemplate(
-                "Theme-based PPT Generation",
-                "Generate PPT content based on specific theme or topic",
-                "You are a PPT assistant. Please generate a complete PPT outline for the following theme:\n" +
-                        "Theme: {0}\n" +
-                        "Target Audience: {1}\n" +
-                        "Presentation Duration: {2} minutes\n\n" +
-                        "Requirements:\n" +
-                        "1. Create a comprehensive PPT structure for the theme\n" +
-                        "2. Each slide should include title, subtitle, and relevant bullet points\n" +
-                        "3. Content should be engaging and informative\n" +
-                        "4. Include appropriate visual elements descriptions\n\n" +
-                        "IMPORTANT: You must output in the following standard PPT format:\n" +
-                        "---PPT����---\n" +
-                        "Page 1:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "Page 2:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "(Continue for more pages...)\n\n" +
-                        "Please generate the PPT outline:",
+                "主题PPT",
+                "根据指定主题生成PPT内容",
+                "You are a PPT assistant. Please generate a complete PPT outline for the following topic:\n"
+                        + "Topic: {0}\n"
+                        + "Audience: {1}\n"
+                        + "Duration: {2} minutes\n\n"
+                        + "Requirements:\n"
+                        + "1. Design a comprehensive PPT structure for the topic\n"
+                        + "2. Each page should include Title, Subtitle, and Bullets\n"
+                        + "3. Content should be vivid and informative\n"
+                        + "4. Include appropriate visual element descriptions\n\n"
+                        + "Important: Output must follow the standard PPT format below:\n"
+                        + "---PPT Outline---\n"
+                        + "Page 1:\n"
+                        + "Title: [Page Title]\n"
+                        + "Subtitle: [Page Subtitle]\n"
+                        + "Bullet: [Bullet Content]\n"
+                        + "Text: [小标题下具体自然段文本,PPT的正文内容]\n"
+                        + "Draw: [Draw Description]\n"
+                        + "Page 2:\n"
+                        + "Title: [Page Title]\n"
+                        + "Subtitle: [Page Subtitle]\n"
+                        + "Bullet: [Bullet Content]\n"
+                        + "Text: [小标题下具体自然段文本,PPT的正文内容]\n"
+                        + "Draw: [Draw Description]\n"
+                        + "(More pages as needed...)\n\n"
+                        + "Please generate the PPT outline:",
                 TemplateCategory.PPT_THEME);
         themeTemplate.setDefault(true);
         themeTemplate.addTag("PPT");
-        themeTemplate.addTag("theme");
+        themeTemplate.addTag("主题");
         defaultTemplates.add(themeTemplate);
 
-        // ����PPT����ģ��
+        // 教育PPT生成模板
         PromptTemplate educationTemplate = new PromptTemplate(
-                "Educational PPT Generation",
-                "Generate educational PPT content for learning purposes",
-                "You are an educational PPT assistant. Please generate a complete PPT outline for educational content:\n"
+                "教育PPT",
+                "生成用于教学的PPT内容",
+                "你是一名教育PPT助手，请为以下教学内容生成完整的PPT大纲：\n"
                         +
-                        "Subject: {0}\n" +
-                        "Target Students: {1}\n" +
-                        "Lesson Duration: {2} minutes\n\n" +
-                        "Requirements:\n" +
-                        "1. Create an educational PPT structure with clear learning objectives\n" +
-                        "2. Each slide should include title, subtitle, and key learning points\n" +
-                        "3. Content should be easy to understand and follow\n" +
-                        "4. Include examples and visual aids descriptions\n\n" +
-                        "IMPORTANT: You must output in the following standard PPT format:\n" +
-                        "---PPT����---\n" +
-                        "Page 1:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "Page 2:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "(Continue for more pages...)\n\n" +
-                        "Please generate the educational PPT outline:",
+                        "学科：{0}\n" +
+                        "目标学生：{1}\n" +
+                        "课程时长：{2}分钟\n\n" +
+                        "要求：\n" +
+                        "1. 设计包含明确学习目标的教学PPT结构\n" +
+                        "2. 每页包含标题、副标题和关键知识点\n" +
+                        "3. 内容易于理解和跟进\n" +
+                        "4. 包含示例和视觉辅助描述\n\n" +
+                        "重要：必须按如下标准PPT格式输出：\n" +
+                        "---PPT大纲---\n" +
+                        "第1页：\n" +
+                        "Title: [页面标题]\n" +
+                        "Subtitle: [页面副标题]\n" +
+                        "Bullet: [要点内容]\n" +
+                        "Text: [小标题下具体自然段文本,PPT的正文内容]\n" +
+                        "Draw: [绘图描述]\n" +
+                        "第2页：\n" +
+                        "Title: [页面标题]\n" +
+                        "Subtitle: [页面副标题]\n" +
+                        "Bullet: [要点内容]\n" +
+                        "Text: [小标题下具体自然段文本,PPT的正文内容]\n" +
+                        "Draw: [绘图描述]\n" +
+                        "（更多页面以此类推...）\n\n" +
+                        "请生成教学PPT大纲：",
                 TemplateCategory.PPT_EDUCATION);
         educationTemplate.setDefault(true);
         educationTemplate.addTag("PPT");
-        educationTemplate.addTag("education");
+        educationTemplate.addTag("教育");
         defaultTemplates.add(educationTemplate);
 
-        // ����PPT����ģ��
+        // 商业PPT生成模板
         PromptTemplate businessTemplate = new PromptTemplate(
-                "Business PPT Generation",
-                "Generate professional business presentation content",
-                "You are a business PPT assistant. Please generate a complete PPT outline for business content:\n" +
-                        "Business Topic: {0}\n" +
-                        "Target Audience: {1}\n" +
-                        "Presentation Duration: {2} minutes\n\n" +
-                        "Requirements:\n" +
-                        "1. Create a professional business PPT structure\n" +
-                        "2. Each slide should include title, subtitle, and key business points\n" +
-                        "3. Content should be professional and data-driven\n" +
-                        "4. Include charts, graphs, and business visual elements descriptions\n\n" +
-                        "IMPORTANT: You must output in the following standard PPT format:\n" +
-                        "---PPT����---\n" +
-                        "Page 1:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "Page 2:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "(Continue for more pages...)\n\n" +
-                        "Please generate the business PPT outline:",
+                "商业PPT",
+                "生成专业的商业演示内容",
+                "你是一名商业PPT助手，请为以下商业内容生成完整的PPT大纲：\n" +
+                        "商业主题：{0}\n" +
+                        "目标听众：{1}\n" +
+                        "演讲时长：{2}分钟\n\n" +
+                        "要求：\n" +
+                        "1. 设计专业的商业PPT结构\n" +
+                        "2. 每页包含标题、副标题和关键业务要点\n" +
+                        "3. 内容专业且数据驱动\n" +
+                        "4. 包含图表、数据和商业视觉元素描述\n\n" +
+                        "重要：必须按如下标准PPT格式输出：\n" +
+                        "---PPT大纲---\n" +
+                        "第1页：\n" +
+                        "Title: [页面标题]\n" +
+                        "Subtitle: [页面副标题]\n" +
+                        "Bullet: [要点内容]\n" +
+                        "Text: [小标题下具体自然段文本,PPT的正文内容]\n" +
+                        "Draw: [绘图描述]\n" +
+                        "第2页：\n" +
+                        "Title: [页面标题]\n" +
+                        "Subtitle: [页面副标题]\n" +
+                        "Bullet: [要点内容]\n" +
+                        "Text: [小标题下具体自然段文本,PPT的正文内容]\n" +
+                        "Draw: [绘图描述]\n" +
+                        "（更多页面以此类推...）\n\n" +
+                        "请生成商业PPT大纲：",
                 TemplateCategory.PPT_BUSINESS);
         businessTemplate.setDefault(true);
         businessTemplate.addTag("PPT");
-        businessTemplate.addTag("business");
+        businessTemplate.addTag("商业");
         defaultTemplates.add(businessTemplate);
 
-        // ����PPT����ģ��
+        // 技术PPT生成模板
         PromptTemplate technicalTemplate = new PromptTemplate(
-                "Technical PPT Generation",
-                "Generate technical presentation content with detailed explanations",
-                "You are a technical PPT assistant. Please generate a complete PPT outline for technical content:\n" +
-                        "Technical Topic: {0}\n" +
-                        "Target Audience: {1}\n" +
-                        "Presentation Duration: {2} minutes\n\n" +
-                        "Requirements:\n" +
-                        "1. Create a detailed technical PPT structure\n" +
-                        "2. Each slide should include title, subtitle, and technical explanations\n" +
-                        "3. Content should be technically accurate and comprehensive\n" +
-                        "4. Include diagrams, flowcharts, and technical visual elements descriptions\n\n" +
-                        "IMPORTANT: You must output in the following standard PPT format:\n" +
-                        "---PPT����---\n" +
-                        "Page 1:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "Page 2:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "(Continue for more pages...)\n\n" +
-                        "Please generate the technical PPT outline:",
+                "技术PPT",
+                "生成包含详细讲解的技术演示内容",
+                "你是一名技术PPT助手，请为以下技术内容生成完整的PPT大纲：\n" +
+                        "技术主题：{0}\n" +
+                        "目标听众：{1}\n" +
+                        "演讲时长：{2}分钟\n\n" +
+                        "要求：\n" +
+                        "1. 设计详细的技术PPT结构\n" +
+                        "2. 每页包含标题、副标题和技术讲解\n" +
+                        "3. 内容准确全面，技术性强\n" +
+                        "4. 包含图示、流程图和技术视觉元素描述\n\n" +
+                        "重要：必须按如下标准PPT格式输出：\n" +
+                        "---PPT大纲---\n" +
+                        "第1页：\n" +
+                        "Title: [页面标题]\n" +
+                        "Subtitle: [页面副标题]\n" +
+                        "Bullet: [要点内容]\n" +
+                        "Text: [小标题下具体自然段文本,PPT的正文内容]\n" +
+                        "Draw: [绘图描述]\n" +
+                        "第2页：\n" +
+                        "Title: [页面标题]\n" +
+                        "Subtitle: [页面副标题]\n" +
+                        "Bullet: [要点内容]\n" +
+                        "Text: [小标题下具体自然段文本,PPT的正文内容]\n" +
+                        "Draw: [绘图描述]\n" +
+                        "（更多页面以此类推...）\n\n" +
+                        "请生成技术PPT大纲：",
                 TemplateCategory.PPT_TECHNICAL);
         technicalTemplate.setDefault(true);
         technicalTemplate.addTag("PPT");
-        technicalTemplate.addTag("technical");
+        technicalTemplate.addTag("技术");
         defaultTemplates.add(technicalTemplate);
 
-        // ����PPT����ģ��
+        // 创意PPT生成模板
         PromptTemplate creativeTemplate = new PromptTemplate(
-                "Creative PPT Generation",
-                "Generate creative and engaging presentation content",
-                "You are a creative PPT assistant. Please generate a complete PPT outline for creative content:\n" +
-                        "Creative Topic: {0}\n" +
-                        "Target Audience: {1}\n" +
-                        "Presentation Duration: {2} minutes\n\n" +
-                        "Requirements:\n" +
-                        "1. Create an innovative and creative PPT structure\n" +
-                        "2. Each slide should include title, subtitle, and creative content\n" +
-                        "3. Content should be engaging, inspiring, and visually appealing\n" +
-                        "4. Include creative visual elements, metaphors, and storytelling elements descriptions\n\n" +
-                        "IMPORTANT: You must output in the following standard PPT format:\n" +
-                        "---PPT����---\n" +
-                        "Page 1:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "Page 2:\n" +
-                        "Title: [Page Title]\n" +
-                        "Subtitle: [Page Subtitle]\n" +
-                        "Bullet: [Bullet Point Content]\n" +
-                        "Draw: [Drawing Description]\n" +
-                        "(Continue for more pages...)\n\n" +
-                        "Please generate the creative PPT outline:",
+                "创意PPT",
+                "生成有创意和吸引力的演示内容",
+                "你是一名创意PPT助手，请为以下创意内容生成完整的PPT大纲：\n" +
+                        "创意主题：{0}\n" +
+                        "目标听众：{1}\n" +
+                        "演讲时长：{2}分钟\n\n" +
+                        "要求：\n" +
+                        "1. 设计创新且有创意的PPT结构\n" +
+                        "2. 每页包含标题、副标题和创意内容\n" +
+                        "3. 内容应富有吸引力、启发性和视觉美感\n" +
+                        "4. 包含创意视觉元素、比喻和故事化描述\n\n" +
+                        "重要：必须按如下标准PPT格式输出：\n" +
+                        "---PPT大纲---\n" +
+                        "第1页：\n" +
+                        "Title: [页面标题]\n" +
+                        "Subtitle: [页面副标题]\n" +
+                        "Bullet: [要点内容]\n" +
+                        "Text: [小标题下具体自然段文本,PPT的正文内容]\n" +
+                        "Draw: [绘图描述]\n" +
+                        "第2页：\n" +
+                        "Title: [页面标题]\n" +
+                        "Subtitle: [页面副标题]\n" +
+                        "Bullet: [要点内容]\n" +
+                        "Text: [小标题下具体自然段文本,PPT的正文内容]\n" +
+                        "Draw: [绘图描述]\n" +
+                        "（更多页面以此类推...）\n\n" +
+                        "请生成创意PPT大纲：",
                 TemplateCategory.PPT_CREATIVE);
         creativeTemplate.setDefault(true);
         creativeTemplate.addTag("PPT");
-        creativeTemplate.addTag("creative");
+        creativeTemplate.addTag("创意");
         defaultTemplates.add(creativeTemplate);
 
         return defaultTemplates;

@@ -38,7 +38,7 @@ public class TemplateManagerWindow {
     private ObservableList<PromptTemplate> templateList;
     private ListView<PromptTemplate> templateListView;
     private TextField searchField;
-    private ComboBox<TemplateCategory> categoryFilter;
+    // 删除与PPT大纲相关的分类、过滤、显示等所有代码
     private TextArea templateContentArea;
     private TextField templateNameField;
     private TextArea templateDescriptionArea;
@@ -56,12 +56,17 @@ public class TemplateManagerWindow {
 
     private void initializeUI() {
         stage = new Stage();
-        stage.setTitle("Prompt Template Management");
+        stage.setTitle("本地提示词模板管理");
         stage.setWidth(1000);
         stage.setHeight(700);
 
         // Main layout
         BorderPane mainLayout = new BorderPane();
+
+        // 插入模板管理系统使用说明
+        Label usageGuide = new Label("使用说明：\n1. 可新建、导入、导出和备份提示词模板。\n2. 点击左侧模板列表可查看和编辑模板内容。\n3. 支持按名称搜索模板。\n4. 编辑完成后请点击保存。\n5. 删除模板请谨慎操作，删除后无法恢复。\n6. 模板内容字段请遵循Title、Subtitle、Bullet、Text、Draw等英文格式，便于正则分析。");
+        usageGuide.setStyle("-fx-font-size: 14px; -fx-text-fill: #333; -fx-padding: 10 0 10 0;");
+        mainLayout.setTop(usageGuide);
 
         // Top toolbar
         HBox toolbar = createToolbar();
@@ -89,38 +94,61 @@ public class TemplateManagerWindow {
         toolbar.setAlignment(Pos.CENTER_LEFT);
         toolbar.setStyle("-fx-background-color: #f0f0f0;");
 
-        // ������
+        // 搜索
         searchField = new TextField();
-        searchField.setPromptText("Search templates...");
+        searchField.setPromptText("搜索模板...");
         searchField.setPrefWidth(200);
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             searchTemplates(newValue);
         });
 
-        // ���������
-        categoryFilter = new ComboBox<>();
-        categoryFilter.getItems().addAll(TemplateCategory.values());
-        categoryFilter.getItems().add(0, null);
-        categoryFilter.setValue(null);
-        categoryFilter.setPromptText("Select Category");
-        categoryFilter.setOnAction(e -> filterByCategory());
-
-        // ��ť
-        Button newButton = new Button("New Template");
+        // 新建
+        Button newButton = new Button("新建模板");
         newButton.setOnAction(e -> createNewTemplate());
 
-        Button importButton = new Button("Import");
+        Button importButton = new Button("导入");
         importButton.setOnAction(e -> importTemplates());
 
-        Button exportButton = new Button("Export");
+        Button exportButton = new Button("导出");
         exportButton.setOnAction(e -> exportTemplates());
 
-        Button backupButton = new Button("Backup");
+        Button backupButton = new Button("备份");
         backupButton.setOnAction(e -> backupTemplates());
 
+        // 添加“使用说明”按钮
+        Button helpButton = new Button("使用说明");
+        helpButton.setOnAction(e -> {
+            Dialog<Void> dialog = new Dialog<>();
+            dialog.setTitle("模板管理系统使用说明");
+            dialog.setHeaderText(null);
+            dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+
+            Label title = new Label("模板管理系统使用说明");
+            title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2a2a2a; -fx-padding: 0 0 10 0;");
+
+            Label content = new Label(
+                "提示词模板是用户可自定义的用于生成PPT大纲的提示词。用户可在“AI功能”中的“AI智能生成PPT”窗口中使用自定义的提示词模板替代程序的内置提示词模板\n\n" +
+                "1. 用户可新建、导入、导出和备份提示词模板，并对模板进行收藏，打分等操作。\n" +
+                "2. 点击左侧模板列表可查看和编辑模板内容。\n" +
+                "3. 支持按名称搜索模板。\n" +
+                "4. 编辑完成后请点击保存。\n" +
+                "5. 删除模板请谨慎操作，删除后无法恢复。\n" +
+                "6. 模板内容字段请遵循Title、Subtitle、Bullet、Text、Draw等英文格式，便于正则分析。具体模板定义格式请参考程序给出的参考模板。"
+            );
+            content.setStyle("-fx-font-size: 15px; -fx-text-fill: #333; -fx-padding: 0 0 0 0;");
+            content.setWrapText(true);
+
+            VBox vbox = new VBox(10, title, content);
+            vbox.setPadding(new Insets(20, 30, 20, 30));
+            vbox.setPrefWidth(480);
+            dialog.getDialogPane().setContent(vbox);
+            dialog.showAndWait();
+        });
+        // 将按钮加入工具栏
+        toolbar.getChildren().add(helpButton);
+
         toolbar.getChildren().addAll(
-                new Label("Search:"), searchField,
-                new Label("Category:"), categoryFilter,
+                new Label("搜索:"), searchField,
                 new Separator(javafx.geometry.Orientation.VERTICAL),
                 newButton, importButton, exportButton, backupButton);
 
@@ -133,8 +161,8 @@ public class TemplateManagerWindow {
         leftPanel.setPrefWidth(300);
         leftPanel.setStyle("-fx-background-color: #f8f8f8;");
 
-        // ģ���б�
-        Label listLabel = new Label("Template List");
+        // 模板列表
+        Label listLabel = new Label("提示词模板列表");
         listLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
 
         templateListView = new ListView<>();
@@ -157,11 +185,11 @@ public class TemplateManagerWindow {
         VBox rightPanel = new VBox(15);
         rightPanel.setPadding(new Insets(10));
 
-        // ģ����������
+        // 模板详情
         VBox detailsPanel = createDetailsPanel();
         VBox.setVgrow(detailsPanel, Priority.ALWAYS);
 
-        // ������ť
+        // 按钮面板
         HBox buttonPanel = createButtonPanel();
 
         rightPanel.getChildren().addAll(detailsPanel, buttonPanel);
@@ -174,32 +202,32 @@ public class TemplateManagerWindow {
         detailsPanel.setStyle("-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1;");
         detailsPanel.setPadding(new Insets(15));
 
-        // ģ������
-        Label nameLabel = new Label("Template Name:");
+        // 模板名称
+        Label nameLabel = new Label("提示词模板名称:");
         templateNameField = new TextField();
-        templateNameField.setPromptText("Enter template name");
+        templateNameField.setPromptText("请输入提示词模板名称");
 
-        // ģ������
-        Label descLabel = new Label("Template Description:");
+        // 模板描述
+        Label descLabel = new Label("提示词模板描述:");
         templateDescriptionArea = new TextArea();
-        templateDescriptionArea.setPromptText("Enter template description");
+        templateDescriptionArea.setPromptText("请输入提示词模板描述");
         templateDescriptionArea.setPrefRowCount(3);
 
-        // ģ�����
-        Label categoryLabel = new Label("Template Category:");
+        // 模板分类
+        Label categoryLabel = new Label("提示词模板分类:");
         templateCategoryCombo = new ComboBox<>();
         templateCategoryCombo.getItems().addAll(TemplateCategory.values());
 
-        // ģ������
-        Label contentLabel = new Label("Template Content:");
+        // 模板内容
+        Label contentLabel = new Label("提示词模板内容:");
         templateContentArea = new TextArea();
-        templateContentArea.setPromptText("Enter template content, use {0}, {1} as placeholders");
+        templateContentArea.setPromptText("请输入提示词模板内容，可用{0}、{1}等占位符");
         templateContentArea.setPrefRowCount(10);
 
-        // ��ǩ
-        Label tagLabel = new Label("Tags:");
+        // 标签
+        Label tagLabel = new Label("提示词模板标签:");
         tagField = new TextField();
-        tagField.setPromptText("Enter tags, separated by commas");
+        tagField.setPromptText("请输入提示词模板标签，用逗号分隔");
 
         detailsPanel.getChildren().addAll(
                 nameLabel, templateNameField,
@@ -215,22 +243,22 @@ public class TemplateManagerWindow {
         HBox buttonPanel = new HBox(10);
         buttonPanel.setAlignment(Pos.CENTER_RIGHT);
 
-        Button saveButton = new Button("Save");
+        Button saveButton = new Button("保存");
         saveButton.setOnAction(e -> saveTemplate());
 
-        Button deleteButton = new Button("Delete");
+        Button deleteButton = new Button("删除");
         deleteButton.setOnAction(e -> deleteTemplate());
 
-        Button duplicateButton = new Button("Duplicate");
+        Button duplicateButton = new Button("复制");
         duplicateButton.setOnAction(e -> duplicateTemplate());
 
-        Button rateButton = new Button("Rate");
+        Button rateButton = new Button("评分");
         rateButton.setOnAction(e -> rateTemplate());
 
-        Button favoriteButton = new Button("Favorite");
+        Button favoriteButton = new Button("收藏");
         favoriteButton.setOnAction(e -> toggleFavorite());
 
-        Button clearButton = new Button("Clear");
+        Button clearButton = new Button("清空");
         clearButton.setOnAction(e -> clearForm());
 
         buttonPanel.getChildren().addAll(saveButton, deleteButton, duplicateButton, rateButton, favoriteButton,
@@ -270,19 +298,6 @@ public class TemplateManagerWindow {
         }
     }
 
-    private void filterByCategory() {
-        TemplateCategory category = categoryFilter.getValue();
-        if (category == null) {
-            loadTemplates();
-        } else {
-            List<PromptTemplate> results = templateManager.getTemplatesByCategory(category);
-            Platform.runLater(() -> {
-                templateList.clear();
-                templateList.addAll(results);
-            });
-        }
-    }
-
     private void loadTemplateDetails(PromptTemplate template) {
         if (template != null) {
             templateNameField.setText(template.getName());
@@ -290,7 +305,7 @@ public class TemplateManagerWindow {
             templateCategoryCombo.setValue(template.getCategory());
             templateContentArea.setText(template.getContent());
 
-            // ���ñ�ǩ
+            // 标签
             String tags = String.join(", ", template.getTags());
             tagField.setText(tags);
         }
@@ -308,33 +323,33 @@ public class TemplateManagerWindow {
         TemplateCategory category = templateCategoryCombo.getValue();
 
         if (name.isEmpty()) {
-            showAlert("Error", "Template name cannot be empty", Alert.AlertType.ERROR);
+            showAlert("错误", "模板名称不能为空", Alert.AlertType.ERROR);
             return;
         }
 
         if (content.isEmpty()) {
-            showAlert("Error", "Template content cannot be empty", Alert.AlertType.ERROR);
+            showAlert("错误", "模板内容不能为空", Alert.AlertType.ERROR);
             return;
         }
 
         if (category == null) {
-            showAlert("Error", "Please select a template category", Alert.AlertType.ERROR);
+            showAlert("错误", "请选择模板分类", Alert.AlertType.ERROR);
             return;
         }
 
-        // ������ǩ
+        // 标签
         String[] tags = tagField.getText().split(",");
 
-        // ����Ƿ��Ǳ༭����ģ��
+        // 是否为编辑模板
         PromptTemplate selectedTemplate = templateListView.getSelectionModel().getSelectedItem();
 
         boolean success;
         if (selectedTemplate != null) {
-            // ��������ģ��
+            // 更新模板
             success = templateManager.updateTemplate(
                     selectedTemplate.getId(), name, description, content, category);
 
-            // ���±�ǩ
+            // 更新标签
             if (success) {
                 for (String tag : tags) {
                     String trimmedTag = tag.trim();
@@ -344,10 +359,10 @@ public class TemplateManagerWindow {
                 }
             }
         } else {
-            // ������ģ��
+            // 新建模板
             success = templateManager.createTemplate(name, description, content, category);
 
-            // ���ӱ�ǩ
+            // 添加标签
             if (success) {
                 Optional<PromptTemplate> newTemplate = templateManager.getTemplateByName(name);
                 if (newTemplate.isPresent()) {
@@ -362,49 +377,49 @@ public class TemplateManagerWindow {
         }
 
         if (success) {
-            showAlert("Success", "Template saved successfully", Alert.AlertType.INFORMATION);
+            showAlert("成功", "模板保存成功", Alert.AlertType.INFORMATION);
             loadTemplates();
             updateStatistics();
         } else {
-            showAlert("Error", "Failed to save template", Alert.AlertType.ERROR);
+            showAlert("错误", "模板保存失败", Alert.AlertType.ERROR);
         }
     }
 
     private void deleteTemplate() {
         PromptTemplate selectedTemplate = templateListView.getSelectionModel().getSelectedItem();
         if (selectedTemplate == null) {
-            showAlert("Error", "Please select a template to delete", Alert.AlertType.ERROR);
+            showAlert("错误", "请选择要删除的模板", Alert.AlertType.ERROR);
             return;
         }
 
         Alert alert;
         if (selectedTemplate.isDefault()) {
-            // For default templates, show special confirmation dialog
+            // 对于默认模板，显示特殊确认对话框
             alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Confirm Delete Default Template");
-            alert.setHeaderText("Delete Default Template");
-            alert.setContentText("You are trying to delete the default template \"" + selectedTemplate.getName()
-                    + "\".\n\n" +
-                    "Default templates are important system presets. Deleting them may affect system functionality.\n" +
-                    "Are you sure you want to delete this default template?");
+            alert.setTitle("确认删除默认模板");
+            alert.setHeaderText("删除默认模板");
+            alert.setContentText("您正在尝试删除默认模板 \"" + selectedTemplate.getName()
+                    + "\"。\n\n" +
+                    "默认模板是系统预设的重要组成部分。删除它们可能会影响系统功能。\n" +
+                    "您确定要删除此默认模板吗？");
         } else {
-            // For regular templates, show standard confirmation dialog
+            // 对于普通模板，显示标准确认对话框
             alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Confirm Delete");
-            alert.setHeaderText("Delete Template");
-            alert.setContentText("Are you sure you want to delete template \"" + selectedTemplate.getName() + "\"?");
+            alert.setTitle("确认删除");
+            alert.setHeaderText("删除模板");
+            alert.setContentText("您确定要删除模板 \"" + selectedTemplate.getName() + "\"?");
         }
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             boolean success = templateManager.deleteTemplate(selectedTemplate.getId());
             if (success) {
-                showAlert("Success", "Template deleted successfully", Alert.AlertType.INFORMATION);
+                showAlert("成功", "模板删除成功", Alert.AlertType.INFORMATION);
                 loadTemplates();
                 updateStatistics();
                 clearForm();
             } else {
-                showAlert("Error", "Failed to delete template", Alert.AlertType.ERROR);
+                showAlert("错误", "模板删除失败", Alert.AlertType.ERROR);
             }
         }
     }
@@ -412,18 +427,18 @@ public class TemplateManagerWindow {
     private void duplicateTemplate() {
         PromptTemplate selectedTemplate = templateListView.getSelectionModel().getSelectedItem();
         if (selectedTemplate == null) {
-            showAlert("Error", "Please select a template to duplicate", Alert.AlertType.ERROR);
+            showAlert("错误", "请选择要复制的模板", Alert.AlertType.ERROR);
             return;
         }
 
-        // ��������
+        // 复制模板
         PromptTemplate duplicate = new PromptTemplate(
-                selectedTemplate.getName() + " (Copy)",
+                selectedTemplate.getName() + " (复制)",
                 selectedTemplate.getDescription(),
                 selectedTemplate.getContent(),
                 selectedTemplate.getCategory());
 
-        // ���Ʊ�ǩ
+        // 复制标签
         for (String tag : selectedTemplate.getTags()) {
             duplicate.addTag(tag);
         }
@@ -434,11 +449,11 @@ public class TemplateManagerWindow {
                 duplicate.getContent(),
                 duplicate.getCategory());
         if (success) {
-            showAlert("Success", "Template duplicated successfully", Alert.AlertType.INFORMATION);
+            showAlert("成功", "模板复制成功", Alert.AlertType.INFORMATION);
             loadTemplates();
             updateStatistics();
         } else {
-            showAlert("Error", "Failed to duplicate template", Alert.AlertType.ERROR);
+            showAlert("错误", "模板复制失败", Alert.AlertType.ERROR);
         }
     }
 
@@ -454,31 +469,31 @@ public class TemplateManagerWindow {
     private void rateTemplate() {
         PromptTemplate selectedTemplate = templateListView.getSelectionModel().getSelectedItem();
         if (selectedTemplate == null) {
-            showAlert("Error", "Please select a template to rate", Alert.AlertType.ERROR);
+            showAlert("错误", "请选择要评分的模板", Alert.AlertType.ERROR);
             return;
         }
 
-        // �������ֶԻ���
+        // 评分对话框
         Dialog<Double> dialog = new Dialog<>();
-        dialog.setTitle("Rate Template");
-        dialog.setHeaderText("Rate template: " + selectedTemplate.getName());
-        dialog.setContentText("Please select a rating (1-5 stars):");
+        dialog.setTitle("评分模板");
+        dialog.setHeaderText("评分模板: " + selectedTemplate.getName());
+        dialog.setContentText("请选择评分 (1-5星):");
 
-        // ���ð�ť
-        ButtonType rateButtonType = new ButtonType("Rate", ButtonBar.ButtonData.OK_DONE);
+        // 确定按钮
+        ButtonType rateButtonType = new ButtonType("评分", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(rateButtonType, ButtonType.CANCEL);
 
-        // ��������ѡ����
+        // 评分选择器
         ComboBox<Double> ratingCombo = new ComboBox<>();
         ratingCombo.getItems().addAll(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0);
         ratingCombo.setValue(5.0);
         ratingCombo.setEditable(false);
 
-        // �����Ǽ���ʾ
+        // 星星显示
         Label starLabel = new Label("*****");
         starLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: gold; -fx-font-weight: bold;");
 
-        // �Ǽ��仯����
+        // 评分变化监听
         ratingCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 int stars = (int) Math.round(newVal);
@@ -495,10 +510,10 @@ public class TemplateManagerWindow {
         });
 
         VBox content = new VBox(10);
-        content.getChildren().addAll(new Label("Rating:"), ratingCombo, starLabel);
+        content.getChildren().addAll(new Label("评分:"), ratingCombo, starLabel);
         dialog.getDialogPane().setContent(content);
 
-        // ���ý��ת����
+        // 结果转换器
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == rateButtonType) {
                 return ratingCombo.getValue();
@@ -506,16 +521,16 @@ public class TemplateManagerWindow {
             return null;
         });
 
-        // ��ʾ�Ի��򲢴������
+        // 显示评分对话框
         Optional<Double> result = dialog.showAndWait();
         result.ifPresent(rating -> {
             boolean success = templateManager.rateTemplate(selectedTemplate.getId(), rating);
             if (success) {
-                showAlert("Success", "Template rated successfully: " + rating + " stars", Alert.AlertType.INFORMATION);
+                showAlert("成功", "模板评分成功: " + rating + "星", Alert.AlertType.INFORMATION);
                 loadTemplates();
                 updateStatistics();
             } else {
-                showAlert("Error", "Failed to rate template", Alert.AlertType.ERROR);
+                showAlert("错误", "模板评分失败", Alert.AlertType.ERROR);
             }
         });
     }
@@ -523,55 +538,55 @@ public class TemplateManagerWindow {
     private void toggleFavorite() {
         PromptTemplate selectedTemplate = templateListView.getSelectionModel().getSelectedItem();
         if (selectedTemplate == null) {
-            showAlert("Error", "Please select a template to toggle favorite", Alert.AlertType.ERROR);
+            showAlert("错误", "请选择要切换收藏状态的模板", Alert.AlertType.ERROR);
             return;
         }
 
         boolean success = templateManager.toggleFavorite(selectedTemplate.getId());
         if (success) {
             boolean isFavorite = selectedTemplate.getMetadata().isFavorite();
-            String message = isFavorite ? "Template added to favorites" : "Template removed from favorites";
-            showAlert("Success", message, Alert.AlertType.INFORMATION);
+            String message = isFavorite ? "模板已添加到收藏" : "模板已从收藏移除";
+            showAlert("成功", message, Alert.AlertType.INFORMATION);
             loadTemplates();
             updateStatistics();
         } else {
-            showAlert("Error", "Failed to toggle favorite status", Alert.AlertType.ERROR);
+            showAlert("错误", "切换收藏状态失败", Alert.AlertType.ERROR);
         }
     }
 
     private void importTemplates() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select template file to import");
+        fileChooser.setTitle("选择要导入的模板文件");
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("JSON files", "*.json"));
+                new FileChooser.ExtensionFilter("JSON文件", "*.json"));
 
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
             boolean success = templateManager.restoreTemplates(file.getAbsolutePath());
             if (success) {
-                showAlert("Success", "Templates imported successfully", Alert.AlertType.INFORMATION);
+                showAlert("成功", "模板导入成功", Alert.AlertType.INFORMATION);
                 loadTemplates();
                 updateStatistics();
             } else {
-                showAlert("Error", "Failed to import templates", Alert.AlertType.ERROR);
+                showAlert("错误", "模板导入失败", Alert.AlertType.ERROR);
             }
         }
     }
 
     private void exportTemplates() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select export location");
+        fileChooser.setTitle("选择导出位置");
         fileChooser.setInitialFileName("templates_export.json");
         fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("JSON files", "*.json"));
+                new FileChooser.ExtensionFilter("JSON文件", "*.json"));
 
         File file = fileChooser.showSaveDialog(stage);
         if (file != null) {
             try {
-                // ֱ��ʹ��JsonTemplateStorage�Ĺ���
+                // 直接使用JsonTemplateStorage的导出功能
                 List<PromptTemplate> allTemplates = templateManager.getAllTemplates();
                 if (allTemplates.isEmpty()) {
-                    showAlert("Warning", "No templates to export", Alert.AlertType.WARNING);
+                    showAlert("警告", "没有模板可导出", Alert.AlertType.WARNING);
                     return;
                 }
 
@@ -584,10 +599,10 @@ public class TemplateManagerWindow {
                 java.nio.file.Path filePath = java.nio.file.Paths.get(file.getAbsolutePath());
                 java.nio.file.Files.write(filePath, json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
-                showAlert("Success", "Templates exported successfully to: " + file.getName(),
+                showAlert("成功", "模板导出成功到: " + file.getName(),
                         Alert.AlertType.INFORMATION);
             } catch (Exception e) {
-                showAlert("Error", "Failed to export templates: " + e.getMessage(), Alert.AlertType.ERROR);
+                showAlert("错误", "模板导出失败: " + e.getMessage(), Alert.AlertType.ERROR);
             }
         }
     }
@@ -595,16 +610,16 @@ public class TemplateManagerWindow {
     private void backupTemplates() {
         boolean success = templateManager.backupTemplates("backups");
         if (success) {
-            showAlert("Success", "Templates backed up successfully", Alert.AlertType.INFORMATION);
+            showAlert("成功", "模板备份成功", Alert.AlertType.INFORMATION);
         } else {
-            showAlert("Error", "Failed to backup templates", Alert.AlertType.ERROR);
+            showAlert("错误", "模板备份失败", Alert.AlertType.ERROR);
         }
     }
 
     private void updateStatistics() {
         TemplateStatistics stats = templateManager.getStatistics();
         String statsText = String.format(
-                "Total: %d | Default: %d | Favorite: %d | Avg Rating: %.1f | Total Usage: %d",
+                "总数: %d | 默认: %d | 收藏: %d | 平均评分: %.1f | 总使用: %d",
                 stats.getTotalCount(), stats.getDefaultCount(), stats.getFavoriteCount(),
                 stats.getAverageRating(), stats.getTotalUseCount());
         statisticsLabel.setText(statsText);
@@ -659,21 +674,21 @@ public class TemplateManagerWindow {
                 categoryLabel.setStyle("-fx-text-fill: #666;");
 
                 Label statsLabel = new Label(String.format(
-                        "Usage: %d | Rating: %.1f",
+                        "使用: %d | 评分: %.1f",
                         item.getMetadata().getUseCount(),
                         item.getMetadata().getAverageRating()));
                 statsLabel.setFont(Font.font("System", 9));
                 statsLabel.setStyle("-fx-text-fill: #999;");
 
-                // �����ղ�״̬��ʾ
+                // 状态显示
                 HBox statusBox = new HBox(5);
                 if (item.getMetadata().isFavorite()) {
-                    Label favoriteLabel = new Label("[FAV]");
+                    Label favoriteLabel = new Label("[收藏]");
                     favoriteLabel.setStyle("-fx-text-fill: gold; -fx-font-weight: bold; -fx-font-size: 9px;");
                     statusBox.getChildren().add(favoriteLabel);
                 }
 
-                // ���������Ǽ���ʾ
+                // 评分显示
                 if (item.getMetadata().getRatingCount() > 0) {
                     double rating = item.getMetadata().getAverageRating();
                     int stars = (int) Math.round(rating);
