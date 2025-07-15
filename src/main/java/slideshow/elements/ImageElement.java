@@ -214,4 +214,12 @@ public class ImageElement extends SlideElement {
         this.x = x;
         this.y = y;
     }
+
+    @Override
+    public SlideElement deepClone() {
+        // 使用imageUrl和尺寸构造新对象
+        ImageElement clone = new ImageElement(this.x, this.y, this.imageUrl, this.width, this.height);
+        clone.setSelected(this.selected);
+        return clone;
+    }
 }

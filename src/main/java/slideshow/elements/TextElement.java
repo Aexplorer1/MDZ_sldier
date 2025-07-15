@@ -284,4 +284,19 @@ public class TextElement extends SlideElement {
     public boolean isItalic() {
         return italic;
     }
+
+    @Override
+    public SlideElement deepClone() {
+        TextElement clone = new TextElement(
+            this.x,
+            this.y,
+            this.text,
+            this.fontSize,
+            this.color,
+            this.fontWeight,
+            this.italic
+        );
+        clone.setSelected(this.selected);
+        return clone;
+    }
 } 

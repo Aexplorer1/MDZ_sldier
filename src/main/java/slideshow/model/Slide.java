@@ -104,4 +104,17 @@ public class Slide {
     public void setHeight(double height) {
         this.height = height;
     }
+    
+    /**
+     * 深拷贝当前幻灯片，包括所有元素和尺寸
+     */
+    public Slide deepClone() {
+        Slide clone = new Slide();
+        clone.width = this.width;
+        clone.height = this.height;
+        for (SlideElement element : this.elements) {
+            clone.addElement(element.deepClone());
+        }
+        return clone;
+    }
 } 

@@ -65,6 +65,7 @@ import java.util.Optional;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.Stack;
 
 /**
  * MDZ_Slider main application class
@@ -104,6 +105,23 @@ public class Main extends Application {
     private ToolBar toolBar;
     private VBox sidebar;
     private BorderPane canvasHolder;
+
+    // ========== 撤销/重做/剪切/复制/粘贴相关成员 ==========
+    // 快照式撤销/重做
+    private static class SlidesSnapshot {
+        List<slideshow.model.Slide> slides;
+        int currentSlideIndex;
+        SlidesSnapshot(List<slideshow.model.Slide> slides, int currentSlideIndex) {
+            this.slides = new ArrayList<>();
+            for (slideshow.model.Slide s : slides) {
+                this.slides.add(s.deepClone());
+            }
+            this.currentSlideIndex = currentSlideIndex;
+        }
+    }
+    private final Stack<SlidesSnapshot> undoStack = new Stack<>();
+    private final Stack<SlidesSnapshot> redoStack = new Stack<>();
+    private SlideElement clipboardElement = null;
 
     @Override
     public void start(Stage primaryStage) {
@@ -210,7 +228,12 @@ public class Main extends Application {
             MenuItem cutItem = new MenuItem("剪切");
             MenuItem copyItem = new MenuItem("复制");
             MenuItem pasteItem = new MenuItem("粘贴");
-            // TODO: 绑定撤销/重做/剪切/复制/粘贴功能
+            // 绑定功能
+            undoItem.setOnAction(ev -> undo());
+            redoItem.setOnAction(ev -> redo());
+            cutItem.setOnAction(ev -> cutSelectedElement());
+            copyItem.setOnAction(ev -> copySelectedElement());
+            pasteItem.setOnAction(ev -> pasteClipboardElement());
             ContextMenu menu = new ContextMenu(
                     undoItem,
                     redoItem,
@@ -487,7 +510,7 @@ public class Main extends Application {
         // Retrieve from environment variable first
         String key = System.getenv("DEEPSEEK_API_KEY");
         // logger.info("API Key: " + key);
-        if (key == null) {
+        if (key != null) {
             throw new RuntimeException("API Key not configured");
         }
         return key;
@@ -832,10 +855,12 @@ public class Main extends Application {
         currentSlideIndex = slides.size() - 1;
         currentSlide = newSlide;
         refreshCanvas();
-        updateSlideControls(); // Update slide control button states
+        updateSlideControls();
+        pushUndoSnapshot(); // 新建后入栈
     }
 
     private void addText() {
+        pushUndoSnapshot();
         // 创建支持多行输入的对话框
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("添加文本");
@@ -880,11 +905,13 @@ public class Main extends Application {
                 );
                 currentSlide.addElement(textElement);
                 refreshCanvas();
+                pushUndoSnapshot(); // 变更后入栈
             }
         });
     }
 
     private void addImage() {
+        pushUndoSnapshot();
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Image");
         fileChooser.getExtensionFilters().addAll(
@@ -916,6 +943,7 @@ public class Main extends Application {
                 System.out.println("Image element added to slide");
 
                 refreshCanvas();
+                pushUndoSnapshot(); // 变更后入栈
             } catch (Exception e) {
                 e.printStackTrace(); // Print detailed error information
                 showError("Failed to Load Image", "Ensure a valid image file is selected. Error: " + e.getMessage());
@@ -1002,6 +1030,7 @@ public class Main extends Application {
     }
 
     private void editSelectedText() {
+        pushUndoSnapshot();
         if (selectedElement instanceof TextElement) {
             TextElement textElement = (TextElement) selectedElement;
             
@@ -1040,18 +1069,21 @@ public class Main extends Application {
                 if (!text.trim().isEmpty()) {
                     textElement.setText(text);
                     refreshCanvas();
+                    pushUndoSnapshot(); // 编辑后入栈
                 }
             });
         }
     }
 
     private void deleteElement(SlideElement element) {
+        pushUndoSnapshot();
         if (currentSlide != null) {
             currentSlide.removeElement(element);
             if (element == selectedElement) {
                 selectedElement = null;
             }
             refreshCanvas();
+            pushUndoSnapshot(); // 删除后入栈
         }
     }
 
@@ -2060,6 +2092,7 @@ public class Main extends Application {
     }
 
     private void parseAndCreateSlides(String aiResult) {
+        pushUndoSnapshot();
         System.out.println("Main: parseAndCreateSlides 开始");
         System.out.println("Main: 输入内容长度: " + aiResult.length());
 
@@ -2080,6 +2113,7 @@ public class Main extends Application {
         // 刷新画布和控件状态
         refreshCanvas();
         updateSlideControls();
+        pushUndoSnapshot(); // 解析后入栈
 
         System.out.println("Main: parseAndCreateSlides 完成");
     }
@@ -3965,5 +3999,91 @@ public class Main extends Application {
         if (sidebar != null) sidebar.setStyle("-fx-background-color:" + mainBgColor + ";-fx-border-width:0 1 0 0;-fx-border-color:" + borderColor + ";-fx-border-radius:16;-fx-background-radius:16;");
         // 画布
         if (canvasHolder != null) canvasHolder.setStyle("-fx-background-color:" + canvasBgColor + ";-fx-border-radius:24;-fx-background-radius:24;");
+    }
+
+    /**
+     * 保存当前幻灯片元素快照到撤销栈
+     */
+    private void pushUndoSnapshot() {
+        undoStack.push(new SlidesSnapshot(slides, currentSlideIndex));
+        redoStack.clear();
+    }
+
+    /**
+     * 撤销上一步操作（恢复整个幻灯片列表和当前页）
+     */
+    private void undo() {
+        if (!undoStack.isEmpty()) {
+            redoStack.push(new SlidesSnapshot(slides, currentSlideIndex));
+            SlidesSnapshot prev = undoStack.pop();
+            restoreSnapshot(prev);
+        }
+    }
+
+    /**
+     * 重做（恢复上一次撤销的内容）
+     */
+    private void redo() {
+        if (!redoStack.isEmpty()) {
+            undoStack.push(new SlidesSnapshot(slides, currentSlideIndex));
+            SlidesSnapshot next = redoStack.pop();
+            restoreSnapshot(next);
+        }
+    }
+
+    /**
+     * 恢复快照内容到当前状态
+     */
+    private void restoreSnapshot(SlidesSnapshot snapshot) {
+        slides = new ArrayList<>();
+        for (slideshow.model.Slide s : snapshot.slides) {
+            slides.add(s.deepClone());
+        }
+        currentSlideIndex = snapshot.currentSlideIndex;
+        currentSlide = slides.isEmpty() ? null : slides.get(currentSlideIndex);
+        selectedElement = null;
+        refreshCanvas();
+        updateSlideControls();
+    }
+
+    /**
+     * 剪切选中元素
+     */
+    private void cutSelectedElement() {
+        if (selectedElement != null && currentSlide != null) {
+            pushUndoSnapshot();
+            clipboardElement = selectedElement.deepClone();
+            currentSlide.removeElement(selectedElement);
+            selectedElement = null;
+            refreshCanvas();
+            pushUndoSnapshot(); // 剪切后入栈
+        }
+    }
+
+    /**
+     * 复制选中元素
+     */
+    private void copySelectedElement() {
+        if (selectedElement != null) {
+            clipboardElement = selectedElement.deepClone();
+        }
+    }
+
+    /**
+     * 粘贴剪贴板元素到当前幻灯片中央
+     */
+    private void pasteClipboardElement() {
+        if (clipboardElement != null && currentSlide != null) {
+            pushUndoSnapshot();
+            SlideElement pasted = clipboardElement.deepClone();
+            // 粘贴到画布中央
+            double centerX = canvas.getWidth() / 2;
+            double centerY = canvas.getHeight() / 2;
+            pasted.setPosition(centerX, centerY);
+            currentSlide.addElement(pasted);
+            selectedElement = pasted;
+            refreshCanvas();
+            pushUndoSnapshot(); // 粘贴后入栈
+        }
     }
 }

@@ -78,4 +78,9 @@ public abstract class SlideElement {
      * 获取元素高度
      */
     public abstract double getHeight();
+    
+    /**
+     * 深拷贝自身，子类需实现
+     */
+    public abstract SlideElement deepClone();
 }
