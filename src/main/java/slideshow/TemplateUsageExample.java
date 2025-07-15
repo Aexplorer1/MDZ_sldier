@@ -7,112 +7,103 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Ä£°åÊ¹ÓÃÊ¾ÀıÀà
- * Õ¹Ê¾ÈçºÎÊ¹ÓÃÌáÊ¾´ÊÄ£°å¡¢¼ÇÂ¼Ê¹ÓÃ´ÎÊıºÍÆÀ·Ö
+ * æ¨¡æ¿ä½¿ç”¨ç¤ºä¾‹
+ * æ¼”ç¤ºæ¨¡æ¿ã€åˆ†ç±»ã€ä½¿ç”¨è®°å½•çš„å¢åˆ æ”¹æŸ¥
  */
 public class TemplateUsageExample {
 
     public static void main(String[] args) {
-        System.out.println("=== Ä£°åÊ¹ÓÃÊ¾Àı ===");
+        System.out.println("=== æç¤ºè¯æ¨¡æ¿ä½¿ç”¨ç¤ºä¾‹ ===");
 
-        // ´´½¨Ä£°å¹ÜÀíÆ÷
+        // åˆå§‹åŒ–æ¨¡æ¿ç®¡ç†å™¨
         TemplateManager templateManager = new TemplateManager();
 
-        // Ê¾Àı1£º²é¿´ËùÓĞÄ£°å
-        System.out.println("\n1. ²é¿´ËùÓĞÄ£°å:");
+        // ç¤ºä¾‹1ï¼šæŸ¥çœ‹æ‰€æœ‰æ¨¡æ¿
+        System.out.println("\n1. æŸ¥çœ‹æ‰€æœ‰æç¤ºè¯æ¨¡æ¿:");
         List<PromptTemplate> allTemplates = templateManager.getAllTemplates();
         for (PromptTemplate template : allTemplates) {
             System.out.println("  - " + template.getName() + " (ID: " + template.getId() + ")");
-            System.out.println("    ·ÖÀà: " + template.getCategory().getDisplayName());
-            System.out.println("    Ê¹ÓÃ´ÎÊı: " + template.getMetadata().getUseCount());
-            System.out.println("    ÆÀ·Ö: " + template.getMetadata().getAverageRating());
-            System.out.println("    ÊÕ²Ø: " + template.getMetadata().isFavorite());
+            System.out.println("    åˆ†ç±»: " + template.getCategory().getDisplayName());
+            System.out.println("    ä½¿ç”¨æ¬¡æ•°: " + template.getMetadata().getUseCount());
+            System.out.println("    å¹³å‡è¯„åˆ†: " + template.getMetadata().getAverageRating());
+            System.out.println("    æ”¶è—: " + template.getMetadata().isFavorite());
         }
 
-        // Ê¾Àı2£ºÊ¹ÓÃÄ£°å£¨Ôö¼ÓÊ¹ÓÃ´ÎÊı£©
-        System.out.println("\n2. Ê¹ÓÃÄ£°åÊ¾Àı:");
+        // ç¤ºä¾‹2ï¼šä½¿ç”¨æ¨¡æ¿ï¼ˆå¢åŠ ä½¿ç”¨æ¬¡æ•°ï¼‰
+        System.out.println("\n2. ä½¿ç”¨æç¤ºè¯æ¨¡æ¿:");
         if (!allTemplates.isEmpty()) {
             PromptTemplate firstTemplate = allTemplates.get(0);
             String templateId = firstTemplate.getId();
 
-            System.out.println("  Ê¹ÓÃÄ£°å: " + firstTemplate.getName());
-            System.out.println("  Ê¹ÓÃÇ°´ÎÊı: " + firstTemplate.getMetadata().getUseCount());
+            System.out.println("  ä½¿ç”¨æç¤ºè¯æ¨¡æ¿: " + firstTemplate.getName());
+            System.out.println("  ä½¿ç”¨å‰æ¬¡æ•°: " + firstTemplate.getMetadata().getUseCount());
 
-            // Ê¹ÓÃÄ£°å£¨Õâ»áÔö¼ÓÊ¹ÓÃ´ÎÊı£©
+            // ä½¿ç”¨æ¨¡æ¿ï¼ˆå¢åŠ ä½¿ç”¨æ¬¡æ•°ï¼‰
             templateManager.useTemplate(templateId);
 
-            // ÖØĞÂ»ñÈ¡Ä£°åÒÔ²é¿´¸üĞÂºóµÄÊ¹ÓÃ´ÎÊı
+            // é‡æ–°è·å–æ¨¡æ¿æŸ¥çœ‹ä½¿ç”¨æ¬¡æ•°
             Optional<PromptTemplate> updatedTemplate = templateManager.getTemplate(templateId);
             if (updatedTemplate.isPresent()) {
-                System.out.println("  Ê¹ÓÃºó´ÎÊı: " + updatedTemplate.get().getMetadata().getUseCount());
+                System.out.println("  ä½¿ç”¨æ¬¡æ•°: " + updatedTemplate.get().getMetadata().getUseCount());
             }
         }
 
-        // Ê¾Àı3£ºÎªÄ£°åÆÀ·Ö
-        System.out.println("\n3. Ä£°åÆÀ·ÖÊ¾Àı:");
+        // ç¤ºä¾‹3ï¼šä¸ºæ¨¡æ¿è¯„åˆ†
+        System.out.println("\n3. ä¸ºæ¨¡æ¿è¯„åˆ†:");
         if (!allTemplates.isEmpty()) {
             PromptTemplate firstTemplate = allTemplates.get(0);
             String templateId = firstTemplate.getId();
 
-            System.out.println("  ÎªÄ£°åÆÀ·Ö: " + firstTemplate.getName());
-            System.out.println("  ÆÀ·ÖÇ°: " + firstTemplate.getMetadata().getAverageRating());
+            System.out.println("  Îªæ¨¡æ¿è¯„åˆ†: " + firstTemplate.getName());
+            System.out.println("  è¯„åˆ†å‰: " + firstTemplate.getMetadata().getAverageRating());
 
-            // ÎªÄ£°åÆÀ·Ö£¨1-5·Ö£©
+            // ä¸ºæ¨¡æ¿è¯„åˆ†ï¼ˆ1-5åˆ†ï¼‰
             boolean ratingSuccess = templateManager.rateTemplate(templateId, 4.5);
             if (ratingSuccess) {
                 Optional<PromptTemplate> ratedTemplate = templateManager.getTemplate(templateId);
                 if (ratedTemplate.isPresent()) {
-                    System.out.println("  ÆÀ·Öºó: " + ratedTemplate.get().getMetadata().getAverageRating());
-                    System.out.println("  ÆÀ·Ö´ÎÊı: " + ratedTemplate.get().getMetadata().getRatingCount());
+                    System.out.println("  è¯„åˆ†æˆåŠŸ: " + ratedTemplate.get().getMetadata().getAverageRating());
+                    System.out.println("  è¯„åˆ†æ¬¡æ•°: " + ratedTemplate.get().getMetadata().getRatingCount());
                 }
             }
         }
 
-        // Ê¾Àı4£ºÊÕ²ØÄ£°å
-        System.out.println("\n4. ÊÕ²ØÄ£°åÊ¾Àı:");
+        // ç¤ºä¾‹4ï¼šæ”¶è—æ¨¡æ¿
+        System.out.println("\n4. æ”¶è—æ¨¡æ¿:");
         if (!allTemplates.isEmpty()) {
             PromptTemplate firstTemplate = allTemplates.get(0);
             String templateId = firstTemplate.getId();
 
-            System.out.println("  ÊÕ²ØÄ£°å: " + firstTemplate.getName());
-            System.out.println("  ÊÕ²ØÇ°×´Ì¬: " + firstTemplate.getMetadata().isFavorite());
+            System.out.println("  æ”¶è—æ¨¡æ¿: " + firstTemplate.getName());
+            System.out.println("  æ”¶è—å‰çŠ¶æ€: " + firstTemplate.getMetadata().isFavorite());
 
-            // ÇĞ»»ÊÕ²Ø×´Ì¬
+            // åˆ‡æ¢æ”¶è—çŠ¶æ€
             boolean favoriteSuccess = templateManager.toggleFavorite(templateId);
             if (favoriteSuccess) {
                 Optional<PromptTemplate> favoritedTemplate = templateManager.getTemplate(templateId);
                 if (favoritedTemplate.isPresent()) {
-                    System.out.println("  ÊÕ²Øºó×´Ì¬: " + favoritedTemplate.get().getMetadata().isFavorite());
+                    System.out.println("  æ”¶è—çŠ¶æ€: " + favoritedTemplate.get().getMetadata().isFavorite());
                 }
             }
         }
 
-        // Ê¾Àı5£º²é¿´Í³¼ÆĞÅÏ¢
-        System.out.println("\n5. Ä£°åÍ³¼ÆĞÅÏ¢:");
+        // ç¤ºä¾‹5ï¼šæŸ¥çœ‹ç»Ÿè®¡ä¿¡æ¯
+        System.out.println("\n5. æ¨¡æ¿ç»Ÿè®¡ä¿¡æ¯:");
         TemplateManager.TemplateStatistics stats = templateManager.getStatistics();
-        System.out.println("  ×ÜÄ£°åÊı: " + stats.getTotalCount());
-        System.out.println("  Ä¬ÈÏÄ£°åÊı: " + stats.getDefaultCount());
-        System.out.println("  ÊÕ²ØÄ£°åÊı: " + stats.getFavoriteCount());
-        System.out.println("  Æ½¾ùÆÀ·Ö: " + stats.getAverageRating());
-        System.out.println("  ×ÜÊ¹ÓÃ´ÎÊı: " + stats.getTotalUseCount());
+        System.out.println("  æ€»æ¨¡æ¿æ•°: " + stats.getTotalCount());
+        System.out.println("  é»˜è®¤æ¨¡æ¿æ•°: " + stats.getDefaultCount());
+        System.out.println("  æ”¶è—æ¨¡æ¿æ•°: " + stats.getFavoriteCount());
+        System.out.println("  å¹³å‡è¯„åˆ†: " + stats.getAverageRating());
+        System.out.println("  æ€»ä½¿ç”¨æ¬¡æ•°: " + stats.getTotalUseCount());
 
-        // Ê¾Àı6£ºËÑË÷Ä£°å
-        System.out.println("\n6. ËÑË÷Ä£°åÊ¾Àı:");
-        List<PromptTemplate> searchResults = templateManager.searchTemplates("speech");
-        System.out.println("  ËÑË÷'speech'µÄ½á¹ûÊıÁ¿: " + searchResults.size());
+        // ç¤ºä¾‹6ï¼šæœç´¢æ¨¡æ¿
+        System.out.println("\n6. æœç´¢æ¨¡æ¿:");
+        List<PromptTemplate> searchResults = templateManager.searchTemplates("æ¼”è®²");
+        System.out.println("  æœç´¢'æ¼”è®²'çš„ç»“æœæ•°é‡: " + searchResults.size());
         for (PromptTemplate result : searchResults) {
             System.out.println("    - " + result.getName());
         }
 
-        // Ê¾Àı7£º°´·ÖÀà»ñÈ¡Ä£°å
-        System.out.println("\n7. °´·ÖÀà»ñÈ¡Ä£°å:");
-        List<PromptTemplate> outlineTemplates = templateManager
-                .getTemplatesByCategory(TemplateCategory.PPT_OUTLINE);
-        System.out.println("  PPT´ó¸ÙÉú³ÉÄ£°åÊıÁ¿: " + outlineTemplates.size());
-        for (PromptTemplate template : outlineTemplates) {
-            System.out.println("    - " + template.getName());
-        }
-
-        System.out.println("\n=== Ê¾ÀıÍê³É ===");
+        System.out.println("\n=== ç¤ºä¾‹ç»“æŸ ===");
     }
 }

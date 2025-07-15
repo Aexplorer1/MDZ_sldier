@@ -1,40 +1,40 @@
 [
   {
-    "id": "e8c44ed5-23bc-4de7-aefa-9452f2bc044f",
-    "name": "Theme-based PPT Generation",
-    "description": "Generate PPT content based on specific theme or topic",
-    "content": "You are a PPT assistant. Please generate a complete PPT outline for the following theme:\nTheme: {0}\nTarget Audience: {1}\nPresentation Duration: {2} minutes\n\nRequirements:\n1. Create a comprehensive PPT structure for the theme\n2. Each slide should include title, subtitle, and relevant bullet points\n3. Content should be engaging and informative\n4. Include appropriate visual elements descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the PPT outline:",
+    "id": "e10d2f2d-6d08-4ea5-9bbf-70051f4a7283",
+    "name": "主题PPT",
+    "description": "根据指定主题生成PPT内容",
+    "content": "你是一名PPT助手，请为以下主题生成完整的PPT大纲：\n主题：{0}\n目标听众：{1}\n演讲时长：{2}分钟\n\n要求：\n1. 针对主题设计全面的PPT结构\n2. 每页包含标题、副标题和相关要点\n3. 内容生动有趣，信息丰富\n4. 包含合适的视觉元素描述\n\n重要：必须按如下标准PPT格式输出：\n---PPT大纲---\n第1页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n第2页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n（更多页面以此类推...）\n\n请生成PPT大纲：",
     "category": "PPT_THEME",
     "tags": [
       "PPT",
-      "theme"
+      "主题"
     ],
     "metadata": {
-      "createdAt": "2025-07-06 08:46:12",
-      "updatedAt": "2025-07-06 08:53:10",
+      "createdAt": "2025-07-15 11:42:51",
+      "updatedAt": "2025-07-15 11:42:51",
       "useCount": 0,
-      "rating": 5.0,
-      "ratingCount": 1,
+      "rating": 0.0,
+      "ratingCount": 0,
       "author": "User",
       "version": "1.0",
-      "isFavorite": true
+      "isFavorite": false
     },
     "isDefault": true,
     "isPublic": false
   },
   {
-    "id": "d2af26da-23c4-4660-ac58-b166fb1d7db8",
-    "name": "Educational PPT Generation",
-    "description": "Generate educational PPT content for learning purposes",
-    "content": "You are an educational PPT assistant. Please generate a complete PPT outline for educational content:\nSubject: {0}\nTarget Students: {1}\nLesson Duration: {2} minutes\n\nRequirements:\n1. Create an educational PPT structure with clear learning objectives\n2. Each slide should include title, subtitle, and key learning points\n3. Content should be easy to understand and follow\n4. Include examples and visual aids descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the educational PPT outline:",
+    "id": "5e814908-b307-4425-a36b-65323399015a",
+    "name": "教育PPT",
+    "description": "生成用于教学的PPT内容",
+    "content": "你是一名教育PPT助手，请为以下教学内容生成完整的PPT大纲：\n学科：{0}\n目标学生：{1}\n课程时长：{2}分钟\n\n要求：\n1. 设计包含明确学习目标的教学PPT结构\n2. 每页包含标题、副标题和关键知识点\n3. 内容易于理解和跟进\n4. 包含示例和视觉辅助描述\n\n重要：必须按如下标准PPT格式输出：\n---PPT大纲---\n第1页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n第2页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n（更多页面以此类推...）\n\n请生成教学PPT大纲：",
     "category": "PPT_EDUCATION",
     "tags": [
       "PPT",
-      "education"
+      "教育"
     ],
     "metadata": {
-      "createdAt": "2025-07-06 08:46:12",
-      "updatedAt": "2025-07-06 08:46:12",
+      "createdAt": "2025-07-15 11:42:51",
+      "updatedAt": "2025-07-15 11:42:51",
       "useCount": 0,
       "rating": 0.0,
       "ratingCount": 0,
@@ -46,18 +46,18 @@
     "isPublic": false
   },
   {
-    "id": "b958b78b-df85-4942-a93b-adcbb9a6d6da",
-    "name": "Business PPT Generation",
-    "description": "Generate professional business presentation content",
-    "content": "You are a business PPT assistant. Please generate a complete PPT outline for business content:\nBusiness Topic: {0}\nTarget Audience: {1}\nPresentation Duration: {2} minutes\n\nRequirements:\n1. Create a professional business PPT structure\n2. Each slide should include title, subtitle, and key business points\n3. Content should be professional and data-driven\n4. Include charts, graphs, and business visual elements descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the business PPT outline:",
+    "id": "cbbf67e9-8091-4ddc-b720-ac1a6157a515",
+    "name": "商业PPT",
+    "description": "生成专业的商业演示内容",
+    "content": "你是一名商业PPT助手，请为以下商业内容生成完整的PPT大纲：\n商业主题：{0}\n目标听众：{1}\n演讲时长：{2}分钟\n\n要求：\n1. 设计专业的商业PPT结构\n2. 每页包含标题、副标题和关键业务要点\n3. 内容专业且数据驱动\n4. 包含图表、数据和商业视觉元素描述\n\n重要：必须按如下标准PPT格式输出：\n---PPT大纲---\n第1页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n第2页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n（更多页面以此类推...）\n\n请生成商业PPT大纲：",
     "category": "PPT_BUSINESS",
     "tags": [
       "PPT",
-      "business"
+      "商业"
     ],
     "metadata": {
-      "createdAt": "2025-07-06 08:46:12",
-      "updatedAt": "2025-07-06 08:46:12",
+      "createdAt": "2025-07-15 11:42:51",
+      "updatedAt": "2025-07-15 11:42:51",
       "useCount": 0,
       "rating": 0.0,
       "ratingCount": 0,
@@ -69,18 +69,18 @@
     "isPublic": false
   },
   {
-    "id": "c095751c-bdc7-45b0-b28d-3a66608ad5b9",
-    "name": "Technical PPT Generation",
-    "description": "Generate technical presentation content with detailed explanations",
-    "content": "You are a technical PPT assistant. Please generate a complete PPT outline for technical content:\nTechnical Topic: {0}\nTarget Audience: {1}\nPresentation Duration: {2} minutes\n\nRequirements:\n1. Create a detailed technical PPT structure\n2. Each slide should include title, subtitle, and technical explanations\n3. Content should be technically accurate and comprehensive\n4. Include diagrams, flowcharts, and technical visual elements descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the technical PPT outline:",
+    "id": "3bb49fd3-271a-4868-adaf-9dec613845ca",
+    "name": "技术PPT",
+    "description": "生成包含详细讲解的技术演示内容",
+    "content": "你是一名技术PPT助手，请为以下技术内容生成完整的PPT大纲：\n技术主题：{0}\n目标听众：{1}\n演讲时长：{2}分钟\n\n要求：\n1. 设计详细的技术PPT结构\n2. 每页包含标题、副标题和技术讲解\n3. 内容准确全面，技术性强\n4. 包含图示、流程图和技术视觉元素描述\n\n重要：必须按如下标准PPT格式输出：\n---PPT大纲---\n第1页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n第2页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n（更多页面以此类推...）\n\n请生成技术PPT大纲：",
     "category": "PPT_TECHNICAL",
     "tags": [
       "PPT",
-      "technical"
+      "技术"
     ],
     "metadata": {
-      "createdAt": "2025-07-06 08:46:12",
-      "updatedAt": "2025-07-06 08:46:12",
+      "createdAt": "2025-07-15 11:42:51",
+      "updatedAt": "2025-07-15 11:42:51",
       "useCount": 0,
       "rating": 0.0,
       "ratingCount": 0,
@@ -92,20 +92,19 @@
     "isPublic": false
   },
   {
-    "id": "eed6c641-1726-4ff0-af6a-bcbdaa67bdfb",
-    "name": "Creative PPT Generation",
-    "description": "Generate creative and engaging presentation content",
-    "content": "You are a creative PPT assistant. Please generate a complete PPT outline for creative content:\nCreative Topic: {0}\nTarget Audience: {1}\nPresentation Duration: {2} minutes\n\nRequirements:\n1. Create an innovative and creative PPT structure\n2. Each slide should include title, subtitle, and creative content\n3. Content should be engaging, inspiring, and visually appealing\n4. Include creative visual elements, metaphors, and storytelling elements descriptions\n\nIMPORTANT: You must output in the following standard PPT format:\n---PPT����---\nPage 1:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\nPage 2:\nTitle: [Page Title]\nSubtitle: [Page Subtitle]\nBullet: [Bullet Point Content]\nDraw: [Drawing Description]\n(Continue for more pages...)\n\nPlease generate the creative PPT outline:",
+    "id": "f904a3ae-70bb-4cfb-b101-835c5a5c4fb6",
+    "name": "创意PPT",
+    "description": "生成有创意和吸引力的演示内容",
+    "content": "你是一名创意PPT助手，请为以下创意内容生成完整的PPT大纲：\n创意主题：{0}\n目标听众：{1}\n演讲时长：{2}分钟\n\n要求：\n1. 设计创新且有创意的PPT结构\n2. 每页包含标题、副标题和创意内容\n3. 内容应富有吸引力、启发性和视觉美感\n4. 包含创意视觉元素、比喻和故事化描述\n\n重要：必须按如下标准PPT格式输出：\n---PPT大纲---\n第1页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n第2页：\n标题：[页面标题]\n副标题：[页面副标题]\n要点：[要点内容]\n绘图：[绘图描述]\n（更多页面以此类推...）\n\n请生成创意PPT大纲：",
     "category": "PPT_CREATIVE",
     "tags": [
       "PPT",
-      "creative"
+      "创意"
     ],
     "metadata": {
-      "createdAt": "2025-07-06 08:46:12",
-      "updatedAt": "2025-07-06 08:46:32",
-      "lastUsedAt": "2025-07-06 08:46:32",
-      "useCount": 1,
+      "createdAt": "2025-07-15 11:42:51",
+      "updatedAt": "2025-07-15 11:42:51",
+      "useCount": 0,
       "rating": 0.0,
       "ratingCount": 0,
       "author": "User",

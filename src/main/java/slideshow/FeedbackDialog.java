@@ -153,8 +153,8 @@ public class FeedbackDialog extends Stage {
     // 邮件发送逻辑，支持附件
     private void sendFeedbackMail(String desc, String contact, List<File> attachments) throws Exception {
         String host = "smtp.qq.com";
-        String from = "1770453335@qq.com"; // 换成你的发件邮箱
-        String authCode = "fwibqwzyenxqgfja";    // 换成你的SMTP授权码
+        String from = "1770453335@qq.com"; // 发件邮箱
+        String authCode = "fwibqwzyenxqgfja";    // MTP授权码
         String to = "1770453335@qq.com";
 
         Properties props = new Properties();

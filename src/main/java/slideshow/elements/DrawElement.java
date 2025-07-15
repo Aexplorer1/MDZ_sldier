@@ -242,4 +242,15 @@ public class DrawElement extends SlideElement {
         return 0;
     }
 
+    @Override
+    public SlideElement deepClone() {
+        DrawElement clone = new DrawElement(this.startX, this.startY, this.shapeType, this.strokeColor, this.strokeWidth);
+        clone.endX = this.endX;
+        clone.endY = this.endY;
+        clone.x = this.x;
+        clone.y = this.y;
+        clone.setSelected(this.selected);
+        return clone;
+    }
+
 } 
