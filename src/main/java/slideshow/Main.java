@@ -333,7 +333,7 @@ public class Main extends Application {
             MenuItem speechStructureItem = new MenuItem("演讲稿结构");
             MenuItem keywordAnalysisItem = new MenuItem("关键词分析");
             MenuItem aiQAItem = new MenuItem("AI问答");
-            MenuItem templateManageItem = new MenuItem("模板管理");
+            MenuItem templateManageItem = new MenuItem("本地提示词模板管理");
             // 新增：智能生成提示词
             MenuItem promptGenItem = new MenuItem("智能生成提示词");
             promptGenItem.setOnAction(ev -> showPromptGeneratorDialog());
@@ -1588,7 +1588,7 @@ public class Main extends Application {
 
         // 添加一个"不使用模板"选项
         PromptTemplate noTemplate = new PromptTemplate("程序默认提示词", "直接使用默认提示词", "",
-                slideshow.model.TemplateCategory.CUSTOM);
+                slideshow.model.TemplateCategory.OTHER);
         noTemplate.setId("no-template");
         templateCombo.getItems().add(0, noTemplate);
         templateCombo.setValue(noTemplate);
