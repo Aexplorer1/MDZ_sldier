@@ -510,7 +510,7 @@ public class Main extends Application {
         // Retrieve from environment variable first
         String key = System.getenv("DEEPSEEK_API_KEY");
         // logger.info("API Key: " + key);
-        if (key != null) {
+        if (key == null) {
             throw new RuntimeException("API Key not configured");
         }
         return key;
