@@ -792,18 +792,6 @@ public class Main extends Application {
         lineWidthComboBox.getItems().addAll(1.0, 2.0, 3.0, 4.0, 5.0);
         lineWidthComboBox.setValue(2.0);
 
-        // 添加放映按钮
-        Button presentationBtn = new Button("放映");
-        presentationBtn.getStyleClass().add("button");
-        presentationBtn.setOnAction(e -> {
-            MenuItem startPresentationItem = new MenuItem("开始放映");
-            MenuItem speakerViewItem = new MenuItem("演讲者视图");
-            startPresentationItem.setOnAction(ev -> startPresentation());
-            speakerViewItem.setOnAction(ev -> startSpeakerView());
-            ContextMenu menu = new ContextMenu(startPresentationItem, speakerViewItem);
-            menu.show(presentationBtn, javafx.geometry.Side.BOTTOM, 0, 0);
-        });
-        
         // 简化工具栏，只保留基本功能，移除AI功能按钮
         return new ToolBar(
                 newSlideBtn,
@@ -821,9 +809,7 @@ public class Main extends Application {
                 new Separator(),
                 rectBtn, circleBtn, lineBtn, arrowBtn,
                 drawColorPicker,
-                lineWidthComboBox,
-                new Separator(),
-                presentationBtn);
+                lineWidthComboBox);
     }
 
     private void createNewSlide() {
