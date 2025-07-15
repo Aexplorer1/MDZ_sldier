@@ -537,6 +537,7 @@ public class Main extends Application {
 
             lastMouseX = event.getX();
             lastMouseY = event.getY();
+            System.out.println("==="+lastMouseX+"    " + lastMouseY);
             refreshCanvas();
         }
     }
@@ -546,12 +547,21 @@ public class Main extends Application {
 
             // Update drawing
             currentDrawing.updateEndPoint(event.getX(), event.getY());
+            System.out.printf("[调试] 绘图元素终点更新为：(%.2f, %.2f)%n", event.getX(), event.getY());
             refreshCanvas();
             return;
         }
         if (selectedElement != null && currentResizeHandle != SlideElement.ResizeHandle.NONE) {
+
+            System.out.println("============="+lastMouseX+"   "+lastMouseY);
             double deltaX = event.getX() - lastMouseX;
             double deltaY = event.getY() - lastMouseY;
+            if(deltaX>5||deltaY>5){
+                deltaX=0;
+                deltaY=0;
+            }
+            System.out.println("======++++++=="+deltaX+"    " + deltaY);
+//            selectedElement.resize(deltaX, deltaY, currentResizeHandle);
             selectedElement.resize(deltaX, deltaY, currentResizeHandle);
             lastMouseX = event.getX();
             lastMouseY = event.getY();
@@ -2569,6 +2579,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        System.setProperty("file.encoding", "UTF-8");
         Application.launch(args);
     }
 
