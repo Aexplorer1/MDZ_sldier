@@ -1,4 +1,4 @@
-# 将 MDZ_Slider 转换为 Web 应用并容器化部署
+# 将 SlideMind 转换为 Web 应用并容器化部署
 
 ## 转换方案
 

@@ -56,14 +56,14 @@ task fatJar(type: Jar) {
     }
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
-    archiveBaseName = 'MDZ_Slider'
+    archiveBaseName = 'SlideMind'
     archiveVersion = '1.0'
 }
 
 // 添加 JavaFX 启动脚本任务
 task createStartScripts(type: CreateStartScripts) {
     outputDir = file('build/scripts')
-    applicationName = 'MDZ_Slider'
+    applicationName = 'SlideMind'
     mainClass = 'slideshow.Main'
     defaultJvmOpts = [
         '--module-path','lib/javafx-sdk-21.0.1//javafx-sdk-21.0.1/lib',
@@ -87,7 +87,7 @@ test {
 run {
     doFirst {
         jvmArgs = [
-                '--module-path', 'lib/javafx-sdk-21.0.1//javafx-sdk-21.0.1/lib',
+                '--module-path', 'lib/javafx-sdk-21.0.1/javafx-sdk-21.0.1/lib',
                 '--add-modules', 'javafx.controls,javafx.fxml,javafx.base,javafx.graphics,java.logging',
                 '--add-exports', 'javafx.graphics/com.sun.javafx.tk=ALL-UNNAMED',
                 '--add-exports', 'javafx.graphics/com.sun.glass.ui=ALL-UNNAMED',

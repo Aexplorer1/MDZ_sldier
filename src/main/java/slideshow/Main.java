@@ -70,7 +70,7 @@ import java.util.logging.Level;
 import java.util.Stack;
 
 /**
- * MDZ_Slider main application class
+ * SlideMind main application class
  * Responsible for managing the user interface and slide editing functionality
  */
 public class Main extends Application {
@@ -283,7 +283,7 @@ public class Main extends Application {
         canvas.setOnMouseClicked(this::handleMouseClicked);
 
         // ========== 顶部主标题 ==========
-        Label mainTitle = new Label("MDZ_Slider");
+        Label mainTitle = new Label("SlideMind");
         mainTitle.setStyle(
                 "-fx-font-size:22;-fx-font-weight:bold;-fx-padding:12 0 12 24;-fx-text-fill:#222;font-family:'PingFang SC','Microsoft YaHei','Arial';");
         topBox = new VBox();
@@ -566,7 +566,7 @@ public class Main extends Application {
             logger.log(Level.SEVERE, "Failed to load CSS file", e);
         }
 
-        primaryStage.setTitle("MDZ_Slider");
+        primaryStage.setTitle("SlideMind");
         primaryStage.setScene(scene);
 
         // 确保主窗口可以正常控制

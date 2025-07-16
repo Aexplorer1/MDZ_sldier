@@ -1,10 +1,10 @@
 #!/bin/bash
 
-echo "启动 MDZ_Slider 应用..."
+echo "启动 SlideMind 应用..."
 echo
 
 # 检查 JAR 文件是否存在
-if [ ! -f "build/libs/MDZ_Slider-1.0.jar" ]; then
+if [ ! -f "build/libs/SlideMind-1.0.jar" ]; then
     echo "错误：找不到 JAR 文件，请先运行 ./gradlew fatJar"
     exit 1
 fi
@@ -21,7 +21,7 @@ java --module-path lib/javafx-sdk-21.0.1/lib \
      -Dfile.encoding=UTF-8 \
      -Duser.language=zh \
      -Duser.country=CN \
-     -jar build/libs/MDZ_Slider-1.0.jar
+     -jar build/libs/SlideMind-1.0.jar
 
 if [ $? -ne 0 ]; then
     echo

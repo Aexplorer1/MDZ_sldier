@@ -14,7 +14,7 @@
 
 3. **配置 JAR 设置**
    ```
-   Name: MDZ_Slider
+   Name: SlideMind
    Type: JAR
    Main Class: slideshow.Main
    ```
@@ -26,10 +26,10 @@
 ### 2. 构建 JAR
 
 1. **构建 Artifact**
-   - 菜单：`Build` → `Build Artifacts` → `MDZ_Slider` → `Build`
+   - 菜单：`Build` → `Build Artifacts` → `SlideMind` → `Build`
 
 2. **查找输出文件**
-   - 生成的 JAR 在：`out/artifacts/MDZ_Slider/MDZ_Slider.jar`
+   - 生成的 JAR 在：`out/artifacts/SlideMind/SlideMind.jar`
 
 ### 3. 运行 JAR
 
@@ -37,7 +37,7 @@
 # 使用 JavaFX 模块运行
 java --module-path lib/javafx-sdk-21.0.1/lib \
      --add-modules javafx.controls,javafx.fxml,javafx.base,javafx.graphics \
-     -jar out/artifacts/MDZ_Slider/MDZ_Slider.jar
+     -jar out/artifacts/SlideMind/SlideMind.jar
 ```
 
 ## 方式二：使用 Gradle 集成
@@ -54,14 +54,14 @@ task fatJar(type: Jar) {
     }
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
-    archiveBaseName = 'MDZ_Slider'
+    archiveBaseName = 'SlideMind'
     archiveVersion = '1.0'
 }
 
 // 添加 JavaFX 启动脚本任务
 task createStartScripts(type: CreateStartScripts) {
     outputDir = file('build/scripts')
-    applicationName = 'MDZ_Slider'
+    applicationName = 'SlideMind'
     mainClass = 'slideshow.Main'
     defaultJvmOpts = [
         '--module-path', 'lib/javafx-sdk-21.0.1/lib',
@@ -83,7 +83,7 @@ task createStartScripts(type: CreateStartScripts) {
    - 双击 `fatJar` 任务
 
 3. **查找输出文件**
-   - 生成的 JAR 在：`build/libs/MDZ_Slider-1.0.jar`
+   - 生成的 JAR 在：`build/libs/SlideMind-1.0.jar`
 
 ## 方式三：使用 IDEA 运行配置
 
@@ -95,7 +95,7 @@ task createStartScripts(type: CreateStartScripts) {
 
 2. **配置主类**
    ```
-   Name: MDZ_Slider
+   Name: SlideMind
    Main class: slideshow.Main
    Module: MDZ_sldier.main
    ```
@@ -124,13 +124,13 @@ task createStartScripts(type: CreateStartScripts) {
 
 2. **配置构建步骤**
    ```
-   Name: Build MDZ_Slider
+   Name: Build SlideMind
    Target: fatJar (Gradle task)
    ```
 
 ### 2. 一键构建
 
-- 菜单：`Build` → `Build MDZ_Slider`
+- 菜单：`Build` → `Build SlideMind`
 
 ## 推荐的完整流程
 
@@ -151,7 +151,7 @@ java --module-path lib/javafx-sdk-21.0.1/lib ^
      -Dfile.encoding=UTF-8 ^
      -Duser.language=zh ^
      -Duser.country=CN ^
-     -jar build/libs/MDZ_Slider-1.0.jar
+     -jar build/libs/SlideMind-1.0.jar
 pause
 ```
 
@@ -163,7 +163,7 @@ java --module-path lib/javafx-sdk-21.0.1/lib \
      -Dfile.encoding=UTF-8 \
      -Duser.language=zh \
      -Duser.country=CN \
-     -jar build/libs/MDZ_Slider-1.0.jar
+     -jar build/libs/SlideMind-1.0.jar
 ```
 
 ### 3. 在 IDEA 中设置快捷键
