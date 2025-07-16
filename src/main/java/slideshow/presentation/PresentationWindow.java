@@ -76,12 +76,12 @@ public class PresentationWindow {
         });
 
         stage.setScene(scene);
-        stage.setMaximized(true); // 改为最大化而不是全屏
+        stage.setFullScreen(true); // 改为全屏显示
         stage.setTitle("幻灯片演示"); // 添加窗口标题
 
         // 确保窗口可以正常控制
         stage.setResizable(true);
-        stage.setFullScreen(false);
+        // stage.setFullScreen(false); // 不再需要，已改为全屏
         stage.setFullScreenExitHint("按ESC键退出全屏");
         stage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
 
