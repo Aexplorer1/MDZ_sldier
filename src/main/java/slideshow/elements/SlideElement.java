@@ -4,6 +4,8 @@ package slideshow.elements;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.Cursor;
+import javafx.geometry.Bounds;
+import javafx.geometry.BoundingBox;
 
 public abstract class SlideElement {
     protected double x;
@@ -78,6 +80,11 @@ public abstract class SlideElement {
      * 获取元素高度
      */
     public abstract double getHeight();
+    
+    /**
+     * 获取元素包围盒（用于框选/碰撞检测）
+     */
+    public abstract Bounds getBoundingBox();
     
     /**
      * 深拷贝自身，子类需实现

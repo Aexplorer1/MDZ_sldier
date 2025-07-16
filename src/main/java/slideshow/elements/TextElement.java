@@ -6,6 +6,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.geometry.Bounds;
+import javafx.geometry.BoundingBox;
 
 public class TextElement extends SlideElement {
     private String text;
@@ -283,6 +285,12 @@ public class TextElement extends SlideElement {
     
     public boolean isItalic() {
         return italic;
+    }
+
+    @Override
+    public Bounds getBoundingBox() {
+        // x, y为左下角，y-height为上边界
+        return new BoundingBox(x, y - height, width, height);
     }
 
     @Override

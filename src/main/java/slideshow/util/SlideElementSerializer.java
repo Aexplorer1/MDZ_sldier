@@ -59,7 +59,30 @@ public class SlideElementSerializer implements JsonSerializer<SlideElement>, Jso
             case "TextElement":
                 String text = jsonObject.get("text").getAsString();
                 double fontSize = jsonObject.get("fontSize").getAsDouble();
-                Color color = Color.valueOf(jsonObject.get("color").getAsString());
+                String colorStr = jsonObject.get("color").getAsString();
+                Color color;
+                try {
+                    if (colorStr.startsWith("0x")) {
+                        // 0xAARRGGBB or 0xRRGGBBAA or 0xRRGGBB
+                        if (colorStr.length() == 10) {
+                            // 0xAARRGGBB，取RRGGBB
+                            color = Color.web("#" + colorStr.substring(4, 10));
+                        } else if (colorStr.length() == 8) {
+                            // 0xRRGGBBAA，取RRGGBB
+                            color = Color.web("#" + colorStr.substring(2, 8));
+                        } else if (colorStr.length() == 8) {
+                            color = Color.web("#" + colorStr.substring(2, 8));
+                        } else {
+                            color = Color.BLACK;
+                        }
+                    } else if (colorStr.startsWith("#")) {
+                        color = Color.web(colorStr);
+                    } else {
+                        color = Color.valueOf(colorStr);
+                    }
+                } catch (Exception ex) {
+                    color = Color.BLACK;
+                }
                 FontWeight fontWeight = FontWeight.valueOf(jsonObject.get("fontWeight").getAsString());
                 boolean italic = jsonObject.get("italic").getAsBoolean();
                 return new TextElement(x, y, text, fontSize, color, fontWeight, italic);

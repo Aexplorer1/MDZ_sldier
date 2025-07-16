@@ -5,6 +5,8 @@ import javafx.scene.paint.Color;
 import javafx.geometry.Point2D;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.geometry.Bounds;
+import javafx.geometry.BoundingBox;
 
 public class DrawElement extends SlideElement {
     public enum ShapeType {
@@ -240,6 +242,15 @@ public class DrawElement extends SlideElement {
 
     public double getHeight() {
         return 0;
+    }
+
+    @Override
+    public Bounds getBoundingBox() {
+        double minX = Math.min(startX, endX);
+        double minY = Math.min(startY, endY);
+        double width = Math.abs(endX - startX);
+        double height = Math.abs(endY - startY);
+        return new BoundingBox(minX, minY, width, height);
     }
 
     @Override

@@ -3,6 +3,8 @@ package slideshow.elements;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import javafx.geometry.Bounds;
+import javafx.geometry.BoundingBox;
 
 public class ImageElement extends SlideElement {
     private transient Image image;      // 不参与序列化
@@ -221,5 +223,10 @@ public class ImageElement extends SlideElement {
         ImageElement clone = new ImageElement(this.x, this.y, this.imageUrl, this.width, this.height);
         clone.setSelected(this.selected);
         return clone;
+    }
+
+    @Override
+    public Bounds getBoundingBox() {
+        return new BoundingBox(x, y, width, height);
     }
 }
