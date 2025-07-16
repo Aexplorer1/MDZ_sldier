@@ -58,9 +58,16 @@ public class Slide {
     public void draw(GraphicsContext gc) {
         // 添加调试信息
         System.out.println("绘制幻灯片，元素数量：" + (elements != null ? elements.size() : 0));
-        
         if (elements != null) {
-            for (SlideElement element : elements) {
+            for (int i = 0; i < elements.size(); i++) {
+                SlideElement element = elements.get(i);
+                // 输出元素类型和坐标
+                System.out.printf("元素%d 类型：%s，坐标：(%.2f, %.2f)%n",
+                    i + 1,
+                    element.getClass().getSimpleName(),
+                    element.getX(),
+                    element.getY()
+                );
                 element.draw(gc);
             }
         }

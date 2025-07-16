@@ -49,6 +49,31 @@ application {
     mainClass = 'slideshow.Main'
 }
 
+// 添加 fat jar 任务
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'slideshow.Main'
+    }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    archiveBaseName = 'MDZ_Slider'
+    archiveVersion = '1.0'
+}
+
+// 添加 JavaFX 启动脚本任务
+task createStartScripts(type: CreateStartScripts) {
+    outputDir = file('build/scripts')
+    applicationName = 'MDZ_Slider'
+    mainClass = 'slideshow.Main'
+    defaultJvmOpts = [
+        '--module-path', 'lib/javafx-sdk-21.0.1/lib',
+        '--add-modules', 'javafx.controls,javafx.fxml,javafx.base,javafx.graphics',
+        '-Dfile.encoding=UTF-8',
+        '-Duser.language=zh',
+        '-Duser.country=CN'
+    ]
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
