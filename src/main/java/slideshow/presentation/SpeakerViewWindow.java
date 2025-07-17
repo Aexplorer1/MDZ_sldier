@@ -345,17 +345,12 @@ public class SpeakerViewWindow {
      */
     private void updateSpeechContent() {
         if (speechLines != null && speechLines.length > 0) {
-            // 根据当前幻灯片索引计算显示的演讲稿内容
-            int startLine = Math.min(currentIndex * 3, speechLines.length - 1);
-            int endLine = Math.min(startLine + 20, speechLines.length);
-            
+            // 一次性显示全部演讲稿内容
             StringBuilder displayContent = new StringBuilder();
-            for (int i = startLine; i < endLine; i++) {
-                displayContent.append(speechLines[i]).append("\n");
+            for (String line : speechLines) {
+                displayContent.append(line).append("\n");
             }
-            
             speechArea.setText(displayContent.toString());
-            
             // 滚动到顶部
             speechArea.setScrollTop(0);
         }
